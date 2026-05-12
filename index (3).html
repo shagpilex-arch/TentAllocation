@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tent Allocation — Scout Camp Planning Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --scout-green: #2d5a1b;
+      --scout-green-light: #3d7a25;
+      --scout-green-pale: #eef4e8;
+      --scout-green-mid: #c4ddb0;
+      --scout-amber: #d4860a;
+      --scout-amber-pale: #fef7e6;
+      --text-dark: #1a2e0f;
+      --text-mid: #3d4f35;
+      --text-muted: #6b7c61;
+      --text-light: #f5f9f1;
+      --border: #c8ddb8;
+      --bg: #f8faf5;
+      --white: #ffffff;
+      --radius: 10px;
+      --radius-lg: 16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: var(--bg);
+      color: var(--text-dark);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--scout-green);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 1.5rem;
+    }
+
+    .nav-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--text-light);
+      text-decoration: none;
+      padding: 1.1rem 1.5rem 1.1rem 0;
+      margin-right: auto;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-brand svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .nav-tabs {
+      display: flex;
+      list-style: none;
+      gap: 0;
+    }
+
+    .nav-tabs a {
+      display: block;
+      padding: 1.1rem 1.25rem;
+      color: rgba(255,255,255,0.78);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      border-bottom: 3px solid transparent;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .nav-tabs a:hover,
+    .nav-tabs a.active {
+      color: #fff;
+      border-bottom-color: #a3d977;
+    }
+
+    /* ── SECTIONS ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, var(--scout-green) 0%, #1e4010 55%, #2d5a1b 100%);
+      position: relative;
+      overflow: hidden;
+      padding: 5rem 1.5rem 4rem;
+      text-align: center;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 20% 80%, rgba(163,217,119,0.12) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(163,217,119,0.08) 0%, transparent 45%);
+    }
+
+    .hero-inner { position: relative; max-width: 720px; margin: 0 auto; }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      color: #c8edaa;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0.3rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      color: #fff;
+      line-height: 1.15;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      color: rgba(255,255,255,0.78);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      font-weight: 300;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #a3d977;
+      color: var(--text-dark);
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.8rem 1.8rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      font-family: 'Source Sans 3', sans-serif;
+    }
+
+    .btn-primary:hover { background: #b8e88e; transform: translateY(-1px); }
+
+    .btn-outline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      color: rgba(255,255,255,0.9);
+      font-weight: 500;
+      font-size: 1rem;
+      padding: 0.8rem 1.8rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      font-family: 'Source Sans 3', sans-serif;
+    }
+
+    .btn-outline:hover { border-color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.07); }
+
+    /* ── CONTAINER ── */
+    .container { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+    /* ── HONESTY BOX ── */
+    .honesty-box {
+      background: var(--scout-amber-pale);
+      border: 1.5px solid #e8c06a;
+      border-radius: var(--radius-lg);
+      padding: 2rem 2.2rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .honesty-box::before {
+      content: '⚜';
+      position: absolute;
+      right: 1.5rem;
+      top: 1rem;
+      font-size: 4rem;
+      opacity: 0.09;
+    }
+
+    .honesty-box h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: #7a4c00;
+      margin-bottom: 0.9rem;
+    }
+
+    .honesty-box p {
+      color: #5a3800;
+      line-height: 1.75;
+      font-size: 0.97rem;
+      margin-bottom: 1rem;
+    }
+
+    .honesty-box p:last-of-type { margin-bottom: 1.4rem; }
+
+    .scout-law-quote {
+      font-style: italic;
+      border-left: 3px solid #d4860a;
+      padding-left: 1rem;
+      margin: 1rem 0 1.4rem;
+      color: #6b4200;
+    }
+
+    .donate-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--scout-amber);
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+
+    .donate-btn:hover { background: #b5720a; }
+
+    .no-pressure {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.6rem;
+      font-style: italic;
+    }
+
+    /* ── DOWNLOAD CARD ── */
+    .download-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem 2.2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .download-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--scout-green-pale);
+      border-radius: var(--radius);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .download-icon svg { width: 28px; height: 28px; color: var(--scout-green); }
+
+    .download-info { flex: 1; min-width: 200px; }
+
+    .download-info h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      margin-bottom: 0.3rem;
+      color: var(--text-dark);
+    }
+
+    .download-info p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .download-badge {
+      display: inline-block;
+      background: var(--scout-green-pale);
+      color: var(--scout-green);
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.65rem;
+      border-radius: 100px;
+      margin-right: 6px;
+    }
+
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--scout-green);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: var(--radius);
+      text-decoration: none;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-download:hover { background: var(--scout-green-light); }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.5rem;
+    }
+
+    .feature-card .icon {
+      width: 40px;
+      height: 40px;
+      background: var(--scout-green-pale);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.9rem;
+    }
+
+    .feature-card .icon svg { width: 20px; height: 20px; color: var(--scout-green); }
+
+    .feature-card h4 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.4rem; }
+
+    .feature-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; }
+
+    /* ── CONTACT FORMS ── */
+    .forms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 680px) { .forms-grid { grid-template-columns: 1fr; } }
+
+    .form-card {
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+    }
+
+    .form-card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-card > p {
+      font-size: 0.87rem;
+      color: var(--text-muted);
+      margin-bottom: 1.4rem;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.6rem 0.9rem;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-dark);
+      background: var(--bg);
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+
+    input:focus, textarea:focus { border-color: var(--scout-green); }
+
+    textarea { resize: vertical; min-height: 110px; }
+
+    .btn-submit {
+      background: var(--scout-green);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.7rem 1.5rem;
+      font-family: 'Source Sans 3', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      width: 100%;
+    }
+
+    .btn-submit:hover { background: var(--scout-green-light); }
+
+    .form-success {
+      display: none;
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--scout-green);
+    }
+
+    .form-success svg { width: 48px; height: 48px; margin-bottom: 0.75rem; }
+    .form-success p { font-size: 0.95rem; color: var(--text-muted); margin-top: 0.4rem; }
+
+    /* ── SCREENSHOTS ── */
+    .screenshots-intro {
+      text-align: center;
+      padding: 4rem 1.5rem;
+      color: var(--text-muted);
+    }
+
+    .screenshots-intro h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--text-dark);
+      margin-bottom: 0.75rem;
+    }
+
+    .screenshots-intro p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      max-width: 500px;
+      margin: 0 auto 1.5rem;
+    }
+
+    .screenshots-grid {
+      display: none;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      padding: 0 1.5rem 3rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .screenshot-placeholder {
+      background: var(--white);
+      border: 2px dashed var(--border);
+      border-radius: var(--radius-lg);
+      aspect-ratio: 16/10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* ── DOCS ── */
+    .docs-layout {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 640px) { .docs-layout { grid-template-columns: 1fr; } }
+
+    .docs-nav {
+      position: sticky;
+      top: 70px;
+    }
+
+    .docs-nav h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .docs-nav a {
+      display: block;
+      padding: 0.35rem 0.6rem;
+      font-size: 0.87rem;
+      color: var(--text-mid);
+      text-decoration: none;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .docs-nav a:hover { background: var(--scout-green-pale); color: var(--scout-green); }
+
+    .docs-content h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      margin: 2.5rem 0 0.75rem;
+      color: var(--text-dark);
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .docs-content h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .docs-content h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 1.5rem 0 0.5rem;
+      color: var(--text-dark);
+    }
+
+    .docs-content p {
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--text-mid);
+      margin-bottom: 0.9rem;
+    }
+
+    .docs-content ul {
+      padding-left: 1.4rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .docs-content ul li {
+      font-size: 0.95rem;
+      line-height: 1.8;
+      color: var(--text-mid);
+      margin-bottom: 0.3rem;
+    }
+
+    .docs-note {
+      background: var(--scout-green-pale);
+      border-left: 3px solid var(--scout-green);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 0.9rem 1.1rem;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: var(--text-mid);
+      line-height: 1.65;
+    }
+
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+
+    .step-list li {
+      counter-increment: step;
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.9rem;
+      align-items: flex-start;
+    }
+
+    .step-list li::before {
+      content: counter(step);
+      min-width: 26px;
+      height: 26px;
+      background: var(--scout-green);
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--scout-green);
+      color: rgba(255,255,255,0.65);
+      text-align: center;
+      padding: 1.6rem 1.5rem;
+      font-size: 0.82rem;
+    }
+
+    footer a { color: rgba(255,255,255,0.8); text-decoration: none; }
+    footer a:hover { color: #fff; }
+
+    /* ── PAGE TITLES ── */
+    .page-title {
+      padding: 3rem 1.5rem 0;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .page-title h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .page-title p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .divider { height: 1px; background: var(--border); max-width: 900px; margin: 2rem auto 0; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 15 9 22 9 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9 9 9"/>
+      </svg>
+      Tent Allocation
+    </a>
+    <ul class="nav-tabs">
+      <li><a href="#" class="active" onclick="switchTab('home',this)">Home</a></li>
+      <li><a href="#" onclick="switchTab('screenshots',this)">Screenshots</a></li>
+      <li><a href="#" onclick="switchTab('docs',this)">Documentation</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══════════ HOME ═══════════ -->
+<div id="section-home" class="section active">
+
+  <div class="hero">
+    <div class="hero-inner">
+      <span class="hero-badge">Free tool for Scout leaders</span>
+      <h1>Tent Allocation</h1>
+      <p>Smart, simple camp planning software for UK Scout leaders. Assign scouts to tents fairly, quickly, and with far less paper.</p>
+      <div class="hero-actions">
+        <a href="#download" class="btn-primary" onclick="document.getElementById('download').scrollIntoView({behavior:'smooth'});return false;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for Windows
+        </a>
+        <a href="#" class="btn-outline" onclick="switchTab('docs',document.querySelectorAll('.nav-tabs a')[2]);return false;">Read the docs</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Honesty box -->
+    <div class="honesty-box" id="donate">
+      <h2>A gentle reminder from the Scout Promise…</h2>
+      <p>
+        Before you download, we ask you to pause for just a moment. As Scout leaders, we don't just teach the Scout laws — we live by them.
+        We remind our young people regularly that a Scout is <strong>trustworthy</strong>, shows <strong>respect for others</strong>, and is <strong>friendly and considerate</strong>.
+      </p>
+      <p class="scout-law-quote">
+        "A Scout is Friendly and Considerate — A Scout is a friend to all. A Scout is kind to other people and to all living things."
+      </p>
+      <p>
+        This tool has been built in personal time to make <em>your</em> camp planning easier. It is offered completely free to download.
+        If you find it useful, a small tip of just <strong>£1</strong> would mean a great deal and helps ensure the tool stays maintained and improved.
+        Of course, it is entirely your choice — the download is below regardless. Consider it an honesty box.
+      </p>
+      <a href="https://ko-fi.com/benjaminmclaughlin" class="donate-btn" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Tip £1 via Ko-fi
+      </a>
+      <span class="no-pressure">No account needed &nbsp;·&nbsp; Takes 15 seconds &nbsp;·&nbsp; Completely optional</span>
+    </div>
+
+    <!-- Download card -->
+    <div class="download-card" id="download">
+      <div class="download-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div class="download-info">
+        <h3>Tent Allocation for Windows</h3>
+        <p>
+          <span class="download-badge">Windows 10 / 11</span>
+          <span class="download-badge">Free</span>
+        </p>
+        <p style="margin-top:0.4rem;">Latest version &nbsp;·&nbsp; No installation required</p>
+      </div>
+      <!-- Replace href with your actual download URL -->
+      <a href="YOUR_DOWNLOAD_LINK_HERE" class="btn-download">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download .exe
+      </a>
+    </div>
+
+    <!-- Features -->
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        </div>
+        <h4>Fair allocation</h4>
+        <p>Automatically assigns scouts to tents based on your rules and preferences.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h4>Group management</h4>
+        <p>Keep friends together, separate rivalries, and respect patrol structures.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="14 2 14 8 20 8"/><path d="M20 8H14V2M20 8v13a1 1 0 01-1 1H5a1 1 0 01-1-1V3a1 1 0 011-1h9"/></svg>
+        </div>
+        <h4>Export lists</h4>
+        <p>Print or save your tent lists for notice boards and leader packs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h4>Saves time</h4>
+        <p>What used to take an evening of spreadsheet wrangling now takes minutes.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Contact / Feature request forms -->
+  <div style="background: var(--white); border-top: 1px solid var(--border); padding: 3rem 0;">
+    <div class="container" style="padding-top:0; padding-bottom:0;">
+      <div class="forms-grid">
+
+        <!-- Contact form -->
+        <div class="form-card">
+          <h2>Get in touch</h2>
+          <p>Questions, feedback, or just want to say hello? Drop me a message.</p>
+          <div id="contact-form-wrap">
+            <label for="contact-name">Your name</label>
+            <input type="text" id="contact-name" placeholder="Akela" />
+
+            <label for="contact-email">Email address</label>
+            <input type="email" id="contact-email" placeholder="you@scouts.org.uk" />
+
+            <label for="contact-msg">Message</label>
+            <textarea id="contact-msg" placeholder="Type your message here…"></textarea>
+
+            <button class="btn-submit" onclick="sendEmail('contact')">Send message</button>
+          </div>
+          <div class="form-success" id="contact-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <strong>Message sent!</strong>
+            <p>Thanks for getting in touch. I'll reply as soon as I can.</p>
+          </div>
+        </div>
+
+        <!-- Feature request form -->
+        <div class="form-card">
+          <h2>Request a feature</h2>
+          <p>Got an idea that would make Tent Allocation even more useful? Let me know.</p>
+          <div id="feature-form-wrap">
+            <label for="feature-name">Your name</label>
+            <input type="text" id="feature-name" placeholder="Baloo" />
+
+            <label for="feature-email">Email address</label>
+            <input type="email" id="feature-email" placeholder="you@scouts.org.uk" />
+
+            <label for="feature-msg">Describe the feature</label>
+            <textarea id="feature-msg" placeholder="I'd love to be able to…"></textarea>
+
+            <button class="btn-submit" onclick="sendEmail('feature')">Submit idea</button>
+          </div>
+          <div class="form-success" id="feature-success">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <strong>Idea received!</strong>
+            <p>Thanks for the suggestion — I'll take a look at it.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+<!-- ═══════════ end HOME ═══════════ -->
+
+
+<!-- ═══════════ SCREENSHOTS ═══════════ -->
+<div id="section-screenshots" class="section">
+  <div class="screenshots-intro">
+    <h2>Screenshots</h2>
+    <p>Screenshots will appear here once you add them. Drop your images into this project and update the paths below.</p>
+    <p style="font-size:0.82rem; background: var(--scout-green-pale); display:inline-block; padding: 0.5rem 1rem; border-radius: var(--radius); color: var(--scout-green);">
+      To add screenshots: replace the placeholder divs in the HTML with <code>&lt;img&gt;</code> tags pointing to your image files.
+    </p>
+  </div>
+
+  <!-- Replace these placeholders with real <img> tags when you have screenshots -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap:1.5rem; padding:0 1.5rem 3rem; max-width:900px; margin:0 auto;">
+    <div class="screenshot-placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span>Screenshot 1</span>
+    </div>
+    <div class="screenshot-placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span>Screenshot 2</span>
+    </div>
+    <div class="screenshot-placeholder">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <span>Screenshot 3</span>
+    </div>
+  </div>
+</div>
+<!-- ═══════════ end SCREENSHOTS ═══════════ -->
+
+
+<!-- ═══════════ DOCS ═══════════ -->
+<div id="section-docs" class="section">
+  <div class="docs-layout">
+
+    <nav class="docs-nav">
+      <h4>Contents</h4>
+      <a href="#doc-overview">Overview</a>
+      <a href="#doc-requirements">Requirements</a>
+      <a href="#doc-install">Getting started</a>
+      <a href="#doc-usage">Using the app</a>
+      <a href="#doc-export">Exporting</a>
+      <a href="#doc-faq">FAQ</a>
+    </nav>
+
+    <article class="docs-content">
+      <h2 id="doc-overview">Overview</h2>
+      <p>
+        Tent Allocation is a Windows desktop application built to help Scout leaders quickly and fairly assign young people to tents for camp.
+        It removes the hours of manual juggling that come with large groups, patrol splits, and personal preferences.
+      </p>
+      <p>
+        The tool is free to use and requires no installation. Simply download the <code>.exe</code>, run it, and you're ready to go.
+      </p>
+
+      <h2 id="doc-requirements">Requirements</h2>
+      <ul>
+        <li>Windows 10 or Windows 11</li>
+        <li>No additional software or runtime required</li>
+        <li>No internet connection needed once downloaded</li>
+      </ul>
+      <div class="docs-note">
+        Tent Allocation is a standalone executable. You do not need to install anything — just download and run.
+      </div>
+
+      <h2 id="doc-install">Getting started</h2>
+      <ol class="step-list">
+        <li><span>Download the <code>TentAllocation.exe</code> file from the Home page.</span></li>
+        <li><span>Windows may show a SmartScreen warning the first time. Click <strong>More info</strong> → <strong>Run anyway</strong> — the file is safe.</span></li>
+        <li><span>The application will launch directly with no installation wizard.</span></li>
+        <li><span>You're ready to start planning your camp.</span></li>
+      </ol>
+
+      <h2 id="doc-usage">Using the app</h2>
+      <h3>Adding scouts</h3>
+      <p>
+        Enter each young person's name and any relevant details such as patrol membership or preferences.
+        You can type them in directly or paste a list.
+      </p>
+
+      <h3>Setting up tents</h3>
+      <p>
+        Define how many tents you have and the maximum capacity of each. The app will ensure no tent exceeds its limit.
+      </p>
+
+      <h3>Running the allocation</h3>
+      <p>
+        Once your scouts and tents are set up, click <strong>Allocate</strong>. The app will distribute scouts across tents,
+        respecting any constraints you have set.
+      </p>
+
+      <div class="docs-note">
+        <strong>Tip:</strong> You can manually drag and drop scouts between tents after the initial allocation if you want to make tweaks.
+      </div>
+
+      <h2 id="doc-export">Exporting</h2>
+      <p>
+        Use <strong>File → Export</strong> to save your tent list. Supported formats include a printable PDF layout and a plain text list suitable for copying into emails or notice boards.
+      </p>
+
+      <h2 id="doc-faq">FAQ</h2>
+      <h3>Is the tool really free?</h3>
+      <p>
+        Yes, completely. A voluntary £1 tip is appreciated but never required. See the Home page for details.
+      </p>
+
+      <h3>Will it work on a Mac?</h3>
+      <p>
+        Currently Windows only. If there is demand for a Mac version, please use the <em>Request a Feature</em> form on the Home page.
+      </p>
+
+      <h3>My antivirus flagged the file — is it safe?</h3>
+      <p>
+        Yes. Because Tent Allocation is not a widely distributed commercial application, some antivirus tools flag new unsigned executables as a precaution.
+        The file is clean. If you are unsure, you can scan it at <a href="https://www.virustotal.com" target="_blank" rel="noopener">VirusTotal.com</a> before running.
+      </p>
+
+      <h3>Something isn't working — how do I get help?</h3>
+      <p>
+        Use the <strong>Get in touch</strong> form on the Home page and describe what you're seeing. Include your Windows version if possible.
+      </p>
+    </article>
+
+  </div>
+</div>
+<!-- ═══════════ end DOCS ═══════════ -->
+
+<footer>
+  <p>Tent Allocation &nbsp;·&nbsp; Made for UK Scout leaders &nbsp;·&nbsp; <a href="mailto:TentAllocation@bensemail.co.uk">TentAllocation@bensemail.co.uk</a></p>
+</footer>
+
+<script>
+  function switchTab(name, link) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs a').forEach(a => a.classList.remove('active'));
+    document.getElementById('section-' + name).classList.add('active');
+    if (link) link.classList.add('active');
+    window.scrollTo(0, 0);
+    return false;
+  }
+
+  function sendEmail(type) {
+    const isContact = type === 'contact';
+    const name    = document.getElementById(type + '-name').value.trim();
+    const email   = document.getElementById(type + '-email').value.trim();
+    const msg     = document.getElementById(type + '-msg').value.trim();
+
+    if (!name || !email || !msg) {
+      alert('Please fill in all fields before sending.');
+      return;
+    }
+
+    const subject = isContact
+      ? encodeURIComponent('Tent Allocation – Message from ' + name)
+      : encodeURIComponent('Tent Allocation – Feature Request from ' + name);
+
+    const body = encodeURIComponent(
+      (isContact ? 'Message:\n' : 'Feature request:\n') + msg +
+      '\n\nFrom: ' + name + ' <' + email + '>'
+    );
+
+    window.location.href = 'mailto:TentAllocation@bensemail.co.uk?subject=' + subject + '&body=' + body;
+
+    document.getElementById(type + '-form-wrap').style.display = 'none';
+    document.getElementById(type + '-success').style.display = 'block';
+  }
+
+  document.querySelectorAll('.nav-tabs a').forEach(a => {
+    a.addEventListener('click', function(e) {
+      e.preventDefault();
+    });
+  });
+</script>
+
+  <script>
+    var s = document.createElement('script');
+    s.src = 'https://storage.ko-fi.com/cdn/scripts/overlay-widget.js';
+    s.onload = function() {
+      kofiWidgetOverlay.draw('benjaminmclaughlin', {
+        'type': 'floating-chat',
+        'floating-chat.donateButton.text': 'Support Me',
+        'floating-chat.donateButton.background-color': '#2d5a1b',
+        'floating-chat.donateButton.text-color': '#fff'
+      });
+    };
+    document.body.appendChild(s);
+  </script>
+</body>
+</html>
