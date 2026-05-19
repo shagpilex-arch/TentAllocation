@@ -1,905 +1,218 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en-GB">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Camp Tent Planner - Tent Allocation for Scout Camps</title>
-  <meta name="description" content="Camp Tent Planner is a free Windows desktop app for visually planning which Scouts, adults, and young leaders sleep in which tents at camp.">
-  <style>
-    :root {
-      --green-900: #173b20;
-      --green-800: #20542c;
-      --green-700: #2f6d3b;
-      --green-100: #eaf5e5;
-      --field: #9ccc65;
-      --field-line: #79ad3f;
-      --amber: #f28c18;
-      --blue: #2563eb;
-      --pink: #ec4899;
-      --ink: #182018;
-      --muted: #526052;
-      --border: #cdddc8;
-      --paper: #ffffff;
-      --panel: #f7faf4;
-      --warn: #c62828;
-      --shadow: 0 18px 45px rgba(23, 59, 32, 0.16);
-    }
-
-    * { box-sizing: border-box; }
-
-    html { scroll-behavior: smooth; }
-
-    body {
-      margin: 0;
-      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
-      color: var(--ink);
-      background: var(--panel);
-      line-height: 1.55;
-    }
-
-    a { color: inherit; }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: var(--green-800);
-      color: #fff;
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-    }
-
-    .nav {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 12px 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 800;
-      letter-spacing: 0;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .brand-mark {
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      background: #fff;
-      color: var(--green-800);
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,0.08);
-    }
-
-    .brand-mark svg { width: 24px; height: 24px; }
-
-    .links {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .links a {
-      color: #eef8ed;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 650;
-      padding: 8px 10px;
-      border-radius: 6px;
-    }
-
-    .links a:hover { background: rgba(255,255,255,0.12); }
-
-    .hero {
-      background:
-        linear-gradient(rgba(23,59,32,0.18), rgba(23,59,32,0.08)),
-        repeating-linear-gradient(100deg, transparent 0 18px, rgba(121,173,63,0.35) 19px 20px, transparent 21px 48px),
-        var(--field);
-      border-bottom: 1px solid #7cad49;
-    }
-
-    .hero-inner {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 54px 22px 42px;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 430px;
-      gap: 34px;
-      align-items: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.82);
-      border: 1px solid rgba(23,59,32,0.16);
-      color: var(--green-900);
-      font-size: 13px;
-      font-weight: 750;
-      margin-bottom: 16px;
-    }
-
-    h1 {
-      margin: 0;
-      color: var(--green-900);
-      font-size: clamp(38px, 6vw, 68px);
-      line-height: 0.98;
-      letter-spacing: 0;
-      max-width: 820px;
-    }
-
-    .lead {
-      margin: 18px 0 0;
-      max-width: 700px;
-      font-size: 20px;
-      color: #203920;
-      font-weight: 500;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 26px;
-      align-items: center;
-    }
-
-    .button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-height: 44px;
-      padding: 11px 16px;
-      border-radius: 7px;
-      border: 1px solid transparent;
-      text-decoration: none;
-      font-weight: 800;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    .button.primary {
-      background: var(--green-800);
-      color: #fff;
-      box-shadow: 0 10px 24px rgba(32,84,44,0.28);
-    }
-
-    .button.primary:hover { background: var(--green-900); }
-
-    .button.secondary {
-      background: rgba(255,255,255,0.85);
-      color: var(--green-900);
-      border-color: rgba(23,59,32,0.18);
-    }
-
-    .button svg { width: 18px; height: 18px; }
-
-    .hero-note {
-      margin-top: 14px;
-      color: #294329;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .mock-app {
-      background: #f8faf7;
-      border: 1px solid rgba(23,59,32,0.2);
-      border-radius: 10px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .mock-title {
-      height: 31px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      padding: 0 10px;
-      gap: 8px;
-      font-size: 12px;
-      color: #333;
-      border-bottom: 1px solid #d8e2d4;
-    }
-
-    .mock-square {
-      width: 12px;
-      height: 12px;
-      border-radius: 2px;
-      background: linear-gradient(135deg, #2f6d3b, #9ccc65);
-      border: 1px solid #b4c5af;
-    }
-
-    .mock-toolbar {
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      background: #f1f8e9;
-      border-bottom: 1px solid #c8ddc0;
-    }
-
-    .mock-btn {
-      height: 28px;
-      padding: 0 10px;
-      border-radius: 4px;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 750;
-      display: flex;
-      align-items: center;
-    }
-
-    .mock-field {
-      position: relative;
-      height: 290px;
-      background:
-        repeating-linear-gradient(100deg, transparent 0 16px, rgba(121,173,63,0.45) 17px 18px, transparent 19px 42px),
-        var(--field);
-      overflow: hidden;
-    }
-
-    .mock-side {
-      position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
-      width: 106px;
-      background: #f8f8f8;
-      border-left: 1px solid #c8d3c2;
-      padding: 12px 10px;
-      font-size: 10px;
-      color: #374137;
-    }
-
-    .mock-side strong {
-      display: block;
-      color: var(--green-800);
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-
-    .tent-card {
-      position: absolute;
-      width: 96px;
-      height: 86px;
-      background: rgba(255,255,255,0.82);
-      border: 2px solid #47784b;
-      border-radius: 8px;
-      display: grid;
-      justify-items: center;
-      align-content: start;
-      padding-top: 9px;
-      box-shadow: 0 5px 15px rgba(20,70,25,0.13);
-    }
-
-    .tent-card svg { width: 54px; height: 46px; }
-
-    .tent-card span {
-      margin-top: 3px;
-      font-size: 10px;
-      font-weight: 800;
-      color: #173b20;
-      max-width: 86px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .person-card {
-      position: absolute;
-      width: 54px;
-      height: 56px;
-      background: #fff;
-      border: 1.5px solid #2f6d3b;
-      border-radius: 7px;
-      display: grid;
-      justify-items: center;
-      align-content: start;
-      padding-top: 4px;
-      box-shadow: 0 4px 12px rgba(20,70,25,0.1);
-    }
-
-    .person-card svg { width: 28px; height: 30px; }
-
-    .person-card span {
-      font-size: 9px;
-      font-weight: 700;
-      max-width: 48px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .site-icon {
-      position: absolute;
-      width: 52px;
-      height: 52px;
-      border-radius: 8px;
-      background: #fffefa;
-      border: 1.5px solid #6a7d64;
-      display: grid;
-      place-items: center;
-      box-shadow: 0 4px 12px rgba(20,70,25,0.1);
-    }
-
-    main {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 44px 22px 58px;
-    }
-
-    .section-title {
-      margin: 0 0 8px;
-      font-size: clamp(27px, 4vw, 40px);
-      color: var(--green-900);
-      letter-spacing: 0;
-      line-height: 1.08;
-    }
-
-    .section-lead {
-      margin: 0 0 24px;
-      color: var(--muted);
-      max-width: 820px;
-      font-size: 17px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin: 24px 0 42px;
-    }
-
-    .card {
-      background: var(--paper);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      box-shadow: 0 7px 22px rgba(24,32,24,0.06);
-    }
-
-    .card h3 {
-      margin: 0 0 8px;
-      color: var(--green-900);
-      font-size: 18px;
-      letter-spacing: 0;
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    .screenshots {
-      margin: 8px 0 44px;
-    }
-
-    .shot-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 22px;
-    }
-
-    .shot {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(24,32,24,0.08);
-    }
-
-    .shot-preview {
-      min-height: 210px;
-      padding: 14px;
-      background: #edf5e7;
-    }
-
-    .shot-preview img {
-      display: block;
-      width: 100%;
-      height: 230px;
-      object-fit: cover;
-      object-position: top left;
-      border: 1px solid #b8cdb2;
-      border-radius: 7px;
-      background: #fff;
-    }
-
-    .shot-caption {
-      padding: 14px 16px 16px;
-      border-top: 1px solid #e5eee1;
-    }
-
-    .shot-caption h3 {
-      margin: 0 0 6px;
-      color: var(--green-900);
-      font-size: 17px;
-    }
-
-    .shot-caption p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .download-panel {
-      display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
-      gap: 20px;
-      align-items: stretch;
-      margin: 10px 0 42px;
-    }
-
-    .download-main {
-      background: var(--green-900);
-      color: #fff;
-      border-radius: 10px;
-      padding: 26px;
-      box-shadow: var(--shadow);
-    }
-
-    .download-main h2 {
-      margin: 0 0 9px;
-      font-size: 30px;
-      letter-spacing: 0;
-      line-height: 1.1;
-    }
-
-    .download-main p {
-      margin: 0 0 18px;
-      color: #dceedd;
-      max-width: 650px;
-    }
-
-    .download-main .button {
-      background: #fff;
-      color: var(--green-900);
-      width: fit-content;
-    }
-
-    .download-meta {
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 22px;
-    }
-
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 10px 0;
-      border-bottom: 1px solid #edf2ea;
-      font-size: 14px;
-    }
-
-    .meta-row:last-child { border-bottom: 0; }
-
-    .meta-row strong { color: var(--green-900); }
-
-    .steps {
-      counter-reset: step;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-      margin: 24px 0 42px;
-    }
-
-    .step {
-      position: relative;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px 20px 20px 58px;
-    }
-
-    .step::before {
-      counter-increment: step;
-      content: counter(step);
-      position: absolute;
-      left: 18px;
-      top: 18px;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: grid;
-      place-items: center;
-      background: var(--green-800);
-      color: #fff;
-      font-weight: 800;
-    }
-
-    .step h3 {
-      margin: 0 0 6px;
-      color: var(--green-900);
-      font-size: 17px;
-    }
-
-    .step p { margin: 0; color: var(--muted); }
-
-    .note {
-      border-left: 4px solid var(--amber);
-      background: #fff8e8;
-      padding: 14px 16px;
-      border-radius: 6px;
-      color: #553b0d;
-      margin: 18px 0 40px;
-    }
-
-    .honesty-box {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 260px;
-      gap: 20px;
-      align-items: center;
-      margin: 10px 0 42px;
-      padding: 26px;
-      background: #fff8e8;
-      border: 1px solid #f0d8a6;
-      border-left: 5px solid var(--amber);
-      border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(85, 59, 13, 0.08);
-    }
-
-    .honesty-box h2 {
-      margin: 0 0 8px;
-      color: #5a3707;
-      font-size: 28px;
-      letter-spacing: 0;
-      line-height: 1.12;
-    }
-
-    .honesty-box p {
-      margin: 0 0 12px;
-      color: #553b0d;
-    }
-
-    .honesty-box p:last-child { margin-bottom: 0; }
-
-    .pay-card {
-      background: #fff;
-      border: 1px solid #efd49b;
-      border-radius: 8px;
-      padding: 18px;
-      text-align: center;
-    }
-
-    .pay-card strong {
-      display: block;
-      margin-bottom: 10px;
-      color: #5a3707;
-      font-size: 17px;
-    }
-
-    .button.pay {
-      background: var(--amber);
-      color: #241500;
-      width: 100%;
-      box-shadow: 0 8px 18px rgba(242, 140, 24, 0.24);
-    }
-
-    .button.pay:hover { background: #d9790c; }
-
-    .faq {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-      margin-top: 20px;
-    }
-
-    footer {
-      background: var(--green-900);
-      color: #dceedd;
-      padding: 26px 22px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    footer a { color: #fff; font-weight: 700; }
-
-    code {
-      background: rgba(23,59,32,0.08);
-      border: 1px solid rgba(23,59,32,0.12);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-family: Consolas, "Courier New", monospace;
-      font-size: 0.95em;
-    }
-
-    @media (max-width: 900px) {
-      .hero-inner,
-      .download-panel,
-      .honesty-box,
-      .grid,
-      .shot-grid,
-      .steps,
-      .faq {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-inner { padding-top: 34px; }
-      .mock-app { max-width: 520px; }
-    }
-
-    @media (max-width: 680px) {
-      .nav {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .links { justify-content: flex-start; }
-      .links a { padding-left: 0; }
-      .hero-actions { flex-direction: column; align-items: stretch; }
-      .button { width: 100%; }
-      .mock-side { display: none; }
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Bear Camp is a friendly home for hobby apps, camp tools, ESP32 experiments, 3D printer files, utilities, and other projects." />
+  <title>Bear Camp - Hobby Project Hub</title>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-  <header class="topbar">
-    <nav class="nav" aria-label="Main navigation">
-      <a class="brand" href="#top" aria-label="Camp Tent Planner home">
-        <span class="brand-mark" aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="img">
-            <path d="M32 8 8 54h48L32 8Z" fill="#2f6d3b"/>
-            <path d="M32 8v46h24L32 8Z" fill="#255d34"/>
-            <path d="M32 20v34" stroke="#111" stroke-width="3"/>
-          </svg>
-        </span>
-        Camp Tent Planner
+  <header class="site-header">
+    <nav class="site-nav" aria-label="Main navigation">
+      <a class="brand" href="index.html" aria-current="page">
+        <img class="brand-logo" src="assets/icons/bear-camp-logo.svg" alt="" aria-hidden="true" />
+        <span>Bear Camp</span>
       </a>
-      <div class="links">
-        <a href="#features">Features</a>
-        <a href="#screenshots">Screenshots</a>
-        <a href="#support">Support</a>
-        <a href="#download">Download</a>
-        <a href="#how">How it works</a>
-        <a href="#faq">FAQ</a>
+      <div class="nav-links">
+        <a href="index.html" aria-current="page">Home</a>
+        <details class="nav-menu">
+          <summary>Projects</summary>
+          <div class="nav-menu-panel">
+            <a href="index.html#projects">All projects</a>
+            <a href="projects/camp-tent-allocation.html">Camp Tent Allocation</a>
+            <a href="projects/camp-chore-planner.html">Camp Chore Planner</a>
+            <a href="projects/foot-pedal.html">Foot Pedal</a>
+            <a href="projects/benmail.html">BenMail</a>
+            <a href="projects/c3-emulator.html">C3 Emulator</a>
+            <a href="projects/3d-printer-files.html">3D Printer Files</a>
+          </div>
+        </details>
+        <a href="about.html">About</a>
+        <a href="support.html">Support</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
       </div>
     </nav>
   </header>
 
-  <section class="hero" id="top">
-    <div class="hero-inner">
+  <section class="home-hero">
+    <div class="home-hero-inner">
+      <img class="hero-mark" src="assets/icons/bear-camp-logo.svg" alt="Bear Camp logo" />
       <div>
-        <div class="eyebrow">Windows desktop app for Scout camp tent allocation</div>
-        <h1>Plan who sleeps in which tent without a spreadsheet.</h1>
-        <p class="lead">
-          Camp Tent Planner is a visual drag-and-drop planning tool for camps. Place tents on a grass-style field, allocate Scouts, adults and young leaders, keep friend groups together, and export a clean printable tent allocation table.
+        <p class="eyebrow">Scout camp meets woodland tech shed</p>
+        <h1>Bear Camp</h1>
+        <p class="hero-copy">
+          A warm little home for hobby apps, camp tools, ESP32 experiments, 3D printer files, utilities, and other projects that are useful enough to share.
         </p>
         <div class="hero-actions">
-          <a class="button primary" href="CampTentPlannerSetup.exe" download>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Download setup exe
-          </a>
-          <a class="button secondary" href="#support">Support the project</a>
-        </div>
-        <p class="hero-note">Free to use. Works locally. No login, no cloud storage, no internet required after download.</p>
-      </div>
-
-      <div class="mock-app" aria-label="Illustration of Camp Tent Planner interface">
-        <div class="mock-title"><span class="mock-square"></span> Camp Tent Planner - My Camp</div>
-        <div class="mock-toolbar">
-          <div class="mock-btn" style="background:#4caf50">Add Tent</div>
-          <div class="mock-btn" style="background:#2196f3">Add Camper</div>
-          <div class="mock-btn" style="background:#795548">Friend Link</div>
-        </div>
-        <div class="mock-field">
-          <div class="tent-card" style="left:24px;top:28px">
-            <svg viewBox="0 0 80 60" aria-hidden="true"><path d="M40 4 8 56h64L40 4Z" fill="#4caf50" stroke="#234f2b" stroke-width="3"/><path d="M40 4v52h32L40 4Z" fill="#398d40"/><path d="M40 18v38" stroke="#111" stroke-width="2"/></svg>
-            <span>Oak Tent</span>
-          </div>
-          <div class="person-card" style="left:42px;top:122px">
-            <svg viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="9" r="6" fill="#2563eb"/><path d="M25 17v14M12 23h26M25 31l-9 13M25 31l9 13" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/></svg>
-            <span>Ben</span>
-          </div>
-          <div class="person-card" style="left:104px;top:122px">
-            <svg viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="9" r="6" fill="#2563eb"/><path d="M25 17v14M12 23h26M25 31l-9 13M25 31l9 13" stroke="#2563eb" stroke-width="4" stroke-linecap="round"/></svg>
-            <span>Alex</span>
-          </div>
-          <div class="tent-card" style="left:160px;top:28px">
-            <svg viewBox="0 0 80 60" aria-hidden="true"><path d="M40 4 8 56h64L40 4Z" fill="#2196f3" stroke="#123f73" stroke-width="3"/><path d="M40 4v52h32L40 4Z" fill="#1976d2"/><path d="M40 18v38" stroke="#111" stroke-width="2"/></svg>
-            <span>Blue Tent</span>
-          </div>
-          <div class="person-card" style="left:181px;top:122px">
-            <svg viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="9" r="6" fill="#ec4899"/><path d="M25 17v14M12 23h26M25 31l-9 13M25 31l9 13" stroke="#ec4899" stroke-width="4" stroke-linecap="round"/></svg>
-            <span>Rosie</span>
-          </div>
-          <div class="site-icon" style="left:298px;top:45px">
-            <svg viewBox="0 0 64 64" width="42" height="42" aria-hidden="true"><path d="M32 5 8 41h48L32 5Z" fill="#ffe0b2" stroke="#7b4a16" stroke-width="3"/><rect x="18" y="39" width="28" height="9" rx="2" fill="#8b4513"/><circle cx="25" cy="43" r="3" fill="#fff"/><circle cx="39" cy="43" r="3" fill="#fff"/></svg>
-          </div>
-          <div class="site-icon" style="left:302px;top:122px">
-            <svg viewBox="0 0 64 64" width="42" height="42" aria-hidden="true"><path d="M32 8c-8 10-5 17-1 23-8-6-15 3-10 13 5 11 21 13 27 1 5-10-4-16-6-25-3 6-6 9-10 11 3-8 3-16 0-23Z" fill="#ff5722" stroke="#9a2619" stroke-width="2"/><path d="M33 34c-5 6-3 12 1 16 5-4 6-11 1-16Z" fill="#ffd54f"/></svg>
-          </div>
-          <div class="mock-side">
-            <strong>Warnings</strong>
-            No issues detected
-            <br><br>
-            <strong>Stats</strong>
-            Tents: 2<br>
-            Allocated: 3<br>
-            Unallocated: 0
-          </div>
+          <a class="button button-primary" href="#projects">See the projects</a>
+          <a class="button button-secondary" href="projects/camp-tent-allocation.html">Camp Tent Allocation</a>
         </div>
       </div>
     </div>
   </section>
 
-  <main>
-    <section id="features">
-      <h2 class="section-title">Built for the real camp planning job</h2>
-      <p class="section-lead">
-        The app is designed for a practical field-style workflow: drag tents around, drop people into allocations, see warnings immediately, and print something adults can actually use.
-      </p>
-      <div class="grid">
-        <article class="card">
-          <h3>Visual tent planning</h3>
-          <p>Use a grass-style canvas with draggable tent cards, people cards, mess tents, storage tents, fire points and flag poles.</p>
-        </article>
-        <article class="card">
-          <h3>People and roles</h3>
-          <p>Add campers, adults and young leaders with male/female icons so groups can be checked quickly at a glance.</p>
-        </article>
-        <article class="card">
-          <h3>Friend groups</h3>
-          <p>Link friends together. Dragging one person in a linked group moves the connected group together.</p>
-        </article>
-        <article class="card">
-          <h3>Allocation warnings</h3>
-          <p>Warnings are shown for mixed-gender camper tents, camper/adult mixing, camper/young leader mixing, insufficient adults, foe conflicts and unallocated people.</p>
-        </article>
-        <article class="card">
-          <h3>Printable outputs</h3>
-          <p>Create a clean tent allocation table and export it to PDF for A4 printing. Tent tags can also be exported.</p>
-        </article>
-        <article class="card">
-          <h3>Local camp files</h3>
-          <p>Projects save as readable JSON camp files. Nothing is uploaded and there is no account or cloud service.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="screenshots" id="screenshots">
-      <h2 class="section-title">Screenshots</h2>
-      <p class="section-lead">
-        A quick look at the main parts of the app: the drag-and-drop planning field, friend and foe links, and the printable allocation table.
-      </p>
-      <div class="shot-grid">
-        <article class="shot">
-          <div class="shot-preview">
-            <img src="TentPlanner.png" alt="Camp Tent Planner drag-and-drop planning board showing tents, people and the warnings panel">
-          </div>
-          <div class="shot-caption">
-            <h3>Visual tent planning</h3>
-            <p>Drag tents around the grass field and place people directly into the right tent.</p>
-          </div>
-        </article>
-
-        <article class="shot">
-          <div class="shot-preview">
-            <img src="Friend and Foe.png" alt="Camp Tent Planner friend and foe link screen showing relationship controls">
-          </div>
-          <div class="shot-caption">
-            <h3>Friend and foe links</h3>
-            <p>Keep linked friends together and highlight people who should not share a tent.</p>
-          </div>
-        </article>
-
-        <article class="shot">
-          <div class="shot-preview">
-            <img src="TentPlannerTable.png" alt="Camp Tent Planner printable tent allocation table">
-          </div>
-          <div class="shot-caption">
-            <h3>Printable PDF table</h3>
-            <p>Export a clean A4 tent allocation plan for leaders, parents or camp records.</p>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section class="honesty-box" id="support" aria-labelledby="support-title">
-      <div>
-        <h2 id="support-title">A small honesty-box request</h2>
-        <p>
-          Before you download, please pause for a moment. As Scout leaders, we do not just teach the Scout laws, we try to live by them.
-        </p>
-        <p>
-          A Scout is trustworthy: this is an honesty-box download, so the choice is left with you. A Scout is helpful: this tool was built in personal time to help leaders spend less time fighting spreadsheets and more time planning a good camp. A Scout is considerate: if it saves your group an evening of admin, a single £1 payment helps recognise the work behind it and keeps improvements possible.
-        </p>
-        <p>
-          The download is still available either way, but the Scout-law answer is fairly clear: if the app is useful to your camp, please consider putting just £1 in the box before taking it away. Nothing more is being asked.
-        </p>
-      </div>
-      <aside class="pay-card" aria-label="Optional payment">
-        <strong>Support Camp Tent Planner for £1</strong>
-        <a href="https://ko-fi.com/F1F21ZEP60" target="_blank" rel="noopener">
-          <img height="36" style="border:0;height:36px;" src="https://storage.ko-fi.com/cdn/kofi5.png?v=6" border="0" alt="Buy Me a Coffee at ko-fi.com">
-        </a>
-      </aside>
-    </section>
-
-    <section class="download-panel" id="download">
-      <div class="download-main">
-        <h2>Download Camp Tent Planner</h2>
-        <p>
-          Download the Windows setup executable, run it, and the installer will copy the app locally and create Desktop and Start Menu shortcuts.
-        </p>
-        <a class="button" href="CampTentPlannerSetup.exe" download>
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download CampTentPlannerSetup.exe
-        </a>
-      </div>
-      <aside class="download-meta" aria-label="Download details">
-        <div class="meta-row"><strong>Platform</strong><span>Windows 10 / 11</span></div>
-        <div class="meta-row"><strong>File</strong><span>CampTentPlannerSetup.exe</span></div>
-        <div class="meta-row"><strong>Runtime</strong><span>.NET 8 Desktop Runtime</span></div>
-        <div class="meta-row"><strong>Cost</strong><span>Free</span></div>
-        <div class="meta-row"><strong>Storage</strong><span>Local files only</span></div>
-      </aside>
-    </section>
-
-    <div class="note">
-      <strong>Runtime note:</strong> the installer checks whether the Microsoft .NET 8 Desktop Runtime is present. If it is missing, install the runtime from Microsoft and then run the setup again.
+  <div class="camp-strip">
+    <div class="camp-strip-inner">
+      <span><strong>Available now:</strong> Camp Tent Allocation for Windows.</span>
+      <a href="projects/camp-tent-allocation.html">View project</a>
     </div>
+  </div>
 
-    <section id="how">
-      <h2 class="section-title">How it works</h2>
-      <p class="section-lead">A typical camp plan can be put together in a few simple steps.</p>
-      <div class="steps">
-        <article class="step">
-          <h3>Add the camp details</h3>
-          <p>Set the camp name and date, then add the tents and any site items you want shown on the planning field.</p>
+  <main>
+    <section class="section">
+      <div class="intro-grid">
+        <div class="panel">
+          <h2>A practical campfire for small projects</h2>
+          <p>
+            Bear Camp is where I keep the tools I build in personal time: camp planning apps, tiny utilities, ESP32 experiments, printer files, and the odd idea that got far enough to deserve a page.
+          </p>
+          <p>
+            These are hobby projects, not polished corporate software products. They may change, improve, get replaced, or never be "finished" in the traditional sense. The aim is simpler: make useful things, explain them honestly, and share them without tracking, cookies, analytics, or fuss.
+          </p>
+        </div>
+
+        <aside class="panel camp-note" aria-labelledby="camp-note-title">
+          <h2 id="camp-note-title">Camp notes</h2>
+          <ul>
+            <li>Mostly built for real planning problems.</li>
+            <li>Provided as-is, with plain explanations.</li>
+            <li>No popups, tracking, cookies, or paid services.</li>
+            <li>Camp Tent Allocation is the main available project right now.</li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="projects">
+      <div class="section-heading">
+        <h2>Projects</h2>
+        <p>
+          A noticeboard of current and upcoming Bear Camp tools. Statuses are deliberately plain, so you can tell what is ready and what is still being tinkered with.
+        </p>
+      </div>
+
+      <div class="projects-grid">
+        <article class="project-card featured">
+          <span class="status status-available">Available now</span>
+          <h3>Camp Tent Allocation</h3>
+          <p>Organise who is sleeping in which tent at camp, without turning the plan into a messy spreadsheet expedition.</p>
+          <div class="tag-list">
+            <span class="tag">Scout camps</span>
+            <span class="tag">Windows</span>
+            <span class="tag">Planning</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/camp-tent-allocation.html">View project</a>
         </article>
-        <article class="step">
-          <h3>Add people</h3>
-          <p>Add campers, adults and young leaders, then create friend or foe links where those relationships matter.</p>
+
+        <article class="project-card">
+          <span class="status status-developing">In development</span>
+          <h3>Camp Chore Planner</h3>
+          <p>Plan camp chore rotas, duties, food prep, washing up, free time, and other moving parts across several days.</p>
+          <div class="tag-list">
+            <span class="tag">Rotas</span>
+            <span class="tag">Camp duties</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/camp-chore-planner.html">View project</a>
         </article>
-        <article class="step">
-          <h3>Drag, check, print</h3>
-          <p>Drag people into tents, review warnings, save the camp file and export the tent allocation table to PDF.</p>
+
+        <article class="project-card">
+          <span class="status status-request">Available on request</span>
+          <h3>Foot Pedal</h3>
+          <p>An Olympus RS24 foot pedal mapper that reads pedal presses and turns them into configurable keyboard macros.</p>
+          <div class="tag-list">
+            <span class="tag">Utilities</span>
+            <span class="tag">Driver work</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/foot-pedal.html">View project</a>
+        </article>
+
+        <article class="project-card">
+          <span class="status status-request">Available on request</span>
+          <h3>BenMail</h3>
+          <p>A very basic Windows mail app using MailKit and MimeKit, intended around simple inbox and message handling.</p>
+          <div class="tag-list">
+            <span class="tag">Email</span>
+            <span class="tag">Windows</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/benmail.html">View project</a>
+        </article>
+
+        <article class="project-card">
+          <span class="status status-request">Available on request</span>
+          <h3>C3 Emulator</h3>
+          <p>A Windows ESP32-C3 Super Mini emulator shell with GPIO, peripherals, serial commands, and upload experiments.</p>
+          <div class="tag-list">
+            <span class="tag">ESP32-C3</span>
+            <span class="tag">Experiments</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/c3-emulator.html">View project</a>
+        </article>
+
+        <article class="project-card">
+          <span class="status status-coming">Free downloads coming later</span>
+          <h3>3D Printer Files</h3>
+          <p>A future catalogue of free STL files, with individual model cards and download links when files are ready.</p>
+          <div class="tag-list">
+            <span class="tag">STL files</span>
+            <span class="tag">3D printing</span>
+          </div>
+          <a class="button button-primary button-small" href="projects/3d-printer-files.html">View project</a>
         </article>
       </div>
     </section>
 
-    <section id="faq">
-      <h2 class="section-title">Questions</h2>
-      <div class="faq">
-        <article class="card">
-          <h3>Does it need the internet?</h3>
-          <p>No. After download, the app works offline. Camp files are stored locally on the computer.</p>
-        </article>
-        <article class="card">
-          <h3>Is there a login or cloud account?</h3>
-          <p>No. There is no login, no cloud sync and no online storage.</p>
-        </article>
-        <article class="card">
-          <h3>What does it export?</h3>
-          <p>The app exports PDF files for printable tent allocation tables and tent tags.</p>
-        </article>
-        <article class="card">
-          <h3>Is this an official Scouts product?</h3>
-          <p>No. It is an independent tool made to help with practical camp planning.</p>
-        </article>
+    <section class="support-panel" aria-labelledby="support-title">
+      <div>
+        <span class="support-kicker">A small Scout honesty-box request</span>
+        <h2 id="support-title">If Bear Camp saves you an evening, £1 is a fair campfire-sized thank you.</h2>
+        <p>
+          This site is offered on trust. There is no paywall, no lock, and no awkward begging bowl. Just a simple honesty-box request: if a Bear Camp tool helps your camp, please consider buying me a coffee for £1.
+        </p>
+        <p>The Scout laws that feel especially relevant here are:</p>
+        <ul class="support-laws">
+          <li>A Scout is to be trusted</li>
+          <li>A Scout is helpful</li>
+          <li>A Scout is friendly and considerate</li>
+          <li>A Scout makes good use of time and is careful of possessions and property</li>
+        </ul>
+        <p>
+          The projects are still available either way. But if one saves your group even one evening of admin, £1 in the honesty box helps recognise the work behind it and keeps future improvements possible.
+        </p>
+      </div>
+      <div class="support-action">
+        <div class="support-amount">£1</div>
+        <p>Nothing more is being asked. Just a campfire-sized thank you.</p>
+        <a class="button button-accent" href="https://ko-fi.com/F1F21ZEP60" target="_blank" rel="noopener">Buy me a coffee</a>
+      </div>
+    </section>
+
+    <section class="section section-compact">
+      <div class="panel">
+        <h2>Questions, bugs, or project ideas?</h2>
+        <p>
+          The site has a simple contact page for now. There is no backend form yet, but it gives the contact area somewhere tidy to live while the projects keep moving.
+        </p>
+        <div class="button-row">
+          <a class="button button-secondary" href="contact.html">Contact page</a>
+          <a class="button button-secondary" href="about.html">About Bear Camp</a>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer>
-    Camp Tent Planner · Offline Windows tent allocation for Scout camps
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-links" aria-label="Footer navigation">
+        <a href="index.html">Home</a>
+        <a href="index.html#projects">Projects</a>
+        <a href="support.html">Support</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy Policy</a>
+      </div>
+      <p class="footer-disclaimer">These are hobby projects provided as-is.</p>
+    </div>
   </footer>
 </body>
 </html>
