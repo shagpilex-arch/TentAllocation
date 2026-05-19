@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="bearCampLogoTitle">
+  <title id="bearCampLogoTitle">Bear Camp logo</title>
+  <rect width="96" height="96" rx="18" fill="#f4ead8"/>
+  <path d="M18 72h60l-7-31H25l-7 31Z" fill="#5d6b43"/>
+  <path d="M32 41 48 22l16 19H32Z" fill="#7d603f"/>
+  <path d="M39 72V52c0-5 4-9 9-9s9 4 9 9v20H39Z" fill="#f4ead8"/>
+  <path d="M29 41h38l4 31H25l4-31Z" fill="none" stroke="#2e3a25" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="35" cy="31" r="7" fill="#2e3a25"/>
+  <circle cx="61" cy="31" r="7" fill="#2e3a25"/>
+  <circle cx="48" cy="38" r="17" fill="#2e3a25"/>
+  <ellipse cx="48" cy="47" rx="10" ry="7" fill="#b78a5c"/>
+  <circle cx="42" cy="38" r="2.2" fill="#f4ead8"/>
+  <circle cx="54" cy="38" r="2.2" fill="#f4ead8"/>
+  <path d="M45 46h6l-3 3-3-3Z" fill="#1f2419"/>
+  <path d="M29 76h38" stroke="#2e3a25" stroke-width="4" stroke-linecap="round"/>
+  <path d="M69 74c4-2 6-6 4-10-3 3-5 5-4 10Z" fill="#c76737"/>
+  <path d="M74 74c-4-3-5-8-1-12 2 4 5 7 1 12Z" fill="#d99b48"/>
+</svg>
