@@ -712,6 +712,62 @@ h3 {
   box-shadow: 0 12px 22px rgba(143, 69, 40, 0.22);
 }
 
+.web-collab-panel {
+  margin: 2.4rem 0;
+  padding: 1.45rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.36fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  border: 2px solid #8fa173;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(64, 83, 58, 0.2), rgba(213, 166, 75, 0.16)),
+    var(--white);
+  box-shadow: 0 18px 36px rgba(58, 44, 28, 0.16);
+}
+
+.web-collab-panel h2 {
+  margin-bottom: 0.65rem;
+  font-size: 1.7rem;
+}
+
+.web-collab-panel > *,
+.web-collab-action {
+  min-width: 0;
+}
+
+.web-collab-panel p {
+  color: #463d31;
+  margin-bottom: 0.8rem;
+  overflow-wrap: break-word;
+}
+
+.web-collab-action {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1.05rem;
+  border: 2px solid var(--green);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(241, 248, 233, 0.94)),
+    repeating-linear-gradient(135deg, rgba(64, 83, 58, 0.12) 0 8px, transparent 8px 16px);
+}
+
+.web-collab-action p {
+  margin-bottom: 0;
+  color: var(--green-deep);
+  font-weight: 800;
+}
+
+.web-collab-action .button {
+  width: 100%;
+  min-height: 46px;
+  white-space: normal;
+}
+
 .page-hero,
 .project-hero {
   background: var(--canvas);
@@ -1223,10 +1279,11 @@ h3 {
   .home-hero-inner,
   .intro-grid,
   .content-grid,
-  .project-hero-inner,
-  .support-panel,
-  .contact-hero-grid,
-  .contact-layout {
+    .project-hero-inner,
+    .support-panel,
+    .web-collab-panel,
+    .contact-hero-grid,
+    .contact-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1312,12 +1369,13 @@ h3 {
     white-space: normal;
   }
 
-  .panel,
-  .project-card,
-  .support-panel,
-  .download-section,
-  .screenshot,
-  .model-card {
+    .panel,
+    .project-card,
+    .support-panel,
+    .web-collab-panel,
+    .download-section,
+    .screenshot,
+    .model-card {
     width: 100%;
     max-width: 100%;
   }
