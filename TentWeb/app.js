@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const AppVersion = "1.5.0";
+    const AppVersion = "1.5.1";
     const TentCardWidth = 170;
     const TentCardHeight = 145;
     const PersonCardWidth = 92;
@@ -62,7 +62,17 @@
         canvasWidth: 1,
         canvasHeight: 1,
         drag: null,
-        suppressNextClick: false
+        suppressNextClick: false,
+        collaboration: {
+            active: false,
+            sessionCode: "",
+            roomName: "",
+            clientId: createId(),
+            revision: 0,
+            channel: null,
+            applyingRemote: false,
+            receivedInitialSnapshot: false
+        }
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -74,6 +84,7 @@
         refreshUI();
         requestAnimationFrame(refreshUI);
         setTimeout(refreshUI, 150);
+        setTimeout(promptForCollaborationFromUrl, 0);
     }
 
     function bindDom() {
@@ -97,6 +108,7 @@
         dom.csvFileInput = document.getElementById("csvFileInput");
         dom.undoMenuItem = document.getElementById("undoMenuItem");
         dom.redoMenuItem = document.getElementById("redoMenuItem");
+        dom.collaborationStatus = document.getElementById("collaborationStatus");
     }
 
     function bindEvents() {
@@ -156,6 +168,7 @@
         switch (action) {
             case "new": await actionNew(); break;
             case "open": await actionOpen(); break;
+            case "collaboration": await actionCollaboration(); break;
             case "save": await actionSave(false); break;
             case "save-as": await actionSave(true); break;
             case "exit": await actionExit(); break;
@@ -432,6 +445,9 @@
             state.isDirty = true;
         }
         refreshUI();
+        if (before !== after) {
+            sendCollaborationSnapshot("change");
+        }
     }
 
     function undoLastChange() {
@@ -445,6 +461,7 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
+        sendCollaborationSnapshot("undo");
     }
 
     function redoLastChange() {
@@ -458,6 +475,7 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
+        sendCollaborationSnapshot("redo");
     }
 
     function trimStack(stack) {
@@ -478,6 +496,7 @@
         renderStats();
         renderWarnings();
         updateMenuState();
+        updateCollaborationStatus();
         updateTitle();
     }
 
@@ -563,6 +582,15 @@
     function updateTitle() {
         const fileName = state.currentFileName ? stripExtension(state.currentFileName) : "Untitled";
         document.title = `Camp Tent Planner v${AppVersion} - ${fileName}${state.isDirty ? "*" : ""}`;
+    }
+
+    function updateCollaborationStatus() {
+        if (!dom.collaborationStatus) {
+            return;
+        }
+        dom.collaborationStatus.textContent = state.collaboration.active
+            ? `Collaboration: ${state.collaboration.sessionCode}`
+            : "Collaboration: Off";
     }
 
     function createTentElement(tent, peopleInTent, hasWarning) {
@@ -976,6 +1004,7 @@
         state.redoStack.length = 0;
         state.lastSnapshot = captureProjectSnapshot();
         refreshUI();
+        sendCollaborationSnapshot("new");
     }
 
     async function actionOpen() {
@@ -1009,9 +1038,190 @@
             state.redoStack.length = 0;
             state.lastSnapshot = captureProjectSnapshot();
             refreshUI();
+            sendCollaborationSnapshot("open");
         } catch (error) {
             showMessage(`Error opening file: ${error.message}`, "Error");
         }
+    }
+
+    async function actionCollaboration() {
+        if (state.collaboration.active) {
+            const result = await showChoiceMessage(
+                `Collaboration session '${state.collaboration.sessionCode}' is active.`,
+                "Collaboration",
+                [
+                    { label: "Disconnect", value: "disconnect", primary: true },
+                    { label: "Close", value: "close", secondary: true }
+                ]
+            );
+            if (result === "disconnect") {
+                stopCollaboration();
+                refreshUI();
+            }
+            return;
+        }
+
+        const details = await showCollaborationDialog(getCollaborationCodeFromUrl() || createCollaborationCode());
+        if (details) {
+            await startCollaboration(details);
+        }
+    }
+
+    function promptForCollaborationFromUrl() {
+        const sessionCode = getCollaborationCodeFromUrl();
+        if (!sessionCode || state.collaboration.active) {
+            return;
+        }
+        showCollaborationDialog(sessionCode).then(details => {
+            if (details) {
+                startCollaboration(details);
+            }
+        });
+    }
+
+    function showCollaborationDialog(sessionCode) {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Collaboration</div>
+                <label>Session Code:</label>
+                <input name="sessionCode" type="text" autocomplete="off" value="${escapeAttribute(sessionCode || "")}">
+                <label>Password:</label>
+                <input name="password" type="password" autocomplete="current-password">
+                <div class="dialog-actions">
+                    <button class="primary" type="submit">Start</button>
+                    <button class="secondary" type="button" data-cancel>Cancel</button>
+                </div>
+            </div>`;
+        return showFormDialog(form, submitted => {
+            const enteredSessionCode = submitted.elements.sessionCode.value.trim();
+            const password = submitted.elements.password.value;
+            if (!enteredSessionCode) {
+                showMessage("Please enter a session code.", "Collaboration");
+                return null;
+            }
+            if (!password) {
+                showMessage("Please enter a password.", "Collaboration");
+                return null;
+            }
+            return { sessionCode: enteredSessionCode, password };
+        });
+    }
+
+    async function startCollaboration(details) {
+        if (!("BroadcastChannel" in window)) {
+            showMessage("This browser does not support collaboration in this app.", "Collaboration");
+            return;
+        }
+
+        stopCollaboration(false);
+        const roomName = await getCollaborationRoomName(details.sessionCode, details.password);
+        const channel = new BroadcastChannel(roomName);
+        state.collaboration.active = true;
+        state.collaboration.sessionCode = details.sessionCode;
+        state.collaboration.roomName = roomName;
+        state.collaboration.revision = 0;
+        state.collaboration.channel = channel;
+        state.collaboration.receivedInitialSnapshot = false;
+        channel.onmessage = event => {
+            handleCollaborationMessage(event.data).catch(error => {
+                console.warn("Collaboration update failed:", error);
+            });
+        };
+
+        setCollaborationUrl(details.sessionCode);
+        refreshUI();
+        channel.postMessage({
+            type: "requestSnapshot",
+            clientId: state.collaboration.clientId,
+            sentAt: Date.now()
+        });
+        setTimeout(() => {
+            if (state.collaboration.active &&
+                state.collaboration.roomName === roomName &&
+                !state.collaboration.receivedInitialSnapshot) {
+                sendCollaborationSnapshot("initial", true);
+            }
+        }, 750);
+    }
+
+    function stopCollaboration(updateUrl = true) {
+        if (state.collaboration.channel) {
+            state.collaboration.channel.close();
+        }
+        state.collaboration.active = false;
+        state.collaboration.sessionCode = "";
+        state.collaboration.roomName = "";
+        state.collaboration.revision = 0;
+        state.collaboration.channel = null;
+        state.collaboration.applyingRemote = false;
+        state.collaboration.receivedInitialSnapshot = false;
+        if (updateUrl) {
+            clearCollaborationUrl();
+        }
+    }
+
+    async function handleCollaborationMessage(message) {
+        if (!message || message.clientId === state.collaboration.clientId || !state.collaboration.active) {
+            return;
+        }
+
+        if (message.type === "requestSnapshot") {
+            sendCollaborationSnapshot("response", true);
+            return;
+        }
+
+        if (message.type !== "snapshot" || typeof message.projectJson !== "string") {
+            return;
+        }
+
+        const incomingRevision = Number(message.revision) || 0;
+        if (incomingRevision <= state.collaboration.revision) {
+            return;
+        }
+
+        applyCollaborationSnapshot(message.projectJson, incomingRevision);
+    }
+
+    function applyCollaborationSnapshot(projectJson, revision) {
+        const before = captureProjectSnapshot();
+        const incomingProject = deserializeProject(projectJson);
+        state.collaboration.applyingRemote = true;
+        try {
+            state.project = incomingProject;
+            state.selectedTentIds.clear();
+            const after = captureProjectSnapshot();
+            if (before !== after) {
+                state.undoStack.push(before);
+                trimStack(state.undoStack);
+                state.redoStack.length = 0;
+                state.isDirty = true;
+            }
+            state.lastSnapshot = after;
+            state.collaboration.revision = revision;
+            state.collaboration.receivedInitialSnapshot = true;
+            refreshUI();
+        } finally {
+            state.collaboration.applyingRemote = false;
+        }
+    }
+
+    function sendCollaborationSnapshot(reason, keepRevision = false) {
+        const collaboration = state.collaboration;
+        if (!collaboration.active || !collaboration.channel || collaboration.applyingRemote) {
+            return;
+        }
+        if (!keepRevision || collaboration.revision <= 0) {
+            collaboration.revision = Math.max(Date.now(), collaboration.revision + 1);
+        }
+        collaboration.channel.postMessage({
+            type: "snapshot",
+            clientId: collaboration.clientId,
+            revision: collaboration.revision,
+            reason,
+            projectJson: captureProjectSnapshot()
+        });
     }
 
     async function actionSave(forceSaveAs) {
@@ -3126,6 +3336,82 @@
     function sanitizeFileNamePart(value, fallback = "Camp") {
         const clean = String(value ?? fallback).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim();
         return clean || fallback;
+    }
+
+    function createCollaborationCode() {
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const bytes = new Uint8Array(6);
+        if (globalThis.crypto?.getRandomValues) {
+            globalThis.crypto.getRandomValues(bytes);
+        } else {
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        return [...bytes].map(value => alphabet[value % alphabet.length]).join("");
+    }
+
+    function getCollaborationCodeFromUrl() {
+        const rawHash = location.hash.replace(/^#/, "");
+        if (!rawHash) {
+            return "";
+        }
+        const hash = safeDecodeURIComponent(rawHash).trim();
+        if (!hash) {
+            return "";
+        }
+        if (!hash.includes("=")) {
+            return hash;
+        }
+        const params = new URLSearchParams(hash);
+        return (params.get("collab") || params.get("session") || "").trim();
+    }
+
+    async function getCollaborationRoomName(sessionCode, password) {
+        const value = `camp-tent-planner\n${sessionCode}\n${password}`;
+        if (globalThis.crypto?.subtle && globalThis.TextEncoder) {
+            const bytes = new TextEncoder().encode(value);
+            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+            return `camp-tent-planner:${bytesToBase64Url(new Uint8Array(digest))}`;
+        }
+        return `camp-tent-planner:${hashString(value)}`;
+    }
+
+    function bytesToBase64Url(bytes) {
+        let binary = "";
+        for (const byte of bytes) {
+            binary += String.fromCharCode(byte);
+        }
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function setCollaborationUrl(sessionCode) {
+        const hash = `collab=${encodeURIComponent(sessionCode)}`;
+        if (history.replaceState) {
+            history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`);
+        } else {
+            location.hash = hash;
+        }
+    }
+
+    function clearCollaborationUrl() {
+        const hash = safeDecodeURIComponent(location.hash.replace(/^#/, ""));
+        if (!hash.includes("collab=") && !hash.includes("session=")) {
+            return;
+        }
+        if (history.replaceState) {
+            history.replaceState(null, "", `${location.pathname}${location.search}`);
+        } else {
+            location.hash = "";
+        }
+    }
+
+    function safeDecodeURIComponent(value) {
+        try {
+            return decodeURIComponent(value);
+        } catch {
+            return value;
+        }
     }
 
     function normalizeHeader(value) {
