@@ -187,6 +187,14 @@ button {
 .friend-link { background: #795548; }
 .foe-link { background: #d32f2f; }
 .export { background: #607d8b; }
+.collaboration { background: #33691e; }
+
+.collaboration-status {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #2e7d32;
+    font-weight: 600;
+}
 
 .toolbar-divider {
     flex: 0 0 1px;
@@ -644,6 +652,7 @@ button {
 }
 
 .dialog input[type="text"],
+.dialog input[type="password"],
 .dialog input[type="date"],
 .dialog input[type="number"],
 .dialog select,
@@ -702,6 +711,14 @@ button {
     white-space: pre-line;
     line-height: 1.45;
     margin: 0 0 14px;
+}
+
+.dialog-error {
+    min-height: 18px;
+    color: #d32f2f;
+    font-size: 12px;
+    font-weight: 600;
+    margin: -6px 0 12px;
 }
 
 .choice-list {

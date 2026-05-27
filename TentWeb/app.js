@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const AppVersion = "1.5.0";
+    const AppVersion = "1.6.0";
     const TentCardWidth = 170;
     const TentCardHeight = 145;
     const PersonCardWidth = 92;
@@ -22,6 +22,18 @@
     const GridSnapSize = 20;
     const MaxUndoStates = 50;
     const ZoomLevels = [0.75, 0.9, 1.0, 1.15, 1.3];
+    const CollaborationRootPath = "campTentPlannerSessions";
+    const CollaborationSaveDelay = 650;
+    const firebaseConfig = {
+        apiKey: "AIzaSyAC4rGNZVQLv4fSvcQ2YXuoIeizzGdaZn8",
+        authDomain: "tentplanner-3a5ce.firebaseapp.com",
+        databaseURL: "https://tentplanner-3a5ce-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "tentplanner-3a5ce",
+        storageBucket: "tentplanner-3a5ce.firebasestorage.app",
+        messagingSenderId: "488435840170",
+        appId: "1:488435840170:web:9c4be854ff9e8ec90b8cd3",
+        measurementId: "G-5NNZKJLK6T"
+    };
 
     const PersonType = ["Camper", "Adult", "YoungLeader"];
     const Gender = ["Male", "Female", "Other"];
@@ -62,7 +74,24 @@
         canvasWidth: 1,
         canvasHeight: 1,
         drag: null,
-        suppressNextClick: false
+        suppressNextClick: false,
+        collaboration: {
+            active: false,
+            mode: "",
+            sessionKey: "",
+            password: "",
+            passwordHash: "",
+            clientId: createId(),
+            firebaseApp: null,
+            database: null,
+            sessionRef: null,
+            sessionListener: null,
+            revision: 0,
+            applyingRemote: false,
+            saveTimer: null,
+            saveInFlight: false,
+            pendingSave: false
+        }
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -74,6 +103,7 @@
         refreshUI();
         requestAnimationFrame(refreshUI);
         setTimeout(refreshUI, 150);
+        runStartupPasswordFlow();
     }
 
     function bindDom() {
@@ -97,6 +127,7 @@
         dom.csvFileInput = document.getElementById("csvFileInput");
         dom.undoMenuItem = document.getElementById("undoMenuItem");
         dom.redoMenuItem = document.getElementById("redoMenuItem");
+        dom.collaborationStatus = document.getElementById("collaborationStatus");
     }
 
     function bindEvents() {
@@ -156,6 +187,7 @@
         switch (action) {
             case "new": await actionNew(); break;
             case "open": await actionOpen(); break;
+            case "collaboration": await actionCollaboration(); break;
             case "save": await actionSave(false); break;
             case "save-as": await actionSave(true); break;
             case "exit": await actionExit(); break;
@@ -432,6 +464,9 @@
             state.isDirty = true;
         }
         refreshUI();
+        if (before !== after) {
+            scheduleCollaborationSave();
+        }
     }
 
     function undoLastChange() {
@@ -445,6 +480,7 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
+        scheduleCollaborationSave();
     }
 
     function redoLastChange() {
@@ -458,6 +494,7 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
+        scheduleCollaborationSave();
     }
 
     function trimStack(stack) {
@@ -478,6 +515,7 @@
         renderStats();
         renderWarnings();
         updateMenuState();
+        updateCollaborationStatus();
         updateTitle();
     }
 
@@ -563,6 +601,18 @@
     function updateTitle() {
         const fileName = state.currentFileName ? stripExtension(state.currentFileName) : "Untitled";
         document.title = `Camp Tent Planner v${AppVersion} - ${fileName}${state.isDirty ? "*" : ""}`;
+    }
+
+    function updateCollaborationStatus() {
+        if (!dom.collaborationStatus) {
+            return;
+        }
+        if (!state.collaboration.active) {
+            dom.collaborationStatus.textContent = "Collaboration: Off";
+            return;
+        }
+        const mode = state.collaboration.mode === "host" ? "Hosting" : "Joined";
+        dom.collaborationStatus.textContent = `Collaboration: ${mode} ${state.collaboration.sessionKey}`;
     }
 
     function createTentElement(tent, peopleInTent, hasWarning) {
@@ -976,6 +1026,7 @@
         state.redoStack.length = 0;
         state.lastSnapshot = captureProjectSnapshot();
         refreshUI();
+        scheduleCollaborationSave();
     }
 
     async function actionOpen() {
@@ -1009,9 +1060,435 @@
             state.redoStack.length = 0;
             state.lastSnapshot = captureProjectSnapshot();
             refreshUI();
+            scheduleCollaborationSave();
         } catch (error) {
             showMessage(`Error opening file: ${error.message}`, "Error");
         }
+    }
+
+    async function actionCollaboration() {
+        if (!state.collaboration.passwordHash) {
+            return;
+        }
+        if (state.collaboration.active) {
+            const result = await showChoiceMessage(
+                `${state.collaboration.mode === "host" ? "Hosting" : "Joined"} session ${state.collaboration.sessionKey}.`,
+                "Collaboration",
+                [
+                    { label: state.collaboration.mode === "host" ? "Show Key" : "Close", value: "show", primary: true },
+                    { label: "Leave", value: "leave", secondary: true },
+                    { label: "Cancel", value: "cancel", secondary: true }
+                ]);
+            if (result === "show" && state.collaboration.mode === "host") {
+                await showHostKeyDialog(state.collaboration.sessionKey);
+            } else if (result === "leave") {
+                stopCollaboration();
+                refreshUI();
+            }
+            return;
+        }
+
+        const mode = await showChoiceMessage(
+            "Choose collaboration mode.",
+            "Collaboration",
+            [
+                { label: "Host", value: "host", primary: true },
+                { label: "Join", value: "join", secondary: true },
+                { label: "Cancel", value: "cancel", secondary: true }
+            ]);
+        if (mode === "host") {
+            await startHostingCollaboration();
+        } else if (mode === "join") {
+            const sessionKey = await showJoinKeyDialog(getCollaborationCodeFromUrl());
+            if (sessionKey) {
+                await joinCollaborationSession(sessionKey);
+            }
+        }
+    }
+
+    async function runStartupPasswordFlow() {
+        if (!(await ensureStartupPassword())) {
+            return;
+        }
+        const sessionKey = getCollaborationCodeFromUrl();
+        if (sessionKey) {
+            await joinCollaborationSession(sessionKey, true);
+        }
+    }
+
+    function ensureStartupPassword() {
+        if (state.collaboration.passwordHash) {
+            return Promise.resolve(true);
+        }
+        return showStartupPasswordDialog();
+    }
+
+    function showStartupPasswordDialog() {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Camp Tent Planner</div>
+                <label>Password:</label>
+                <input name="password" type="password" autocomplete="current-password">
+                <div class="dialog-error" aria-live="polite"></div>
+                <div class="dialog-actions">
+                    <button class="primary" type="submit">Open</button>
+                </div>
+            </div>`;
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.password;
+            const error = form.querySelector(".dialog-error");
+            setTimeout(() => input.focus(), 0);
+            form.addEventListener("submit", async event => {
+                event.preventDefault();
+                const password = input.value;
+                if (!password) {
+                    error.textContent = "Please enter a password.";
+                    return;
+                }
+                state.collaboration.password = password;
+                state.collaboration.passwordHash = await getPasswordHash(password);
+                closeModal();
+                resolve(true);
+            });
+        });
+    }
+
+    async function startHostingCollaboration() {
+        try {
+            const database = ensureFirebaseDatabase();
+            const passwordHash = state.collaboration.passwordHash;
+            let sessionKey = "";
+            let sessionRef = null;
+            for (let attempt = 0; attempt < 10; attempt++) {
+                sessionKey = createCollaborationCode();
+                sessionRef = database.ref(`${CollaborationRootPath}/${sessionKey}`);
+                const existing = await sessionRef.once("value");
+                if (!existing.exists()) {
+                    break;
+                }
+                sessionKey = "";
+                sessionRef = null;
+            }
+            if (!sessionKey || !sessionRef) {
+                showMessage("Failed to create a unique collaboration session key.", "Collaboration");
+                return;
+            }
+
+            const now = Date.now();
+            await sessionRef.set({
+                createdAt: now,
+                updatedAt: now,
+                updatedBy: state.collaboration.clientId,
+                revision: 1,
+                passwordHash,
+                state: getCurrentPlannerState()
+            });
+            beginCollaborationSession("host", sessionKey, sessionRef, 1);
+            setCollaborationUrl(sessionKey);
+            refreshUI();
+            await showHostKeyDialog(sessionKey);
+        } catch (error) {
+            showCollaborationError("Failed to create session", error);
+        }
+    }
+
+    async function joinCollaborationSession(rawSessionKey, autoJoin = false) {
+        const sessionKey = normalizeSessionKey(rawSessionKey);
+        if (!isValidSessionKey(sessionKey)) {
+            if (!autoJoin) {
+                showMessage("Enter a valid join key using letters and numbers only.", "Collaboration");
+            }
+            return;
+        }
+        try {
+            const database = ensureFirebaseDatabase();
+            const sessionRef = database.ref(`${CollaborationRootPath}/${sessionKey}`);
+            const snapshot = await sessionRef.once("value");
+            if (!snapshot.exists()) {
+                showMessage(`Session key '${sessionKey}' was not found.`, "Collaboration");
+                return;
+            }
+            const record = snapshot.val();
+            if (!record || !record.state) {
+                showMessage("That collaboration session does not contain planner data.", "Collaboration");
+                return;
+            }
+            if (record.passwordHash && record.passwordHash !== state.collaboration.passwordHash) {
+                showMessage("The password does not match this collaboration session.", "Collaboration");
+                return;
+            }
+
+            stopCollaboration(false);
+            state.collaboration.applyingRemote = true;
+            try {
+                applyPlannerState(record.state, true);
+            } finally {
+                state.collaboration.applyingRemote = false;
+            }
+            beginCollaborationSession("join", sessionKey, sessionRef, Number(record.revision) || 0);
+            setCollaborationUrl(sessionKey);
+            refreshUI();
+        } catch (error) {
+            showCollaborationError("Failed to join session", error);
+        }
+    }
+
+    function beginCollaborationSession(mode, sessionKey, sessionRef, revision) {
+        stopCollaboration(false);
+        state.collaboration.active = true;
+        state.collaboration.mode = mode;
+        state.collaboration.sessionKey = sessionKey;
+        state.collaboration.sessionRef = sessionRef;
+        state.collaboration.revision = revision;
+        state.collaboration.sessionListener = snapshot => handleCollaborationSnapshot(snapshot.val());
+        sessionRef.on("value", state.collaboration.sessionListener, error => {
+            showCollaborationError("Sync failed", error);
+        });
+    }
+
+    function stopCollaboration(updateUrl = true) {
+        const collaboration = state.collaboration;
+        if (collaboration.saveTimer) {
+            clearTimeout(collaboration.saveTimer);
+        }
+        if (collaboration.sessionRef && collaboration.sessionListener) {
+            collaboration.sessionRef.off("value", collaboration.sessionListener);
+        }
+        collaboration.active = false;
+        collaboration.mode = "";
+        collaboration.sessionKey = "";
+        collaboration.sessionRef = null;
+        collaboration.sessionListener = null;
+        collaboration.revision = 0;
+        collaboration.applyingRemote = false;
+        collaboration.saveTimer = null;
+        collaboration.saveInFlight = false;
+        collaboration.pendingSave = false;
+        if (updateUrl) {
+            clearCollaborationUrl();
+        }
+    }
+
+    function handleCollaborationSnapshot(record) {
+        const collaboration = state.collaboration;
+        if (!collaboration.active || !record) {
+            return;
+        }
+        const incomingRevision = Number(record.revision) || 0;
+        if (record.updatedBy === collaboration.clientId) {
+            collaboration.revision = Math.max(collaboration.revision, incomingRevision);
+            return;
+        }
+        if (incomingRevision <= collaboration.revision || !record.state) {
+            return;
+        }
+
+        if (collaboration.saveTimer) {
+            clearTimeout(collaboration.saveTimer);
+            collaboration.saveTimer = null;
+        }
+        collaboration.pendingSave = false;
+        collaboration.applyingRemote = true;
+        try {
+            applyPlannerState(record.state, true);
+            collaboration.revision = incomingRevision;
+        } finally {
+            collaboration.applyingRemote = false;
+        }
+    }
+
+    function scheduleCollaborationSave() {
+        const collaboration = state.collaboration;
+        if (!collaboration.active || collaboration.applyingRemote || !collaboration.sessionRef) {
+            return;
+        }
+        collaboration.pendingSave = true;
+        if (collaboration.saveTimer) {
+            clearTimeout(collaboration.saveTimer);
+        }
+        collaboration.saveTimer = setTimeout(flushCollaborationSave, CollaborationSaveDelay);
+    }
+
+    async function flushCollaborationSave() {
+        const collaboration = state.collaboration;
+        if (!collaboration.active || !collaboration.sessionRef || collaboration.applyingRemote) {
+            return;
+        }
+        if (collaboration.saveInFlight) {
+            collaboration.pendingSave = true;
+            return;
+        }
+        collaboration.saveInFlight = true;
+        collaboration.pendingSave = false;
+        collaboration.saveTimer = null;
+        const plannerState = getCurrentPlannerState();
+        try {
+            const result = await new Promise((resolve, reject) => {
+                collaboration.sessionRef.transaction(current => {
+                    if (!current) {
+                        return current;
+                    }
+                    const nextRevision = Math.max(Number(current.revision) || 0, collaboration.revision) + 1;
+                    return {
+                        ...current,
+                        updatedAt: Date.now(),
+                        updatedBy: collaboration.clientId,
+                        revision: nextRevision,
+                        state: plannerState
+                    };
+                }, (error, committed, snapshot) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve({ committed, snapshot });
+                    }
+                }, false);
+            });
+            if (!result.committed) {
+                showMessage("Collaboration session was not available for saving.", "Collaboration");
+                return;
+            }
+            const saved = result.snapshot?.val?.();
+            collaboration.revision = Math.max(collaboration.revision, Number(saved?.revision) || 0);
+        } catch (error) {
+            showCollaborationError("Sync failed", error);
+        } finally {
+            collaboration.saveInFlight = false;
+            if (collaboration.pendingSave) {
+                scheduleCollaborationSave();
+            }
+        }
+    }
+
+    function getCurrentPlannerState() {
+        return JSON.parse(captureProjectSnapshot());
+    }
+
+    function applyPlannerState(projectState, markDirty) {
+        state.project = normalizeProject(projectState, true);
+        state.selectedTentIds.clear();
+        state.redoStack.length = 0;
+        state.lastSnapshot = captureProjectSnapshot();
+        if (markDirty) {
+            state.isDirty = true;
+        }
+        refreshUI();
+    }
+
+    function ensureFirebaseDatabase() {
+        if (state.collaboration.database) {
+            return state.collaboration.database;
+        }
+        if (!globalThis.firebase?.initializeApp || !globalThis.firebase?.database) {
+            throw new Error("Firebase SDK is not loaded. Check the Firebase CDN scripts in index.html.");
+        }
+        if (!firebaseConfig || !firebaseConfig.apiKey) {
+            throw new Error("Firebase config is missing. Paste the Firebase web config into app.js.");
+        }
+        if (!firebaseConfig.databaseURL) {
+            throw new Error("Realtime Database URL is required in firebaseConfig.databaseURL.");
+        }
+        state.collaboration.firebaseApp = globalThis.firebase.apps.length
+            ? globalThis.firebase.app()
+            : globalThis.firebase.initializeApp(firebaseConfig);
+        state.collaboration.database = globalThis.firebase.database();
+        return state.collaboration.database;
+    }
+
+    function showJoinKeyDialog(sessionKey = "") {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Join Collaboration</div>
+                <label>Join Key:</label>
+                <input name="sessionKey" type="text" autocomplete="off" value="${escapeAttribute(normalizeSessionKey(sessionKey))}">
+                <div class="dialog-error" aria-live="polite"></div>
+                <div class="dialog-actions">
+                    <button class="primary" type="submit">Join</button>
+                    <button class="secondary" type="button" data-cancel>Cancel</button>
+                </div>
+            </div>`;
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.sessionKey;
+            const error = form.querySelector(".dialog-error");
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                const sessionKeyValue = normalizeSessionKey(input.value);
+                if (!isValidSessionKey(sessionKeyValue)) {
+                    error.textContent = "Use letters and numbers only.";
+                    return;
+                }
+                closeModal();
+                resolve(sessionKeyValue);
+            });
+            form.querySelector("[data-cancel]").addEventListener("click", () => {
+                closeModal();
+                resolve(null);
+            });
+        });
+    }
+
+    function showHostKeyDialog(sessionKey) {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Host Collaboration</div>
+                <label>Host Key:</label>
+                <input name="sessionKey" type="text" readonly value="${escapeAttribute(sessionKey)}">
+                <div class="dialog-actions">
+                    <button class="primary" type="button" data-copy>Copy Key</button>
+                    <button class="secondary" type="submit">Close</button>
+                </div>
+            </div>`;
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.sessionKey;
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                closeModal();
+                resolve();
+            });
+            form.querySelector("[data-copy]").addEventListener("click", async () => {
+                input.select();
+                try {
+                    await navigator.clipboard?.writeText(sessionKey);
+                } catch {
+                    document.execCommand?.("copy");
+                }
+            });
+        });
+    }
+
+    function showCollaborationError(title, error) {
+        const message = formatCollaborationError(error);
+        showMessage(`${title}:\n${message}`, "Collaboration");
+    }
+
+    function formatCollaborationError(error) {
+        const rawMessage = error?.message || String(error || "Unknown error");
+        const code = String(error?.code || "").toLowerCase();
+        const lowered = rawMessage.toLowerCase();
+        if (code.includes("permission") || lowered.includes("permission_denied") || lowered.includes("permission denied")) {
+            return `Firebase permissions/rules blocked this read or write. Check Realtime Database rules for ${CollaborationRootPath}.\n\nDetails: ${rawMessage}`;
+        }
+        if (code.includes("network") || lowered.includes("network") || lowered.includes("offline") || lowered.includes("unavailable")) {
+            return `Network unavailable or Firebase could not be reached. Local data has not been destroyed.\n\nDetails: ${rawMessage}`;
+        }
+        return rawMessage;
     }
 
     async function actionSave(forceSaveAs) {
@@ -3126,6 +3603,90 @@
     function sanitizeFileNamePart(value, fallback = "Camp") {
         const clean = String(value ?? fallback).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim();
         return clean || fallback;
+    }
+
+    function createCollaborationCode() {
+        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const bytes = new Uint8Array(6);
+        if (globalThis.crypto?.getRandomValues) {
+            globalThis.crypto.getRandomValues(bytes);
+        } else {
+            for (let i = 0; i < bytes.length; i++) {
+                bytes[i] = Math.floor(Math.random() * 256);
+            }
+        }
+        return [...bytes].map(value => alphabet[value % alphabet.length]).join("");
+    }
+
+    function normalizeSessionKey(value) {
+        return String(value || "").trim().toUpperCase();
+    }
+
+    function isValidSessionKey(value) {
+        return /^[A-Z0-9]{3,20}$/.test(String(value || ""));
+    }
+
+    function getCollaborationCodeFromUrl() {
+        const rawHash = location.hash.replace(/^#/, "");
+        if (!rawHash) {
+            return "";
+        }
+        const hash = safeDecodeURIComponent(rawHash).trim();
+        if (!hash) {
+            return "";
+        }
+        if (!hash.includes("=")) {
+            return normalizeSessionKey(hash);
+        }
+        const params = new URLSearchParams(hash);
+        return normalizeSessionKey(params.get("collab") || params.get("session") || "");
+    }
+
+    async function getPasswordHash(password) {
+        const value = `camp-tent-planner\n${password}`;
+        if (globalThis.crypto?.subtle && globalThis.TextEncoder) {
+            const bytes = new TextEncoder().encode(value);
+            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+            return bytesToBase64Url(new Uint8Array(digest));
+        }
+        return hashString(value);
+    }
+
+    function bytesToBase64Url(bytes) {
+        let binary = "";
+        for (const byte of bytes) {
+            binary += String.fromCharCode(byte);
+        }
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function setCollaborationUrl(sessionKey) {
+        const hash = `collab=${encodeURIComponent(sessionKey)}`;
+        if (history.replaceState) {
+            history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`);
+        } else {
+            location.hash = hash;
+        }
+    }
+
+    function clearCollaborationUrl() {
+        const hash = safeDecodeURIComponent(location.hash.replace(/^#/, ""));
+        if (!hash.includes("collab=") && !hash.includes("session=")) {
+            return;
+        }
+        if (history.replaceState) {
+            history.replaceState(null, "", `${location.pathname}${location.search}`);
+        } else {
+            location.hash = "";
+        }
+    }
+
+    function safeDecodeURIComponent(value) {
+        try {
+            return decodeURIComponent(value);
+        } catch {
+            return value;
+        }
     }
 
     function normalizeHeader(value) {
