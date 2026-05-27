@@ -652,6 +652,7 @@ button {
 }
 
 .dialog input[type="text"],
+.dialog input[type="password"],
 .dialog input[type="date"],
 .dialog input[type="number"],
 .dialog select,
@@ -710,6 +711,14 @@ button {
     white-space: pre-line;
     line-height: 1.45;
     margin: 0 0 14px;
+}
+
+.dialog-error {
+    min-height: 18px;
+    color: #d32f2f;
+    font-size: 12px;
+    font-weight: 600;
+    margin: -6px 0 12px;
 }
 
 .choice-list {

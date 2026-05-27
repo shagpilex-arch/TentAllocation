@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const AppVersion = "1.5.1";
+    const AppVersion = "1.5.2";
     const TentCardWidth = 170;
     const TentCardHeight = 145;
     const PersonCardWidth = 92;
@@ -66,6 +66,8 @@
         collaboration: {
             active: false,
             sessionCode: "",
+            mode: "",
+            password: "",
             roomName: "",
             clientId: createId(),
             revision: 0,
@@ -84,7 +86,7 @@
         refreshUI();
         requestAnimationFrame(refreshUI);
         setTimeout(refreshUI, 150);
-        setTimeout(promptForCollaborationFromUrl, 0);
+        setTimeout(runStartupPasswordFlow, 0);
     }
 
     function bindDom() {
@@ -588,9 +590,12 @@
         if (!dom.collaborationStatus) {
             return;
         }
-        dom.collaborationStatus.textContent = state.collaboration.active
-            ? `Collaboration: ${state.collaboration.sessionCode}`
-            : "Collaboration: Off";
+        if (!state.collaboration.active) {
+            dom.collaborationStatus.textContent = "Collaboration: Off";
+            return;
+        }
+        const mode = state.collaboration.mode === "host" ? "Hosting" : "Joined";
+        dom.collaborationStatus.textContent = `${mode}: ${state.collaboration.sessionCode}`;
     }
 
     function createTentElement(tent, peopleInTent, hasWarning) {
@@ -1045,15 +1050,23 @@
     }
 
     async function actionCollaboration() {
+        if (!(await ensureStartupPassword())) {
+            return;
+        }
+
         if (state.collaboration.active) {
-            const result = await showChoiceMessage(
-                `Collaboration session '${state.collaboration.sessionCode}' is active.`,
-                "Collaboration",
-                [
-                    { label: "Disconnect", value: "disconnect", primary: true },
-                    { label: "Close", value: "close", secondary: true }
-                ]
-            );
+            const activeLabel = state.collaboration.mode === "host"
+                ? `Hosting with key '${state.collaboration.sessionCode}'.`
+                : `Joined with key '${state.collaboration.sessionCode}'.`;
+            const result = await showChoiceMessage(activeLabel, "Collaboration", [
+                { label: state.collaboration.mode === "host" ? "Show Key" : "Close", value: "show", primary: true },
+                { label: "Disconnect", value: "disconnect", secondary: true },
+                { label: "Cancel", value: "cancel", secondary: true }
+            ]);
+            if (result === "show" && state.collaboration.mode === "host") {
+                await showHostKeyDialog(state.collaboration.sessionCode);
+                return;
+            }
             if (result === "disconnect") {
                 stopCollaboration();
                 refreshUI();
@@ -1061,65 +1074,164 @@
             return;
         }
 
-        const details = await showCollaborationDialog(getCollaborationCodeFromUrl() || createCollaborationCode());
-        if (details) {
-            await startCollaboration(details);
+        const mode = await showChoiceMessage("Choose collaboration mode.", "Collaboration", [
+            { label: "Host", value: "host", primary: true },
+            { label: "Join", value: "join", secondary: true },
+            { label: "Cancel", value: "cancel", secondary: true }
+        ]);
+        if (mode === "host") {
+            const sessionCode = createCollaborationCode();
+            if (await startCollaboration({ sessionCode, mode: "host" })) {
+                await showHostKeyDialog(sessionCode);
+            }
+        } else if (mode === "join") {
+            const sessionCode = await showJoinKeyDialog(getCollaborationCodeFromUrl());
+            if (sessionCode) {
+                await startCollaboration({ sessionCode, mode: "join" });
+            }
         }
     }
 
-    function promptForCollaborationFromUrl() {
-        const sessionCode = getCollaborationCodeFromUrl();
-        if (!sessionCode || state.collaboration.active) {
+    async function runStartupPasswordFlow() {
+        if (!(await ensureStartupPassword())) {
             return;
         }
-        showCollaborationDialog(sessionCode).then(details => {
-            if (details) {
-                startCollaboration(details);
-            }
-        });
+        const sessionCode = getCollaborationCodeFromUrl();
+        if (!sessionCode) {
+            return;
+        }
+        await startCollaboration({ sessionCode, mode: "join" });
     }
 
-    function showCollaborationDialog(sessionCode) {
+    function ensureStartupPassword() {
+        if (state.collaboration.password) {
+            return Promise.resolve(true);
+        }
+        return showStartupPasswordDialog();
+    }
+
+    function showStartupPasswordDialog() {
         const form = document.createElement("form");
         form.className = "dialog";
         form.innerHTML = `
             <div class="dialog-body">
-                <div class="dialog-title">Collaboration</div>
-                <label>Session Code:</label>
-                <input name="sessionCode" type="text" autocomplete="off" value="${escapeAttribute(sessionCode || "")}">
+                <div class="dialog-title">Camp Tent Planner</div>
                 <label>Password:</label>
                 <input name="password" type="password" autocomplete="current-password">
+                <div class="dialog-error" aria-live="polite"></div>
                 <div class="dialog-actions">
-                    <button class="primary" type="submit">Start</button>
+                    <button class="primary" type="submit">Open</button>
+                </div>
+            </div>`;
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.password;
+            const error = form.querySelector(".dialog-error");
+            setTimeout(() => input.focus(), 0);
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                const password = input.value;
+                if (!password) {
+                    error.textContent = "Please enter a password.";
+                    return;
+                }
+                state.collaboration.password = password;
+                closeModal();
+                resolve(true);
+            });
+        });
+    }
+
+    function showJoinKeyDialog(sessionCode = "") {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Join Collaboration</div>
+                <label>Join Key:</label>
+                <input name="sessionCode" type="text" autocomplete="off" value="${escapeAttribute(sessionCode || "")}">
+                <div class="dialog-error" aria-live="polite"></div>
+                <div class="dialog-actions">
+                    <button class="primary" type="submit">Join</button>
                     <button class="secondary" type="button" data-cancel>Cancel</button>
                 </div>
             </div>`;
-        return showFormDialog(form, submitted => {
-            const enteredSessionCode = submitted.elements.sessionCode.value.trim();
-            const password = submitted.elements.password.value;
-            if (!enteredSessionCode) {
-                showMessage("Please enter a session code.", "Collaboration");
-                return null;
-            }
-            if (!password) {
-                showMessage("Please enter a password.", "Collaboration");
-                return null;
-            }
-            return { sessionCode: enteredSessionCode, password };
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.sessionCode;
+            const error = form.querySelector(".dialog-error");
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                const enteredSessionCode = input.value.trim();
+                if (!enteredSessionCode) {
+                    error.textContent = "Please enter a join key.";
+                    return;
+                }
+                closeModal();
+                resolve(enteredSessionCode);
+            });
+            form.querySelector("[data-cancel]").addEventListener("click", () => {
+                closeModal();
+                resolve(null);
+            });
+        });
+    }
+
+    function showHostKeyDialog(sessionCode) {
+        const form = document.createElement("form");
+        form.className = "dialog";
+        form.innerHTML = `
+            <div class="dialog-body">
+                <div class="dialog-title">Host Collaboration</div>
+                <label>Host Key:</label>
+                <input name="sessionCode" type="text" readonly value="${escapeAttribute(sessionCode)}">
+                <div class="dialog-actions">
+                    <button class="primary" type="button" data-copy>Copy Key</button>
+                    <button class="secondary" type="submit">Close</button>
+                </div>
+            </div>`;
+        return new Promise(resolve => {
+            mountModal(form);
+            const input = form.elements.sessionCode;
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 0);
+            form.addEventListener("submit", event => {
+                event.preventDefault();
+                closeModal();
+                resolve();
+            });
+            form.querySelector("[data-copy]").addEventListener("click", async () => {
+                input.select();
+                try {
+                    await navigator.clipboard?.writeText(sessionCode);
+                } catch {
+                    document.execCommand?.("copy");
+                }
+            });
         });
     }
 
     async function startCollaboration(details) {
+        if (!state.collaboration.password && !(await ensureStartupPassword())) {
+            return false;
+        }
         if (!("BroadcastChannel" in window)) {
             showMessage("This browser does not support collaboration in this app.", "Collaboration");
-            return;
+            return false;
         }
 
         stopCollaboration(false);
-        const roomName = await getCollaborationRoomName(details.sessionCode, details.password);
+        const roomName = await getCollaborationRoomName(details.sessionCode, state.collaboration.password);
         const channel = new BroadcastChannel(roomName);
         state.collaboration.active = true;
         state.collaboration.sessionCode = details.sessionCode;
+        state.collaboration.mode = details.mode || "join";
         state.collaboration.roomName = roomName;
         state.collaboration.revision = 0;
         state.collaboration.channel = channel;
@@ -1140,10 +1252,12 @@
         setTimeout(() => {
             if (state.collaboration.active &&
                 state.collaboration.roomName === roomName &&
-                !state.collaboration.receivedInitialSnapshot) {
+                !state.collaboration.receivedInitialSnapshot &&
+                state.collaboration.mode === "host") {
                 sendCollaborationSnapshot("initial", true);
             }
         }, 750);
+        return true;
     }
 
     function stopCollaboration(updateUrl = true) {
@@ -1152,6 +1266,7 @@
         }
         state.collaboration.active = false;
         state.collaboration.sessionCode = "";
+        state.collaboration.mode = "";
         state.collaboration.roomName = "";
         state.collaboration.revision = 0;
         state.collaboration.channel = null;
