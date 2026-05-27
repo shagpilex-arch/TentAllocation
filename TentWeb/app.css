@@ -301,7 +301,6 @@ button {
 }
 
 .edit-camp-button,
-.collaboration-button,
 .zoom-bar button {
     border: 0;
     border-radius: var(--button-radius);
@@ -309,32 +308,6 @@ button {
     color: #222222;
     padding: 5px 8px;
     font-size: 12px;
-}
-
-.collaborate { background: #6a5acd; }
-
-.collaboration-status {
-    border: 1px solid #d0d0d0;
-    border-radius: 6px;
-    background: #ffffff;
-    color: #555555;
-    font-size: 12px;
-    font-weight: 600;
-    margin: 0 0 8px;
-    padding: 8px 9px;
-    overflow-wrap: anywhere;
-}
-
-.collaboration-status.live {
-    border-color: #66bb6a;
-    background: #f1f8e9;
-    color: #246b28;
-}
-
-.collaboration-status.connecting {
-    border-color: #ffb74d;
-    background: #fff8e1;
-    color: #8a5600;
 }
 
 .stats-label {
@@ -868,21 +841,7 @@ button {
     }
 
     .planner-main {
-        min-height: 0;
-    }
-
-    .canvas-scroll {
-        flex: 0 0 clamp(260px, 52vh, 460px);
-        min-height: 260px;
-    }
-
-    .unallocated-border {
-        flex: 0 0 auto;
-        margin: 8px;
-    }
-
-    .unallocated-scroll {
-        max-height: 230px;
+        min-height: 650px;
     }
 
     .right-panel {

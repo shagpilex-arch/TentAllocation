@@ -1,10 +1,6 @@
 (() => {
     "use strict";
 
-    if (!window.campPasswordUnlocked) {
-        return;
-    }
-
     const AppVersion = "1.5.0";
     const TentCardWidth = 170;
     const TentCardHeight = 145;
@@ -26,15 +22,6 @@
     const GridSnapSize = 20;
     const MaxUndoStates = 50;
     const ZoomLevels = [0.75, 0.9, 1.0, 1.15, 1.3];
-    const CollaborationPath = "campTentPlannerSessions";
-    // Paste your Firebase web app config here before publishing collaboration.
-    const CollaborationConfig = {
-        apiKey: "AIzaSyAC4rGNZVQLv4fSvcQ2YXuoIeizzGdaZn8",
-        authDomain: "tentplanner-3a5ce.firebaseapp.com",
-        databaseURL: "https://tentplanner-3a5ce-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "tentplanner-3a5ce",
-        appId: "1:488435840170:web:9c4be854ff9e8ec90b8cd3"
-    };
 
     const PersonType = ["Camper", "Adult", "YoungLeader"];
     const Gender = ["Male", "Female", "Other"];
@@ -75,22 +62,7 @@
         canvasWidth: 1,
         canvasHeight: 1,
         drag: null,
-        suppressNextClick: false,
-        collaboration: {
-            clientId: createId(),
-            mode: null,
-            code: null,
-            db: null,
-            ref: null,
-            patchRef: null,
-            participantRef: null,
-            connectedRef: null,
-            connected: false,
-            applyingRemote: false,
-            authUid: null,
-            lastPatchId: null,
-            lastPublishedSnapshot: ""
-        }
+        suppressNextClick: false
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -114,7 +86,6 @@
         dom.versionLabel = document.getElementById("versionLabel");
         dom.campNameLabel = document.getElementById("campNameLabel");
         dom.campDateLabel = document.getElementById("campDateLabel");
-        dom.collaborationStatus = document.getElementById("collaborationStatus");
         dom.statsLabel = document.getElementById("statsLabel");
         dom.snapToGrid = document.getElementById("snapToGrid");
         dom.warningsPanel = document.getElementById("warningsPanel");
@@ -138,7 +109,6 @@
         document.addEventListener("mouseup", handlePointerUp);
         document.addEventListener("contextmenu", handleContextMenu);
         window.addEventListener("resize", debounce(refreshUI, 80));
-        window.addEventListener("pagehide", markCollaborationParticipantDisconnecting);
         window.addEventListener("beforeunload", event => {
             if (!state.isDirty) {
                 return;
@@ -216,7 +186,6 @@
             case "edit-site-item": await chooseAndEditSiteItem(); break;
             case "delete-site-item": await chooseAndDeleteSiteItem(); break;
             case "fit-screen": fitCanvasToScreen(); break;
-            case "collaborate": await showCollaborationDialog(); break;
             case "about": showAbout(); break;
         }
     }
@@ -461,7 +430,6 @@
             state.redoStack.length = 0;
             state.lastSnapshot = after;
             state.isDirty = true;
-            publishProjectToSession();
         }
         refreshUI();
     }
@@ -476,7 +444,6 @@
         state.selectedTentIds.clear();
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
-        publishProjectToSession();
         refreshUI();
     }
 
@@ -490,7 +457,6 @@
         state.selectedTentIds.clear();
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
-        publishProjectToSession();
         refreshUI();
     }
 
@@ -512,7 +478,6 @@
         renderStats();
         renderWarnings();
         updateMenuState();
-        updateCollaborationStatus();
         updateTitle();
     }
 
@@ -1010,7 +975,6 @@
         state.undoStack.length = 0;
         state.redoStack.length = 0;
         state.lastSnapshot = captureProjectSnapshot();
-        publishProjectToSession();
         refreshUI();
     }
 
@@ -1044,7 +1008,6 @@
             state.undoStack.length = 0;
             state.redoStack.length = 0;
             state.lastSnapshot = captureProjectSnapshot();
-            publishProjectToSession();
             refreshUI();
         } catch (error) {
             showMessage(`Error opening file: ${error.message}`, "Error");
@@ -1461,583 +1424,6 @@
         }
         state.zoomIndex = clamp(index, 0, ZoomLevels.length - 1);
         refreshUI();
-    }
-
-    async function showCollaborationDialog() {
-        if (state.collaboration.code) {
-            const result = await showChoiceMessage(
-                `You are ${state.collaboration.mode === "host" ? "hosting" : "joined to"} session ${state.collaboration.code}. Share this code with anyone who should collaborate.`,
-                "Collaboration",
-                [
-                    { label: "Copy Code", value: "copy", primary: true },
-                    { label: "Leave Session", value: "leave", secondary: true },
-                    { label: "Close", value: "close", secondary: true }
-                ]);
-            if (result === "copy") {
-                await copyCollaborationCode();
-            } else if (result === "leave") {
-                await leaveCollaborationSession();
-            }
-            return;
-        }
-
-        const choice = await showChoiceMessage(
-            "Host a new shared planning session, or join one with a code from someone else.",
-            "Collaboration",
-            [
-                { label: "Host", value: "host", primary: true },
-                { label: "Join", value: "join", secondary: true },
-                { label: "Cancel", value: "cancel", secondary: true }
-            ]);
-        if (choice === "host") {
-            if (await confirmSaveIfNeeded()) {
-                await hostCollaborationSession();
-            }
-        } else if (choice === "join") {
-            if (!(await confirmSaveIfNeeded())) {
-                return;
-            }
-            const code = await showJoinSessionDialog();
-            if (code) {
-                await joinCollaborationSession(code);
-            }
-        }
-    }
-
-    function showJoinSessionDialog() {
-        const form = document.createElement("form");
-        form.className = "dialog";
-        form.innerHTML = `
-            <div class="dialog-body">
-                <div class="dialog-title">Join Collaboration</div>
-                <label>Session Code:</label>
-                <input name="code" type="text" autocomplete="off" inputmode="text" maxlength="6" placeholder="ABC123">
-                <div class="dialog-actions">
-                    <button class="primary" type="submit">Join</button>
-                    <button class="secondary" type="button" data-cancel>Cancel</button>
-                </div>
-            </div>`;
-        return showFormDialog(form, submitted => {
-            const code = normalizeSessionCode(submitted.elements.code.value);
-            if (!code) {
-                showMessage("Enter the host's session code.", "Join Collaboration");
-                return null;
-            }
-            return code;
-        });
-    }
-
-    async function hostCollaborationSession() {
-        const db = await getCollaborationDatabase();
-        if (!db) {
-            return;
-        }
-        const code = createSessionCode();
-        attachCollaborationSession(db, code, "host");
-        await publishProjectToSession(true);
-        await showChoiceMessage(
-            `Session code: ${code}\n\nAnyone who chooses Join and enters this code will see updates as changes are made.`,
-            "Collaboration Started",
-            [
-                { label: "Copy Code", value: "copy", primary: true },
-                { label: "OK", value: "ok", secondary: true }
-            ]
-        ).then(result => {
-            if (result === "copy") copyCollaborationCode();
-        });
-    }
-
-    async function joinCollaborationSession(code) {
-        const db = await getCollaborationDatabase();
-        if (!db) {
-            return;
-        }
-        const ref = db.ref(`${CollaborationPath}/${code}`);
-        try {
-            const snapshot = await ref.once("value");
-            const value = snapshot.val();
-            if (!value?.project) {
-                showMessage("No active collaboration session was found for that code.", "Join Collaboration");
-                return;
-            }
-            applyRemoteProject(value.project);
-            attachCollaborationSession(db, code, "join", value.latestPatch?.id || null);
-        } catch (error) {
-            showMessage(buildCollaborationErrorMessage(error, "join the session"), "Join Collaboration");
-        }
-    }
-
-    function attachCollaborationSession(db, code, mode, lastPatchId = null) {
-        detachCollaborationListeners(false);
-        state.collaboration.db = db;
-        state.collaboration.code = code;
-        state.collaboration.mode = mode;
-        state.collaboration.ref = db.ref(`${CollaborationPath}/${code}`);
-        state.collaboration.patchRef = state.collaboration.ref.child("latestPatch");
-        state.collaboration.participantRef = state.collaboration.ref.child(`participants/${state.collaboration.clientId}`);
-        state.collaboration.connectedRef = db.ref(".info/connected");
-        state.collaboration.lastPatchId = lastPatchId;
-        registerCollaborationParticipant();
-        state.collaboration.patchRef.on("value", handleRemotePatchUpdate, error => {
-            showMessage(`Collaboration connection error:
-${error.message}`, "Collaboration");
-        });
-        state.collaboration.connectedRef.on("value", snapshot => {
-            state.collaboration.connected = snapshot.val() === true;
-            updateCollaborationStatus();
-        });
-        updateCollaborationStatus();
-    }
-
-    async function leaveCollaborationSession(refresh = true) {
-        const sessionRef = state.collaboration.ref;
-        detachCollaborationListeners(refresh);
-        try {
-            await removeCollaborationParticipant(sessionRef);
-            await cleanupCollaborationSessionIfEmpty(sessionRef);
-        } catch (error) {
-            console.warn("Collaboration cleanup failed.", error);
-        }
-    }
-
-    function detachCollaborationListeners(refresh = true) {
-        if (state.collaboration.patchRef) {
-            state.collaboration.patchRef.off("value", handleRemotePatchUpdate);
-        }
-        if (state.collaboration.connectedRef) {
-            state.collaboration.connectedRef.off();
-        }
-        state.collaboration.mode = null;
-        state.collaboration.code = null;
-        state.collaboration.ref = null;
-        state.collaboration.patchRef = null;
-        state.collaboration.participantRef = null;
-        state.collaboration.connectedRef = null;
-        state.collaboration.connected = false;
-        state.collaboration.lastPatchId = null;
-        state.collaboration.lastPublishedSnapshot = "";
-        if (refresh) {
-            updateCollaborationStatus();
-        }
-    }
-
-    async function registerCollaborationParticipant() {
-        const participantRef = state.collaboration.participantRef;
-        if (!participantRef) {
-            return;
-        }
-        await participantRef.set({
-            mode: state.collaboration.mode,
-            joinedAt: firebase.database.ServerValue.TIMESTAMP,
-            lastSeenAt: firebase.database.ServerValue.TIMESTAMP
-        });
-        participantRef.onDisconnect().remove();
-    }
-
-    async function removeCollaborationParticipant(sessionRef = state.collaboration.ref) {
-        const participantRef = state.collaboration.participantRef || sessionRef?.child(`participants/${state.collaboration.clientId}`);
-        if (!participantRef) {
-            return;
-        }
-        try {
-            participantRef.onDisconnect().cancel();
-        } catch {
-            // The disconnect registration may already be gone during page close.
-        }
-        await participantRef.remove();
-    }
-
-    function markCollaborationParticipantDisconnecting() {
-        if (!state.collaboration.participantRef) {
-            return;
-        }
-        state.collaboration.participantRef.update({
-            leavingAt: firebase.database.ServerValue.TIMESTAMP
-        }).catch(() => {});
-    }
-
-    async function cleanupCollaborationSessionIfEmpty(sessionRef) {
-        if (!sessionRef) {
-            return;
-        }
-        const snapshot = await sessionRef.child("participants").once("value");
-        if (!snapshot.exists()) {
-            await sessionRef.remove();
-        }
-    }
-
-    function handleRemotePatchUpdate(snapshot) {
-        const patch = snapshot.val();
-        if (!patch?.id || patch.id === state.collaboration.lastPatchId) {
-            return;
-        }
-        state.collaboration.lastPatchId = patch.id;
-        if (patch.updatedBy === state.collaboration.clientId) {
-            return;
-        }
-        applyRemotePatch(patch);
-    }
-
-    function applyRemotePatch(patch) {
-        if (patch.type === "full" && patch.project) {
-            applyRemoteProject(patch.project);
-            return;
-        }
-        if (patch.type === "reload") {
-            reloadRemoteProject();
-            return;
-        }
-        if (patch.type !== "delta" || !patch.updates) {
-            return;
-        }
-        state.collaboration.applyingRemote = true;
-        try {
-            const project = JSON.parse(JSON.stringify(state.project));
-            for (const [path, value] of Object.entries(patch.updates)) {
-                applyProjectPathUpdate(project, path, value);
-            }
-            state.project = normalizeProject(project, true);
-            state.selectedTentIds.clear();
-            state.undoStack.length = 0;
-            state.redoStack.length = 0;
-            state.lastSnapshot = captureProjectSnapshot();
-            state.collaboration.lastPublishedSnapshot = state.lastSnapshot;
-            state.isDirty = false;
-            refreshUI();
-        } finally {
-            state.collaboration.applyingRemote = false;
-        }
-    }
-
-    async function reloadRemoteProject() {
-        if (!state.collaboration.ref) {
-            return;
-        }
-        try {
-            const snapshot = await state.collaboration.ref.child("project").once("value");
-            const project = snapshot.val();
-            if (project) {
-                applyRemoteProject(project);
-            }
-        } catch (error) {
-            showMessage(buildCollaborationErrorMessage(error, "reload the collaboration session"), "Collaboration");
-        }
-    }
-
-    function applyProjectPathUpdate(project, path, value) {
-        if (!path.startsWith("project/")) {
-            return;
-        }
-        const parts = path.split("/").slice(1);
-        let target = project;
-        for (let index = 0; index < parts.length - 1; index++) {
-            const part = parts[index];
-            const nextPart = parts[index + 1];
-            if (target[part] == null) {
-                target[part] = /^\d+$/.test(nextPart) ? [] : {};
-            }
-            target = target[part];
-        }
-        const last = parts[parts.length - 1];
-        if (value === null) {
-            if (Array.isArray(target)) {
-                target.splice(Number(last), 1);
-            } else {
-                delete target[last];
-            }
-        } else {
-            target[last] = value;
-        }
-    }
-
-    function applyRemoteProject(project) {
-        state.collaboration.applyingRemote = true;
-        try {
-            state.project = normalizeProject(JSON.parse(JSON.stringify(project)), true);
-            state.selectedTentIds.clear();
-            state.undoStack.length = 0;
-            state.redoStack.length = 0;
-            state.lastSnapshot = captureProjectSnapshot();
-            state.collaboration.lastPublishedSnapshot = state.lastSnapshot;
-            state.isDirty = false;
-            refreshUI();
-        } finally {
-            state.collaboration.applyingRemote = false;
-        }
-    }
-
-    async function publishProjectToSession(force = false) {
-        const collab = state.collaboration;
-        if (!collab.ref || collab.applyingRemote) {
-            return;
-        }
-        const snapshot = captureProjectSnapshot();
-        if (!force && snapshot === collab.lastPublishedSnapshot) {
-            return;
-        }
-        const previousSnapshot = collab.lastPublishedSnapshot;
-        collab.lastPublishedSnapshot = snapshot;
-        try {
-            const project = JSON.parse(snapshot);
-            if (force || !previousSnapshot) {
-                const patch = buildFullPatch();
-                collab.lastPatchId = patch.id;
-                await collab.ref.update(buildSessionPayload(project, patch));
-                return;
-            }
-            const projectUpdates = buildProjectDeltaUpdates(JSON.parse(previousSnapshot), project);
-            const deltaPatch = buildDeltaPatch(projectUpdates);
-            const updates = { ...projectUpdates };
-            addSessionMetadataUpdates(updates, deltaPatch);
-            const fullPatch = buildFullPatch();
-            const fullPayload = buildSessionPayload(project, fullPatch);
-            if (JSON.stringify(updates).length >= JSON.stringify(fullPayload).length) {
-                collab.lastPatchId = fullPatch.id;
-                await collab.ref.update(fullPayload);
-            } else {
-                collab.lastPatchId = deltaPatch.id;
-                await collab.ref.update(updates);
-            }
-        } catch (error) {
-            collab.lastPublishedSnapshot = previousSnapshot;
-            showMessage(buildCollaborationErrorMessage(error, "sync collaboration changes"), "Collaboration");
-        }
-    }
-
-    function buildSessionPayload(project, patch) {
-        const payload = {
-            project,
-            latestPatch: patch,
-            lastPatchId: patch.id,
-            updatedAt: firebase.database.ServerValue.TIMESTAMP,
-            updatedBy: state.collaboration.clientId,
-            updatedByAuthUid: state.collaboration.authUid || null
-        };
-        if (state.collaboration.mode === "host") {
-            payload.createdBy = state.collaboration.authUid || null;
-        }
-        return payload;
-    }
-
-    function buildFullPatch() {
-        return {
-            id: createPatchId(),
-            type: "reload",
-            updatedBy: state.collaboration.clientId,
-            updatedByAuthUid: state.collaboration.authUid || null
-        };
-    }
-
-    function buildDeltaPatch(projectUpdates) {
-        return {
-            id: createPatchId(),
-            type: "delta",
-            updates: projectUpdates,
-            updatedBy: state.collaboration.clientId,
-            updatedByAuthUid: state.collaboration.authUid || null
-        };
-    }
-
-    function addSessionMetadataUpdates(updates, patch) {
-        updates.latestPatch = patch;
-        updates.lastPatchId = patch.id;
-        updates.updatedAt = firebase.database.ServerValue.TIMESTAMP;
-        updates.updatedBy = state.collaboration.clientId;
-        updates.updatedByAuthUid = state.collaboration.authUid || null;
-        if (state.collaboration.mode === "host") {
-            updates.createdBy = state.collaboration.authUid || null;
-        }
-    }
-
-    function createPatchId() {
-        return `${Date.now().toString(36)}-${state.collaboration.clientId}`;
-    }
-
-    function buildProjectDeltaUpdates(beforeProject, afterProject) {
-        const updates = {};
-        for (const key of ["schemaVersion", "id", "name", "campDate", "lastModified"]) {
-            if (!sameJson(beforeProject[key], afterProject[key])) {
-                updates[`project/${key}`] = afterProject[key];
-            }
-        }
-        addCollectionDeltaUpdates(updates, "tents", beforeProject.tents, afterProject.tents, item => item.id);
-        addCollectionDeltaUpdates(updates, "siteItems", beforeProject.siteItems, afterProject.siteItems, item => item.id);
-        addCollectionDeltaUpdates(updates, "people", beforeProject.people, afterProject.people, item => item.id);
-        addCollectionDeltaUpdates(updates, "friendLinks", beforeProject.friendLinks, afterProject.friendLinks, item => item.id);
-        addCollectionDeltaUpdates(updates, "foeLinks", beforeProject.foeLinks, afterProject.foeLinks, item => item.id);
-        addCollectionDeltaUpdates(updates, "friendGroups", beforeProject.friendGroups, afterProject.friendGroups, item => item.id);
-        addCollectionDeltaUpdates(updates, "allocations", beforeProject.allocations, afterProject.allocations, item => item.personId);
-        return updates;
-    }
-
-    function addCollectionDeltaUpdates(updates, collectionName, beforeValue, afterValue, keySelector) {
-        const before = array(beforeValue);
-        const after = array(afterValue);
-        if (before.length === after.length && hasSameCollectionOrder(before, after, keySelector)) {
-            for (let index = 0; index < after.length; index++) {
-                addItemDeltaUpdates(updates, `project/${collectionName}/${index}`, before[index], after[index]);
-            }
-            return;
-        }
-        if (after.length === before.length + 1 && hasSameCollectionOrder(before, after.slice(0, before.length), keySelector)) {
-            updates[`project/${collectionName}/${after.length - 1}`] = after[after.length - 1];
-            return;
-        }
-        updates[`project/${collectionName}`] = after;
-    }
-
-    function hasSameCollectionOrder(before, after, keySelector) {
-        if (before.length !== after.length) {
-            return false;
-        }
-        for (let index = 0; index < before.length; index++) {
-            if (keySelector(before[index]) !== keySelector(after[index])) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function addItemDeltaUpdates(updates, basePath, beforeItem, afterItem) {
-        if (sameJson(beforeItem, afterItem)) {
-            return;
-        }
-        const keys = new Set([...Object.keys(beforeItem || {}), ...Object.keys(afterItem || {})]);
-        for (const key of keys) {
-            if (!sameJson(beforeItem?.[key], afterItem?.[key])) {
-                updates[`${basePath}/${key}`] = afterItem?.[key] ?? null;
-            }
-        }
-    }
-
-    function sameJson(a, b) {
-        return JSON.stringify(a) === JSON.stringify(b);
-    }
-
-    async function getCollaborationDatabase() {
-        if (!isCollaborationConfigured()) {
-            showMessage(
-                "Collaboration needs a Firebase Realtime Database configuration before it can run from GitHub Pages. Add your Firebase web app settings to CollaborationConfig in app.js.",
-                "Collaboration Setup"
-            );
-            return null;
-        }
-        if (!window.firebase?.database) {
-            showMessage("The Firebase database script did not load. Check your internet connection and the script tags in index.html.", "Collaboration Setup");
-            return null;
-        }
-        try {
-            const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(CollaborationConfig);
-            state.collaboration.authUid = await tryAnonymousCollaborationUser(app);
-            return app.database();
-        } catch (error) {
-            showMessage(buildCollaborationErrorMessage(error, "start Firebase"), "Collaboration Setup");
-            return null;
-        }
-    }
-
-    async function tryAnonymousCollaborationUser(app) {
-        if (!window.firebase?.auth) {
-            return null;
-        }
-        try {
-            const auth = app.auth();
-            if (firebase.auth?.Auth?.Persistence?.LOCAL) {
-                await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            }
-            const existingUser = auth.currentUser || await waitForExistingAuthUser(auth, 500);
-            const user = existingUser || (await auth.signInAnonymously()).user || await waitForExistingAuthUser(auth, 8000);
-            if (!user) {
-                return null;
-            }
-            await user.getIdToken(true);
-            return user.uid;
-        } catch (error) {
-            console.warn("Collaboration is continuing without Firebase Auth.", error);
-            return null;
-        }
-    }
-
-    function waitForExistingAuthUser(auth, timeoutMs) {
-        return new Promise((resolve, reject) => {
-            let unsubscribe = () => {};
-            const timeout = setTimeout(() => {
-                unsubscribe();
-                resolve(null);
-            }, timeoutMs);
-            unsubscribe = auth.onAuthStateChanged(user => {
-                clearTimeout(timeout);
-                unsubscribe();
-                resolve(user || null);
-            }, error => {
-                clearTimeout(timeout);
-                unsubscribe();
-                reject(error);
-            });
-        });
-    }
-
-    function buildCollaborationErrorMessage(error, action) {
-        const message = error?.message || String(error || "Unknown error");
-        if (message.includes("permission_denied") || error?.code === "PERMISSION_DENIED") {
-            return `Could not ${action}:
-${message}
-
-Firebase rules are blocking this request. To make collaboration work without authorized domains, set Realtime Database rules for campTentPlannerSessions to read/write true.`;
-        }
-        return `Could not ${action}:
-${message}`;
-    }
-
-    function isCollaborationConfigured() {
-        return Boolean(CollaborationConfig.apiKey && CollaborationConfig.databaseURL && CollaborationConfig.projectId && CollaborationConfig.appId);
-    }
-
-    function updateCollaborationStatus() {
-        if (!dom.collaborationStatus) {
-            return;
-        }
-        const code = state.collaboration.code;
-        if (!code) {
-            dom.collaborationStatus.textContent = "Not connected";
-            dom.collaborationStatus.className = "collaboration-status";
-            return;
-        }
-        const connectionText = state.collaboration.connected ? "Live" : "Connecting";
-        dom.collaborationStatus.textContent = `${connectionText}: ${code}`;
-        dom.collaborationStatus.className = `collaboration-status ${state.collaboration.connected ? "live" : "connecting"}`;
-    }
-
-    async function copyCollaborationCode() {
-        const code = state.collaboration.code;
-        if (!code) {
-            return;
-        }
-        try {
-            await navigator.clipboard.writeText(code);
-            showMessage(`Session code copied: ${code}`, "Collaboration");
-        } catch {
-            showMessage(`Session code: ${code}`, "Collaboration");
-        }
-    }
-
-    function createSessionCode() {
-        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let code = "";
-        const values = new Uint32Array(6);
-        if (window.crypto?.getRandomValues) {
-            window.crypto.getRandomValues(values);
-        } else {
-            for (let i = 0; i < values.length; i++) values[i] = Math.floor(Math.random() * 0xffffffff);
-        }
-        for (const value of values) {
-            code += alphabet[value % alphabet.length];
-        }
-        return code;
-    }
-
-    function normalizeSessionCode(value) {
-        return String(value || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
     }
 
     function showAbout() {

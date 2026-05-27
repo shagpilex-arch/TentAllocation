@@ -4,28 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camp Tent Planner</title>
-    <style>
-        html:not(.password-unlocked) #app,
-        html:not(.password-unlocked) #modalRoot,
-        html:not(.password-unlocked) #contextMenu,
-        html:not(.password-unlocked) #openFileInput,
-        html:not(.password-unlocked) #csvFileInput {
-            display: none !important;
-        }
-    </style>
-    <script>
-        (() => {
-            const requiredPassword = "I am nice, I tipped";
-            const enteredPassword = window.prompt("Enter password");
-
-            window.campPasswordUnlocked = enteredPassword === requiredPassword;
-
-            if (window.campPasswordUnlocked) {
-                document.documentElement.classList.add("password-unlocked");
-            }
-        })();
-    </script>
-    <link rel="stylesheet" href="app.css">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link rel="stylesheet" href="app.css?v=20260527">
 </head>
 <body>
     <div id="app" class="app-shell">
@@ -112,8 +94,6 @@
                     <button type="button" class="tool-button friend-link" data-action="add-friend">Friend Link</button>
                     <button type="button" class="tool-button foe-link" data-action="add-foe">Foe Link</button>
                     <span class="toolbar-divider"></span>
-                    <button type="button" class="tool-button collaborate" data-action="collaborate">Collaborate</button>
-                    <span class="toolbar-divider"></span>
                     <button type="button" class="tool-button export" data-action="make-table">Export</button>
                 </div>
 
@@ -138,11 +118,6 @@
                     <div id="campNameLabel" class="camp-name-label"></div>
                     <div id="campDateLabel" class="camp-date-label"></div>
                     <button type="button" class="edit-camp-button" data-action="edit-camp">Edit Camp</button>
-
-                    <hr>
-                    <h2>Collaboration</h2>
-                    <div id="collaborationStatus" class="collaboration-status">Not connected</div>
-                    <button type="button" class="collaboration-button" data-action="collaborate">Collaborate</button>
 
                     <hr>
                     <h2>Statistics</h2>
@@ -174,9 +149,6 @@
     <div id="contextMenu" class="context-menu" hidden></div>
     <input id="openFileInput" type="file" accept=".camp,.json,application/json" hidden>
     <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=20260527"></script>
 </body>
 </html>
