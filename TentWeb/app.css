@@ -43,6 +43,10 @@ button {
     min-width: 320px;
 }
 
+body.locked .app-shell {
+    display: none;
+}
+
 .camp-menu {
     flex: 0 0 auto;
     background: var(--camp-green);

@@ -22,6 +22,7 @@
     const GridSnapSize = 20;
     const MaxUndoStates = 50;
     const ZoomLevels = [0.75, 0.9, 1.0, 1.15, 1.3];
+    const StartupPassword = "I am nice, I tipped";
     const CollaborationRootPath = "campTentPlannerSessions";
     const CollaborationSaveDelay = 650;
     const firebaseConfig = {
@@ -75,12 +76,11 @@
         canvasHeight: 1,
         drag: null,
         suppressNextClick: false,
+        accessUnlocked: false,
         collaboration: {
             active: false,
             mode: "",
             sessionKey: "",
-            password: "",
-            passwordHash: "",
             clientId: createId(),
             firebaseApp: null,
             database: null,
@@ -184,6 +184,9 @@
     }
 
     async function runAction(action, data = {}) {
+        if (!state.accessUnlocked) {
+            return;
+        }
         switch (action) {
             case "new": await actionNew(); break;
             case "open": await actionOpen(); break;
@@ -256,6 +259,9 @@
     }
 
     function handleKeyDown(event) {
+        if (!state.accessUnlocked) {
+            return;
+        }
         const key = event.key.toLowerCase();
         if (event.ctrlKey && key === "s") {
             event.preventDefault();
@@ -1067,9 +1073,6 @@
     }
 
     async function actionCollaboration() {
-        if (!state.collaboration.passwordHash) {
-            return;
-        }
         if (state.collaboration.active) {
             const result = await showChoiceMessage(
                 `${state.collaboration.mode === "host" ? "Hosting" : "Joined"} session ${state.collaboration.sessionKey}.`,
@@ -1110,6 +1113,9 @@
         if (!(await ensureStartupPassword())) {
             return;
         }
+        document.body.classList.remove("locked");
+        refreshUI();
+        requestAnimationFrame(refreshUI);
         const sessionKey = getCollaborationCodeFromUrl();
         if (sessionKey) {
             await joinCollaborationSession(sessionKey, true);
@@ -1117,7 +1123,7 @@
     }
 
     function ensureStartupPassword() {
-        if (state.collaboration.passwordHash) {
+        if (state.accessUnlocked) {
             return Promise.resolve(true);
         }
         return showStartupPasswordDialog();
@@ -1143,13 +1149,13 @@
             setTimeout(() => input.focus(), 0);
             form.addEventListener("submit", async event => {
                 event.preventDefault();
-                const password = input.value;
-                if (!password) {
-                    error.textContent = "Please enter a password.";
+                const password = input.value.trim();
+                if (password !== StartupPassword) {
+                    error.textContent = "Incorrect password.";
+                    input.select();
                     return;
                 }
-                state.collaboration.password = password;
-                state.collaboration.passwordHash = await getPasswordHash(password);
+                state.accessUnlocked = true;
                 closeModal();
                 resolve(true);
             });
@@ -1159,7 +1165,6 @@
     async function startHostingCollaboration() {
         try {
             const database = ensureFirebaseDatabase();
-            const passwordHash = state.collaboration.passwordHash;
             let sessionKey = "";
             let sessionRef = null;
             for (let attempt = 0; attempt < 10; attempt++) {
@@ -1183,7 +1188,6 @@
                 updatedAt: now,
                 updatedBy: state.collaboration.clientId,
                 revision: 1,
-                passwordHash,
                 state: getCurrentPlannerState()
             });
             beginCollaborationSession("host", sessionKey, sessionRef, 1);
@@ -1214,10 +1218,6 @@
             const record = snapshot.val();
             if (!record || !record.state) {
                 showMessage("That collaboration session does not contain planner data.", "Collaboration");
-                return;
-            }
-            if (record.passwordHash && record.passwordHash !== state.collaboration.passwordHash) {
-                showMessage("The password does not match this collaboration session.", "Collaboration");
                 return;
             }
 
@@ -3640,24 +3640,6 @@
         }
         const params = new URLSearchParams(hash);
         return normalizeSessionKey(params.get("collab") || params.get("session") || "");
-    }
-
-    async function getPasswordHash(password) {
-        const value = `camp-tent-planner\n${password}`;
-        if (globalThis.crypto?.subtle && globalThis.TextEncoder) {
-            const bytes = new TextEncoder().encode(value);
-            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-            return bytesToBase64Url(new Uint8Array(digest));
-        }
-        return hashString(value);
-    }
-
-    function bytesToBase64Url(bytes) {
-        let binary = "";
-        for (const byte of bytes) {
-            binary += String.fromCharCode(byte);
-        }
-        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     }
 
     function setCollaborationUrl(sessionKey) {
