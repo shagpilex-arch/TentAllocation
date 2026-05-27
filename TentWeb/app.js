@@ -1,7 +1,7 @@
 (() => {
     "use strict";
 
-    const AppVersion = "1.5.2";
+    const AppVersion = "1.5.0";
     const TentCardWidth = 170;
     const TentCardHeight = 145;
     const PersonCardWidth = 92;
@@ -62,19 +62,7 @@
         canvasWidth: 1,
         canvasHeight: 1,
         drag: null,
-        suppressNextClick: false,
-        collaboration: {
-            active: false,
-            sessionCode: "",
-            mode: "",
-            password: "",
-            roomName: "",
-            clientId: createId(),
-            revision: 0,
-            channel: null,
-            applyingRemote: false,
-            receivedInitialSnapshot: false
-        }
+        suppressNextClick: false
     };
 
     document.addEventListener("DOMContentLoaded", init);
@@ -86,7 +74,6 @@
         refreshUI();
         requestAnimationFrame(refreshUI);
         setTimeout(refreshUI, 150);
-        setTimeout(runStartupPasswordFlow, 0);
     }
 
     function bindDom() {
@@ -110,7 +97,6 @@
         dom.csvFileInput = document.getElementById("csvFileInput");
         dom.undoMenuItem = document.getElementById("undoMenuItem");
         dom.redoMenuItem = document.getElementById("redoMenuItem");
-        dom.collaborationStatus = document.getElementById("collaborationStatus");
     }
 
     function bindEvents() {
@@ -170,7 +156,6 @@
         switch (action) {
             case "new": await actionNew(); break;
             case "open": await actionOpen(); break;
-            case "collaboration": await actionCollaboration(); break;
             case "save": await actionSave(false); break;
             case "save-as": await actionSave(true); break;
             case "exit": await actionExit(); break;
@@ -447,9 +432,6 @@
             state.isDirty = true;
         }
         refreshUI();
-        if (before !== after) {
-            sendCollaborationSnapshot("change");
-        }
     }
 
     function undoLastChange() {
@@ -463,7 +445,6 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
-        sendCollaborationSnapshot("undo");
     }
 
     function redoLastChange() {
@@ -477,7 +458,6 @@
         state.lastSnapshot = captureProjectSnapshot();
         state.isDirty = true;
         refreshUI();
-        sendCollaborationSnapshot("redo");
     }
 
     function trimStack(stack) {
@@ -498,7 +478,6 @@
         renderStats();
         renderWarnings();
         updateMenuState();
-        updateCollaborationStatus();
         updateTitle();
     }
 
@@ -584,18 +563,6 @@
     function updateTitle() {
         const fileName = state.currentFileName ? stripExtension(state.currentFileName) : "Untitled";
         document.title = `Camp Tent Planner v${AppVersion} - ${fileName}${state.isDirty ? "*" : ""}`;
-    }
-
-    function updateCollaborationStatus() {
-        if (!dom.collaborationStatus) {
-            return;
-        }
-        if (!state.collaboration.active) {
-            dom.collaborationStatus.textContent = "Collaboration: Off";
-            return;
-        }
-        const mode = state.collaboration.mode === "host" ? "Hosting" : "Joined";
-        dom.collaborationStatus.textContent = `${mode}: ${state.collaboration.sessionCode}`;
     }
 
     function createTentElement(tent, peopleInTent, hasWarning) {
@@ -1009,7 +976,6 @@
         state.redoStack.length = 0;
         state.lastSnapshot = captureProjectSnapshot();
         refreshUI();
-        sendCollaborationSnapshot("new");
     }
 
     async function actionOpen() {
@@ -1043,300 +1009,9 @@
             state.redoStack.length = 0;
             state.lastSnapshot = captureProjectSnapshot();
             refreshUI();
-            sendCollaborationSnapshot("open");
         } catch (error) {
             showMessage(`Error opening file: ${error.message}`, "Error");
         }
-    }
-
-    async function actionCollaboration() {
-        if (!(await ensureStartupPassword())) {
-            return;
-        }
-
-        if (state.collaboration.active) {
-            const activeLabel = state.collaboration.mode === "host"
-                ? `Hosting with key '${state.collaboration.sessionCode}'.`
-                : `Joined with key '${state.collaboration.sessionCode}'.`;
-            const result = await showChoiceMessage(activeLabel, "Collaboration", [
-                { label: state.collaboration.mode === "host" ? "Show Key" : "Close", value: "show", primary: true },
-                { label: "Disconnect", value: "disconnect", secondary: true },
-                { label: "Cancel", value: "cancel", secondary: true }
-            ]);
-            if (result === "show" && state.collaboration.mode === "host") {
-                await showHostKeyDialog(state.collaboration.sessionCode);
-                return;
-            }
-            if (result === "disconnect") {
-                stopCollaboration();
-                refreshUI();
-            }
-            return;
-        }
-
-        const mode = await showChoiceMessage("Choose collaboration mode.", "Collaboration", [
-            { label: "Host", value: "host", primary: true },
-            { label: "Join", value: "join", secondary: true },
-            { label: "Cancel", value: "cancel", secondary: true }
-        ]);
-        if (mode === "host") {
-            const sessionCode = createCollaborationCode();
-            if (await startCollaboration({ sessionCode, mode: "host" })) {
-                await showHostKeyDialog(sessionCode);
-            }
-        } else if (mode === "join") {
-            const sessionCode = await showJoinKeyDialog(getCollaborationCodeFromUrl());
-            if (sessionCode) {
-                await startCollaboration({ sessionCode, mode: "join" });
-            }
-        }
-    }
-
-    async function runStartupPasswordFlow() {
-        if (!(await ensureStartupPassword())) {
-            return;
-        }
-        const sessionCode = getCollaborationCodeFromUrl();
-        if (!sessionCode) {
-            return;
-        }
-        await startCollaboration({ sessionCode, mode: "join" });
-    }
-
-    function ensureStartupPassword() {
-        if (state.collaboration.password) {
-            return Promise.resolve(true);
-        }
-        return showStartupPasswordDialog();
-    }
-
-    function showStartupPasswordDialog() {
-        const form = document.createElement("form");
-        form.className = "dialog";
-        form.innerHTML = `
-            <div class="dialog-body">
-                <div class="dialog-title">Camp Tent Planner</div>
-                <label>Password:</label>
-                <input name="password" type="password" autocomplete="current-password">
-                <div class="dialog-error" aria-live="polite"></div>
-                <div class="dialog-actions">
-                    <button class="primary" type="submit">Open</button>
-                </div>
-            </div>`;
-        return new Promise(resolve => {
-            mountModal(form);
-            const input = form.elements.password;
-            const error = form.querySelector(".dialog-error");
-            setTimeout(() => input.focus(), 0);
-            form.addEventListener("submit", event => {
-                event.preventDefault();
-                const password = input.value;
-                if (!password) {
-                    error.textContent = "Please enter a password.";
-                    return;
-                }
-                state.collaboration.password = password;
-                closeModal();
-                resolve(true);
-            });
-        });
-    }
-
-    function showJoinKeyDialog(sessionCode = "") {
-        const form = document.createElement("form");
-        form.className = "dialog";
-        form.innerHTML = `
-            <div class="dialog-body">
-                <div class="dialog-title">Join Collaboration</div>
-                <label>Join Key:</label>
-                <input name="sessionCode" type="text" autocomplete="off" value="${escapeAttribute(sessionCode || "")}">
-                <div class="dialog-error" aria-live="polite"></div>
-                <div class="dialog-actions">
-                    <button class="primary" type="submit">Join</button>
-                    <button class="secondary" type="button" data-cancel>Cancel</button>
-                </div>
-            </div>`;
-        return new Promise(resolve => {
-            mountModal(form);
-            const input = form.elements.sessionCode;
-            const error = form.querySelector(".dialog-error");
-            setTimeout(() => {
-                input.focus();
-                input.select();
-            }, 0);
-            form.addEventListener("submit", event => {
-                event.preventDefault();
-                const enteredSessionCode = input.value.trim();
-                if (!enteredSessionCode) {
-                    error.textContent = "Please enter a join key.";
-                    return;
-                }
-                closeModal();
-                resolve(enteredSessionCode);
-            });
-            form.querySelector("[data-cancel]").addEventListener("click", () => {
-                closeModal();
-                resolve(null);
-            });
-        });
-    }
-
-    function showHostKeyDialog(sessionCode) {
-        const form = document.createElement("form");
-        form.className = "dialog";
-        form.innerHTML = `
-            <div class="dialog-body">
-                <div class="dialog-title">Host Collaboration</div>
-                <label>Host Key:</label>
-                <input name="sessionCode" type="text" readonly value="${escapeAttribute(sessionCode)}">
-                <div class="dialog-actions">
-                    <button class="primary" type="button" data-copy>Copy Key</button>
-                    <button class="secondary" type="submit">Close</button>
-                </div>
-            </div>`;
-        return new Promise(resolve => {
-            mountModal(form);
-            const input = form.elements.sessionCode;
-            setTimeout(() => {
-                input.focus();
-                input.select();
-            }, 0);
-            form.addEventListener("submit", event => {
-                event.preventDefault();
-                closeModal();
-                resolve();
-            });
-            form.querySelector("[data-copy]").addEventListener("click", async () => {
-                input.select();
-                try {
-                    await navigator.clipboard?.writeText(sessionCode);
-                } catch {
-                    document.execCommand?.("copy");
-                }
-            });
-        });
-    }
-
-    async function startCollaboration(details) {
-        if (!state.collaboration.password && !(await ensureStartupPassword())) {
-            return false;
-        }
-        if (!("BroadcastChannel" in window)) {
-            showMessage("This browser does not support collaboration in this app.", "Collaboration");
-            return false;
-        }
-
-        stopCollaboration(false);
-        const roomName = await getCollaborationRoomName(details.sessionCode, state.collaboration.password);
-        const channel = new BroadcastChannel(roomName);
-        state.collaboration.active = true;
-        state.collaboration.sessionCode = details.sessionCode;
-        state.collaboration.mode = details.mode || "join";
-        state.collaboration.roomName = roomName;
-        state.collaboration.revision = 0;
-        state.collaboration.channel = channel;
-        state.collaboration.receivedInitialSnapshot = false;
-        channel.onmessage = event => {
-            handleCollaborationMessage(event.data).catch(error => {
-                console.warn("Collaboration update failed:", error);
-            });
-        };
-
-        setCollaborationUrl(details.sessionCode);
-        refreshUI();
-        channel.postMessage({
-            type: "requestSnapshot",
-            clientId: state.collaboration.clientId,
-            sentAt: Date.now()
-        });
-        setTimeout(() => {
-            if (state.collaboration.active &&
-                state.collaboration.roomName === roomName &&
-                !state.collaboration.receivedInitialSnapshot &&
-                state.collaboration.mode === "host") {
-                sendCollaborationSnapshot("initial", true);
-            }
-        }, 750);
-        return true;
-    }
-
-    function stopCollaboration(updateUrl = true) {
-        if (state.collaboration.channel) {
-            state.collaboration.channel.close();
-        }
-        state.collaboration.active = false;
-        state.collaboration.sessionCode = "";
-        state.collaboration.mode = "";
-        state.collaboration.roomName = "";
-        state.collaboration.revision = 0;
-        state.collaboration.channel = null;
-        state.collaboration.applyingRemote = false;
-        state.collaboration.receivedInitialSnapshot = false;
-        if (updateUrl) {
-            clearCollaborationUrl();
-        }
-    }
-
-    async function handleCollaborationMessage(message) {
-        if (!message || message.clientId === state.collaboration.clientId || !state.collaboration.active) {
-            return;
-        }
-
-        if (message.type === "requestSnapshot") {
-            sendCollaborationSnapshot("response", true);
-            return;
-        }
-
-        if (message.type !== "snapshot" || typeof message.projectJson !== "string") {
-            return;
-        }
-
-        const incomingRevision = Number(message.revision) || 0;
-        if (incomingRevision <= state.collaboration.revision) {
-            return;
-        }
-
-        applyCollaborationSnapshot(message.projectJson, incomingRevision);
-    }
-
-    function applyCollaborationSnapshot(projectJson, revision) {
-        const before = captureProjectSnapshot();
-        const incomingProject = deserializeProject(projectJson);
-        state.collaboration.applyingRemote = true;
-        try {
-            state.project = incomingProject;
-            state.selectedTentIds.clear();
-            const after = captureProjectSnapshot();
-            if (before !== after) {
-                state.undoStack.push(before);
-                trimStack(state.undoStack);
-                state.redoStack.length = 0;
-                state.isDirty = true;
-            }
-            state.lastSnapshot = after;
-            state.collaboration.revision = revision;
-            state.collaboration.receivedInitialSnapshot = true;
-            refreshUI();
-        } finally {
-            state.collaboration.applyingRemote = false;
-        }
-    }
-
-    function sendCollaborationSnapshot(reason, keepRevision = false) {
-        const collaboration = state.collaboration;
-        if (!collaboration.active || !collaboration.channel || collaboration.applyingRemote) {
-            return;
-        }
-        if (!keepRevision || collaboration.revision <= 0) {
-            collaboration.revision = Math.max(Date.now(), collaboration.revision + 1);
-        }
-        collaboration.channel.postMessage({
-            type: "snapshot",
-            clientId: collaboration.clientId,
-            revision: collaboration.revision,
-            reason,
-            projectJson: captureProjectSnapshot()
-        });
     }
 
     async function actionSave(forceSaveAs) {
@@ -3451,82 +3126,6 @@
     function sanitizeFileNamePart(value, fallback = "Camp") {
         const clean = String(value ?? fallback).replace(/[<>:"/\\|?*\x00-\x1f]/g, "_").trim();
         return clean || fallback;
-    }
-
-    function createCollaborationCode() {
-        const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        const bytes = new Uint8Array(6);
-        if (globalThis.crypto?.getRandomValues) {
-            globalThis.crypto.getRandomValues(bytes);
-        } else {
-            for (let i = 0; i < bytes.length; i++) {
-                bytes[i] = Math.floor(Math.random() * 256);
-            }
-        }
-        return [...bytes].map(value => alphabet[value % alphabet.length]).join("");
-    }
-
-    function getCollaborationCodeFromUrl() {
-        const rawHash = location.hash.replace(/^#/, "");
-        if (!rawHash) {
-            return "";
-        }
-        const hash = safeDecodeURIComponent(rawHash).trim();
-        if (!hash) {
-            return "";
-        }
-        if (!hash.includes("=")) {
-            return hash;
-        }
-        const params = new URLSearchParams(hash);
-        return (params.get("collab") || params.get("session") || "").trim();
-    }
-
-    async function getCollaborationRoomName(sessionCode, password) {
-        const value = `camp-tent-planner\n${sessionCode}\n${password}`;
-        if (globalThis.crypto?.subtle && globalThis.TextEncoder) {
-            const bytes = new TextEncoder().encode(value);
-            const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
-            return `camp-tent-planner:${bytesToBase64Url(new Uint8Array(digest))}`;
-        }
-        return `camp-tent-planner:${hashString(value)}`;
-    }
-
-    function bytesToBase64Url(bytes) {
-        let binary = "";
-        for (const byte of bytes) {
-            binary += String.fromCharCode(byte);
-        }
-        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-    }
-
-    function setCollaborationUrl(sessionCode) {
-        const hash = `collab=${encodeURIComponent(sessionCode)}`;
-        if (history.replaceState) {
-            history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`);
-        } else {
-            location.hash = hash;
-        }
-    }
-
-    function clearCollaborationUrl() {
-        const hash = safeDecodeURIComponent(location.hash.replace(/^#/, ""));
-        if (!hash.includes("collab=") && !hash.includes("session=")) {
-            return;
-        }
-        if (history.replaceState) {
-            history.replaceState(null, "", `${location.pathname}${location.search}`);
-        } else {
-            location.hash = "";
-        }
-    }
-
-    function safeDecodeURIComponent(value) {
-        try {
-            return decodeURIComponent(value);
-        } catch {
-            return value;
-        }
     }
 
     function normalizeHeader(value) {

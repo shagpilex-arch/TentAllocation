@@ -4,10 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camp Tent Planner</title>
-    <meta http-equiv="Cache-Control" content="no-store">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <link rel="stylesheet" href="app.css?v=20260527c">
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
     <div id="app" class="app-shell">
@@ -18,8 +15,6 @@
                     <ul class="menu-dropdown">
                         <li><button type="button" data-action="new">New</button></li>
                         <li><button type="button" data-action="open">Open</button></li>
-                        <li><button type="button" data-action="collaboration">Collaboration...</button></li>
-                        <li class="separator"></li>
                         <li><button type="button" data-action="save"><span>Save</span><span class="gesture">Ctrl+S</span></button></li>
                         <li><button type="button" data-action="save-as">Save As...</button></li>
                         <li class="separator"></li>
@@ -97,7 +92,6 @@
                     <button type="button" class="tool-button foe-link" data-action="add-foe">Foe Link</button>
                     <span class="toolbar-divider"></span>
                     <button type="button" class="tool-button export" data-action="make-table">Export</button>
-                    <button type="button" class="tool-button collaboration" data-action="collaboration">Collaboration</button>
                 </div>
 
                 <div id="canvasScroll" class="canvas-scroll">
@@ -121,7 +115,6 @@
                     <div id="campNameLabel" class="camp-name-label"></div>
                     <div id="campDateLabel" class="camp-date-label"></div>
                     <button type="button" class="edit-camp-button" data-action="edit-camp">Edit Camp</button>
-                    <div id="collaborationStatus" class="collaboration-status">Collaboration: Off</div>
 
                     <hr>
                     <h2>Statistics</h2>
@@ -153,6 +146,6 @@
     <div id="contextMenu" class="context-menu" hidden></div>
     <input id="openFileInput" type="file" accept=".camp,.json,application/json" hidden>
     <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden>
-    <script src="app.js?v=20260527c"></script>
+    <script src="app.js"></script>
 </body>
 </html>
