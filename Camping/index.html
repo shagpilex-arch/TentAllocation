@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#2e733b">
+    <title>Scout Camp Planner</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <header class="topbar">
+            <div class="topbar-main">
+                <button id="navToggle" class="icon-button" type="button" aria-label="Toggle navigation">☰</button>
+                <div class="brand">
+                    <div class="brand-title">Camp Planner</div>
+                    <div id="dirtyBadge" class="brand-subtitle">Ready</div>
+                </div>
+                <div id="summaryPill" class="summary-pill"></div>
+            </div>
+            <nav class="menu-strip" aria-label="Application menu">
+                <button data-menu="file" type="button">File</button>
+                <button data-menu="edit" type="button">Edit</button>
+                <button data-menu="section" type="button" id="sectionMenuButton">Overview</button>
+                <button data-menu="export" type="button">Export</button>
+                <button data-menu="help" type="button">Help</button>
+            </nav>
+            <div id="commandStrip" class="command-strip" aria-label="Section commands"></div>
+        </header>
+
+        <div class="workspace">
+            <aside id="sideNav" class="side-nav" aria-label="Sections"></aside>
+            <main id="mainContent" class="main-content" tabindex="-1"></main>
+        </div>
+
+        <footer class="statusbar">
+            <span id="statusText">Ready.</span>
+            <span id="collabBadge" class="collab-badge hidden"></span>
+        </footer>
+    </div>
+
+    <div id="modalHost" class="modal-host hidden" role="presentation"></div>
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+    <input id="fallbackFileInput" class="hidden" type="file">
+    <script src="app.js"></script>
+</body>
+</html>
