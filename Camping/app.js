@@ -207,7 +207,126 @@
         pendingFiles: new Map()
     };
 
-    function $(selector, root = document) {
+    // ── Language / translation ────────────────────────────────────────────────
+
+    const LANG_DICTS = {
+        es: {
+            "Overview": "Resumen",
+            "Personnel": "Personal",
+            "Tent Allocation": "Asignación de tiendas",
+            "Chores": "Tareas",
+            "Menu": "Menú",
+            "The Plan": "El Plan",
+            "Kit List (group)": "Lista de equipo (grupo)",
+            "Kit List (Participant)": "Lista de equipo (participante)",
+            "Shopping List": "Lista de compras",
+            "Exports": "Exportaciones",
+            "Camp details": "Detalles del campamento",
+            "People & teams": "Personas y equipos",
+            "Sleeping plan": "Plan de alojamiento",
+            "Rota jobs": "Tareas de turno",
+            "Meals & diets": "Comidas y dietas",
+            "Daily timeline": "Cronograma diario",
+            "Stores kit": "Equipamiento general",
+            "Personal kit": "Equipamiento personal",
+            "Buying lists": "Listas de compra",
+            "Print & share": "Imprimir y compartir",
+            "Add person": "Añadir persona",
+            "Add team": "Añadir equipo",
+            "Add tent": "Añadir tienda",
+            "Add item": "Añadir artículo",
+            "Add meal": "Añadir comida",
+            "Save": "Guardar",
+            "Cancel": "Cancelar",
+            "Remove": "Eliminar",
+            "Edit": "Editar",
+            "Name": "Nombre",
+            "Notes": "Notas",
+            "Date": "Fecha",
+            "Ready": "Listo",
+            "Unsaved changes": "Cambios sin guardar",
+            "No location set": "Sin ubicación",
+            "people": "personas",
+            "tents": "tiendas",
+            "meals": "comidas",
+            "group kit": "equipo grupal",
+            "participant kit": "equipo personal",
+            "Breakfast": "Desayuno",
+            "Dinner": "Almuerzo",
+            "Tea": "Cena",
+            "Extra": "Extra",
+            "Camper": "Campista",
+            "Young Leader": "Joven Líder",
+            "Adult": "Adulto",
+            "Male": "Masculino",
+            "Female": "Femenino",
+            "Other": "Otro",
+            "Not set": "No definido"
+        },
+        fr: {
+            "Overview": "Vue d'ensemble",
+            "Personnel": "Personnel",
+            "Tent Allocation": "Attribution des tentes",
+            "Chores": "Corvées",
+            "Menu": "Menu",
+            "The Plan": "Le Programme",
+            "Kit List (group)": "Liste d'équipement (groupe)",
+            "Kit List (Participant)": "Liste d'équipement (participant)",
+            "Shopping List": "Liste de courses",
+            "Exports": "Exportations",
+            "Camp details": "Détails du camp",
+            "People & teams": "Personnes et équipes",
+            "Sleeping plan": "Plan de couchage",
+            "Rota jobs": "Tâches de permanence",
+            "Meals & diets": "Repas et régimes",
+            "Daily timeline": "Programme journalier",
+            "Stores kit": "Matériel collectif",
+            "Personal kit": "Matériel personnel",
+            "Buying lists": "Listes d'achats",
+            "Print & share": "Imprimer et partager",
+            "Add person": "Ajouter une personne",
+            "Add team": "Ajouter une équipe",
+            "Add tent": "Ajouter une tente",
+            "Add item": "Ajouter un article",
+            "Add meal": "Ajouter un repas",
+            "Save": "Enregistrer",
+            "Cancel": "Annuler",
+            "Remove": "Supprimer",
+            "Edit": "Modifier",
+            "Name": "Nom",
+            "Notes": "Notes",
+            "Date": "Date",
+            "Ready": "Prêt",
+            "Unsaved changes": "Modifications non enregistrées",
+            "No location set": "Aucun lieu défini",
+            "people": "personnes",
+            "tents": "tentes",
+            "meals": "repas",
+            "group kit": "équipement collectif",
+            "participant kit": "équipement personnel",
+            "Breakfast": "Petit-déjeuner",
+            "Dinner": "Déjeuner",
+            "Tea": "Dîner",
+            "Extra": "Supplément",
+            "Camper": "Campeur",
+            "Young Leader": "Jeune Responsable",
+            "Adult": "Adulte",
+            "Male": "Masculin",
+            "Female": "Féminin",
+            "Other": "Autre",
+            "Not set": "Non défini"
+        }
+    };
+
+    function L(key) {
+        const lang = State.project?.languageCode;
+        if (!lang || lang === TERMS.languageEnglish) return key;
+        return LANG_DICTS[lang]?.[key] ?? key;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
+        function $(selector, root = document) {
         return root.querySelector(selector);
     }
 
@@ -1238,31 +1357,56 @@
     function renderNav() {
         const nav = $("#sideNav");
         nav.classList.toggle("collapsed", State.navCollapsed);
-        nav.innerHTML = SECTIONS.map(section => `
+        // Keep the toggle row at the top, replace everything after it
+        const toggleRow = nav.querySelector(".nav-toggle-row");
+        nav.innerHTML = "";
+        if (toggleRow) nav.appendChild(toggleRow);
+        const frag = document.createElement("div");
+        frag.innerHTML = SECTIONS.map(section => `
             <button class="nav-item ${section.id === State.currentSection ? "active" : ""}" data-action="switchSection" data-section="${section.id}" type="button">
                 <span class="nav-icon">${h(section.icon)}</span>
                 <span class="nav-copy">
-                    <span class="nav-title">${h(section.title)}</span>
-                    <span class="nav-subtitle">${h(section.subtitle)}</span>
+                    <span class="nav-title">${h(L(section.title))}</span>
+                    <span class="nav-subtitle">${h(L(section.subtitle))}</span>
                 </span>
             </button>
         `).join("");
+        while (frag.firstChild) nav.appendChild(frag.firstChild);
     }
 
     function renderShell() {
         const project = State.project;
         $("#summaryPill").textContent = `${project.campName} | ${dateRange(project)} | ${project.location || "No location set"} | ${project.people.length} people | ${project.tents.length} tents | ${activeMenuItems(project)} meals | ${groupKit().length} group kit | ${participantKit().length} participant kit`;
-        $("#sectionMenuButton").textContent = SECTION_TITLES[State.currentSection] || "Section";
         $("#dirtyBadge").textContent = State.dirty ? "Unsaved changes" : "Ready";
         const badge = $("#collabBadge");
         badge.classList.toggle("hidden", !State.collab.active);
         badge.textContent = State.collab.active ? `Collaborating: ${State.collab.code}` : "";
-        renderCommandStrip();
+        renderTopbarStrip();
+    }
+
+    function renderTopbarStrip() {
+        const menuItems = [
+            { label: "File", menu: "file" },
+            { label: "Edit", menu: "edit" },
+            { label: L(SECTION_TITLES[State.currentSection] || "Section"), menu: "section" },
+            { label: "Export", menu: "export" },
+            { label: "Help", menu: "help" }
+        ];
+        const commands = sectionCommands(State.currentSection);
+        const menuHtml = menuItems.map(m =>
+            `<button data-menu="${attr(m.menu)}" type="button">${h(m.label)}</button>`
+        ).join("");
+        const divider = commands.length ? '<div class="strip-divider" aria-hidden="true"></div>' : "";
+        const cmdHtml = commands.map(c => {
+            const style = c.style ? ` ${c.style}` : "";
+            const data = Object.entries(c.data || {}).map(([k, v]) => ` data-${k}="${attr(v)}"`).join("");
+            return `<button class="cmd-btn${style}" data-action="${attr(c.action)}"${data} type="button">${h(c.label)}</button>`;
+        }).join("");
+        $("#topbarStrip").innerHTML = menuHtml + divider + cmdHtml;
     }
 
     function renderCommandStrip() {
-        const commands = sectionCommands(State.currentSection);
-        $("#commandStrip").innerHTML = commands.map(commandButton).join("");
+        // Commands are now rendered inside renderTopbarStrip; this is kept for compatibility.
     }
 
     function commandButton(command) {
@@ -4362,149 +4506,350 @@
     }
 
     function addExportOverview(lines) {
-        lines.push({ text: "Overview", size: 15, bold: true });
-        lines.push({ text: `Camp: ${State.project.campName}` });
+        lines.push({ text: "Overview", size: 15 });
+        lines.push({ text: `Camp: ${State.project.campName}`, bold: true, size: 10 });
         lines.push({ text: `Dates: ${dateRange(State.project)}` });
         lines.push({ text: `Location: ${State.project.location || "Not set"}` });
-        lines.push({ text: `People: ${participantCount()} | Tents: ${State.project.tents.length} | Meals: ${activeMenuItems()} | Group kit: ${groupKit().length} | Participant kit: ${participantKit().length}` });
-        if (State.project.notes) lines.push({ text: `Notes: ${State.project.notes}` });
-        [...buildTentWarnings(State.project), ...buildMenuWarnings(State.project)].forEach(warning => lines.push({ text: warning, color: "red" }));
+        lines.push({ text: `People: ${participantCount()}  ·  Tents: ${State.project.tents.length}  ·  Meals: ${activeMenuItems()}  ·  Group kit: ${groupKit().length}  ·  Participant kit: ${participantKit().length}` });
+        if (State.project.notes) {
+            lines.push({ text: "Notes", heading: true });
+            lines.push({ text: State.project.notes });
+        }
+        const warnings = [...buildTentWarnings(State.project), ...buildMenuWarnings(State.project)];
+        if (warnings.length) {
+            lines.push({ text: "Warnings", heading: true, color: "red" });
+            warnings.forEach(w => lines.push({ text: `⚠ ${w}`, color: "red" }));
+        }
     }
 
     function addExportPeople(lines) {
-        lines.push({ text: "Personnel", size: 15, bold: true });
-        if (!State.project.people.length) lines.push({ text: "No people have been added." });
+        lines.push({ text: "Personnel", size: 15 });
+        if (!State.project.people.length) {
+            lines.push({ text: "No people have been added." });
+            return;
+        }
+        // Group by type
+        const byType = {};
         orderedPeople().forEach(person => {
-            lines.push({ text: `${person.name} - ${personRoleText(person)} | ${person.gender} | ${tentName(person.tentId) || "No tent"}${person.dietaryNotes ? " | Food: " + person.dietaryNotes : ""}${person.medicalNotes ? " | Medical: " + person.medicalNotes : ""}` });
+            const role = personRoleText(person);
+            (byType[role] = byType[role] || []).push(person);
         });
-        State.project.choreTeams.forEach(team => lines.push({ text: `Team: ${team.name} - ${peopleForTeam(team.id).map(person => person.name).join(", ") || "No members"}` }));
+        Object.entries(byType).forEach(([role, people]) => {
+            lines.push({ text: role, heading: true });
+            people.forEach(person => {
+                const tent = tentName(person.tentId) || "No tent";
+                const diet = person.dietaryNotes ? `  Diet: ${person.dietaryNotes}` : "";
+                const med  = person.medicalNotes  ? `  Medical: ${person.medicalNotes}` : "";
+                lines.push({ text: `${person.name}  (${person.gender !== "Not set" ? person.gender + ", " : ""}${tent})${diet}${med}` });
+            });
+        });
+        if (State.project.choreTeams.length) {
+            lines.push({ text: "Teams", heading: true });
+            State.project.choreTeams.forEach(team => {
+                lines.push({ text: `${team.name}: ${peopleForTeam(team.id).map(p => p.name).join(", ") || "No members"}` });
+            });
+        }
     }
 
     function addExportTents(lines) {
-        lines.push({ text: "Tent Allocation", size: 15, bold: true });
-        State.project.tents.forEach(tent => lines.push({ text: `${tent.name} - ${tent.type} | Capacity ${tent.capacity} | ${orderedPeople().filter(person => person.tentId === tent.id).map(person => person.name).join(", ") || "None"}` }));
-        State.project.siteItems.forEach(item => lines.push({ text: `Site item: ${item.name} (${item.type})` }));
+        lines.push({ text: "Tent Allocation", size: 15 });
+        if (!State.project.tents.length) {
+            lines.push({ text: "No tents added." });
+            return;
+        }
+        State.project.tents.forEach(tent => {
+            const occupants = orderedPeople().filter(p => p.tentId === tent.id);
+            lines.push({ text: `${tent.name}  –  ${tent.type}  ·  Capacity: ${tent.capacity}`, heading: true });
+            if (occupants.length) {
+                occupants.forEach((p, i) => lines.push({ text: `  ${i + 1}. ${p.name}  (${personRoleText(p)})` }));
+            } else {
+                lines.push({ text: "  No occupants allocated." });
+            }
+        });
+        const unallocated = orderedPeople().filter(p => !p.tentId);
+        if (unallocated.length) {
+            lines.push({ text: "Unallocated people", heading: true, color: "red" });
+            unallocated.forEach(p => lines.push({ text: p.name, color: "red" }));
+        }
+        if (State.project.siteItems.length) {
+            lines.push({ text: "Site items", heading: true });
+            State.project.siteItems.forEach(item => lines.push({ text: `${item.name}  (${item.type})` }));
+        }
     }
 
     function addExportMenu(lines, kitchen) {
-        lines.push({ text: kitchen ? "Kitchen menu" : "Camp Menu", size: 15, bold: true });
-        const dietary = State.project.people.filter(person => person.dietaryNotes);
-        if (kitchen && dietary.length) {
-            lines.push({ text: "People with dietary notes", bold: true, color: "red" });
-            dietary.forEach(person => lines.push({ text: `${person.name}: ${person.dietaryNotes}` }));
+        lines.push({ text: kitchen ? "Kitchen Menu" : "Camp Menu", size: 15 });
+        const dietary = State.project.people.filter(p => p.dietaryNotes);
+        if (dietary.length) {
+            lines.push({ text: "Dietary requirements", heading: true, color: kitchen ? "red" : null });
+            dietary.forEach(p => lines.push({ text: `${p.name}: ${p.dietaryNotes}`, color: kitchen ? "red" : null }));
         }
         enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
-            lines.push({ text: displayDate(date, true), bold: true });
-            const note = State.project.menuDayNotes.find(item => item.date === date);
-            if (note) lines.push({ text: `Day note: ${note.notes}` });
+            lines.push({ text: displayDate(date, true), heading: true });
+            const note = State.project.menuDayNotes.find(n => n.date === date);
+            if (note?.notes) lines.push({ text: `Day note: ${note.notes}` });
             activeMealSlots(State.project, date).forEach(slot => {
-                const items = State.project.menuItems.filter(item => item.date === date && item.slot === slot && hasMenuContent(item));
+                const items = State.project.menuItems.filter(i => i.date === date && i.slot === slot && hasMenuContent(i));
                 if (!items.length) {
-                    lines.push({ text: `${slot}: Not planned` });
+                    lines.push({ text: `  ${slot}: Not planned yet` });
                 } else {
-                    items.forEach(item => lines.push({ text: `${slot}: ${item.meal || "No food recorded"}${item.pudding ? " | Pudding: " + item.pudding : ""}${item.dietaryNotes ? " | Dietary: " + item.dietaryNotes : ""}${item.notes ? " | Notes: " + item.notes : ""}` }));
+                    items.forEach(item => {
+                        lines.push({ text: `  ${slot}: ${item.meal || "No food recorded"}${item.pudding ? "  ·  Pudding: " + item.pudding : ""}` });
+                        if (item.dietaryNotes) lines.push({ text: `    Dietary: ${item.dietaryNotes}` });
+                        if (item.notes) lines.push({ text: `    Notes: ${item.notes}` });
+                    });
                 }
             });
         });
     }
 
     function addExportPlan(lines) {
-        lines.push({ text: "The Plan", size: 15, bold: true });
+        lines.push({ text: "The Plan", size: 15 });
         enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
-            lines.push({ text: displayDate(date, true), bold: true });
-            const items = State.project.planItems.filter(item => item.date === date).sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
-            if (!items.length) lines.push({ text: "No plan items." });
-            items.forEach(item => lines.push({ text: `${planTime(item.startMinute)}-${planTime(item.endMinute)} ${item.title} - ${planAudienceText(item)}${item.notes ? " | " + item.notes : ""}` }));
+            lines.push({ text: displayDate(date, true), heading: true });
+            const items = State.project.planItems.filter(i => i.date === date).sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
+            if (!items.length) {
+                lines.push({ text: "  No items planned for this day." });
+            } else {
+                items.forEach(item => {
+                    lines.push({ text: `  ${planTime(item.startMinute)} – ${planTime(item.endMinute)}  ${item.title}` });
+                    lines.push({ text: `    ${planAudienceText(item)}${item.notes ? "  ·  " + item.notes : ""}` });
+                });
+            }
         });
     }
 
     function addExportKit(lines, participant) {
         const items = participant === null ? State.project.kitItems : participant ? participantKit() : groupKit();
-        lines.push({ text: participant === null ? "Kit list" : participant ? "Participant kit" : "Group kit", size: 15, bold: true });
-        if (!items.length) lines.push({ text: "No kit items." });
-        items.forEach(item => lines.push({ text: `[ ] ${item.name} - Qty ${formatQty(item.quantity)}${participant ? "" : " | " + item.status}${item.notes ? " | " + item.notes : ""}` }));
+        lines.push({ text: participant === null ? "Kit List" : participant ? "Participant Kit" : "Group Kit", size: 15 });
+        if (!items.length) {
+            lines.push({ text: "No kit items recorded." });
+            return;
+        }
+        // Group by category
+        const cats = {};
+        items.forEach(item => { (cats[item.category || "General"] = cats[item.category || "General"] || []).push(item); });
+        Object.entries(cats).forEach(([cat, catItems]) => {
+            lines.push({ text: cat, heading: true });
+            catItems.forEach(item => {
+                const status = participant ? "" : `  [${item.status}]`;
+                const qty = item.quantity !== undefined ? `  Qty: ${formatQty(item.quantity)}` : "";
+                const notes = item.notes ? `  – ${item.notes}` : "";
+                lines.push({ text: `  ☐  ${item.name}${qty}${status}${notes}` });
+            });
+        });
     }
 
     function addExportChores(lines) {
-        lines.push({ text: "Chores", size: 15, bold: true });
+        lines.push({ text: "Chore Rota", size: 15 });
         enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
-            lines.push({ text: displayDate(date, true), bold: true });
+            lines.push({ text: displayDate(date, true), heading: true });
             State.project.choreSessions.forEach(session => {
-                const allocations = State.project.choreAllocations.filter(allocation => allocation.date === date && allocation.session === session);
-                if (!allocations.length) {
-                    lines.push({ text: `${session}: no allocations` });
-                } else {
-                    allocations.forEach(allocation => lines.push({ text: `${session}: ${choreName(allocation.choreItemId)} - ${choreAllocationAssigneeNames(allocation)}${allocation.notes ? " | " + allocation.notes : ""}` }));
+                const allocations = State.project.choreAllocations.filter(a => a.date === date && a.session === session);
+                if (allocations.length) {
+                    lines.push({ text: `  ${session}`, bold: true, size: 9 });
+                    allocations.forEach(a => {
+                        lines.push({ text: `    ${choreName(a.choreItemId)}: ${choreAllocationAssigneeNames(a)}${a.notes ? "  ·  " + a.notes : ""}` });
+                    });
                 }
             });
         });
     }
 
     function addExportShopping(lines) {
-        lines.push({ text: "Shopping lists", size: 15, bold: true });
-        if (!State.project.shoppingLists.length) lines.push({ text: "No shopping lists have been added." });
+        lines.push({ text: "Shopping Lists", size: 15 });
+        if (!State.project.shoppingLists?.length) {
+            lines.push({ text: "No shopping lists have been added." });
+            return;
+        }
         State.project.shoppingLists.forEach(listItem => {
-            lines.push({ text: listItem.name, bold: true });
-            listItem.items.filter(item => item.name).forEach(item => lines.push({ text: `[ ] ${item.name} - Qty ${formatQty(item.quantity)}` }));
+            lines.push({ text: listItem.name, heading: true });
+            const shopItems = listItem.items?.filter(i => i.name) || [];
+            if (!shopItems.length) {
+                lines.push({ text: "  No items in this list." });
+            } else {
+                shopItems.forEach(item => lines.push({ text: `  ☐  ${item.name}  ×${formatQty(item.quantity)}` }));
+            }
         });
     }
 
     async function savePdf(fileName, title, lines) {
-        const pdf = new SimplePdf(title, State.project);
-        lines.forEach(line => pdf.addText(line.text, line));
+        const pdf = new ScoutPdf(title, State.project);
+        lines.forEach(line => {
+            if (line.section) {
+                pdf.addSectionBanner(line.text);
+            } else if (line.size >= 15) {
+                pdf.addSectionBanner(line.text);
+            } else if (line.size >= 12 || line.heading) {
+                pdf.addSubHeading(line.text, line.color);
+            } else {
+                pdf.addText(line.text, line);
+            }
+        });
         await saveBytesFile(`${safeFileName(State.project.campName)}-${fileName}`, "application/pdf", pdf.bytes());
     }
 
-    class SimplePdf {
+    // Full-featured themed PDF builder
+    class ScoutPdf {
         constructor(title, project) {
-            this.width = 595;
-            this.height = 842;
-            this.margin = 42;
-            this.pages = [[]];
-            this.y = this.margin;
-            this.addText(project.campName, { size: 18, bold: true, color: "green" });
-            this.addText(`${title} | ${dateRange(project)}${project.location ? " - " + project.location : ""}`, { size: 10 });
-            this.y += 12;
+            this.W = 595;
+            this.H = 842;
+            this.ML = 42;   // margin left
+            this.MR = 42;   // margin right
+            this.MT = 42;   // margin top
+            this.MB = 48;   // margin bottom (footer space)
+            this.pageObjs = [];     // array of page content string arrays
+            this.rects   = [];      // separate array for filled rects per page
+            this.currentPage = -1;
+            this.y = this.MT;
+            this._addNewPage();
+            // Cover / title header band
+            this._rect(0, 0, this.W, 54, "green-dark");
+            this._text(project.campName, this.ML, 22, 18, true, "white");
+            const subtitle = `${title}  ·  ${dateRange(project)}${project.location ? "  ·  " + project.location : ""}`;
+            this._text(subtitle, this.ML, 38, 9, false, "white");
+            // thin accent line
+            this._rect(0, 54, this.W, 3, "green-light");
+            this.y = 68;
         }
-        page() { return this.pages[this.pages.length - 1]; }
-        addPage() { this.pages.push([]); this.y = this.margin; }
+
+        textWidth() { return this.W - this.ML - this.MR; }
+
+        _addNewPage() {
+            this.currentPage++;
+            this.pageObjs.push([]);
+            this.rects.push([]);
+            this.y = this.MT;
+            // Footer stripe on every page
+            this._rect(0, this.H - 30, this.W, 30, "green-dark");
+            this._text(`Scout Camp Planner`, this.ML, this.H - 14, 8, false, "white");
+        }
+
+        _page() { return this.pageObjs[this.currentPage]; }
+        _pageRects() { return this.rects[this.currentPage]; }
+
+        _needSpace(h) {
+            if (this.y + h > this.H - this.MB) {
+                this._addNewPage();
+                this.y = this.MT;
+            }
+        }
+
+        _rect(x, y, w, h, colorKey) {
+            this._pageRects().push({ x, y, w, h, colorKey });
+        }
+
+        _text(text, x, y, size, bold, colorKey) {
+            this._page().push({ x, y, text: pdfEscape(String(text ?? "")), size, bold: Boolean(bold), colorKey: colorKey || "black" });
+        }
+
+        addSectionBanner(text) {
+            this._needSpace(26);
+            if (this.y > this.MT + 8) this.y += 4;
+            this._rect(this.ML - 8, this.y - 14, this.W - this.ML - this.MR + 16, 22, "green-mid");
+            this._text(text, this.ML, this.y, 11, true, "white");
+            this.y += 14;
+            this._rect(this.ML - 8, this.y, this.W - this.ML - this.MR + 16, 1, "green-light");
+            this.y += 9;
+        }
+
+        addSubHeading(text, colorHint) {
+            this._needSpace(20);
+            this.y += 4;
+            const col = colorHint === "red" ? "red" : "green-dark";
+            this._text(text, this.ML, this.y, 10, true, col);
+            this.y += 14;
+        }
+
         addText(text, options = {}) {
             const size = options.size || 9;
-            const width = this.width - this.margin * 2;
-            wrapText(String(text ?? ""), Math.max(20, Math.floor(width / (size * 0.52)))).forEach(line => {
-                if (this.y > this.height - this.margin) this.addPage();
-                this.page().push({ x: this.margin, y: this.y, text: line, size, bold: Boolean(options.bold), color: options.color || "black" });
-                this.y += size + 6;
-            });
-            if (options.size >= 15) this.y += 4;
+            const col  = options.color === "red" ? "red" : "black";
+            const chars = Math.max(20, Math.floor(this.textWidth() / (size * 0.50)));
+            const wrapped = wrapText(String(text ?? ""), chars);
+            for (const line of wrapped) {
+                this._needSpace(size + 5);
+                this._text(line, this.ML, this.y, size, Boolean(options.bold), col);
+                this.y += size + 5;
+            }
         }
+
+        addBlankLine() { this.y += 6; }
+
         bytes() {
-            const objects = [
-                "<< /Type /Catalog /Pages 2 0 R >>",
-                `<< /Type /Pages /Kids [${this.pages.map((_, index) => `${3 + index * 2} 0 R`).join(" ")}] /Count ${this.pages.length} >>`
-            ];
-            this.pages.forEach((page, index) => {
-                const pageObjectId = 3 + index * 2;
-                const contentObjectId = pageObjectId + 1;
-                objects.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${this.width} ${this.height}] /Resources << /Font << /F1 ${3 + this.pages.length * 2} 0 R /F2 ${4 + this.pages.length * 2} 0 R >> >> /Contents ${contentObjectId} 0 R >>`);
-                const content = page.map(item => `BT /F${item.bold ? 2 : 1} ${fmt(item.size)} Tf ${pdfColor(item.color)} ${fmt(item.x)} ${fmt(this.height - item.y)} Td (${pdfEscape(item.text)}) Tj ET`).join("\n");
-                objects.push(`<< /Length ${asciiBytes(content).length} >>\nstream\n${content}\nendstream`);
-            });
-            objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
-            objects.push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
-            let output = "%PDF-1.4\n";
-            const offsets = [0];
-            objects.forEach((object, index) => {
-                offsets.push(asciiBytes(output).length);
-                output += `${index + 1} 0 obj\n${object}\nendobj\n`;
-            });
-            const xref = asciiBytes(output).length;
-            output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
-            offsets.slice(1).forEach(offset => output += `${String(offset).padStart(10, "0")} 00000 n \n`);
-            output += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
-            return asciiBytes(output);
+            const numPages = this.pageObjs.length;
+            // Object layout:
+            //  1 = Catalog
+            //  2 = Pages
+            //  3..2+numPages = Page objects (one per page)
+            //  3+numPages..2+numPages*2 = Content streams (one per page)
+            //  3+numPages*2 = /Helvetica
+            //  4+numPages*2 = /Helvetica-Bold
+            const fontReg  = 3 + numPages * 2;
+            const fontBold = 4 + numPages * 2;
+
+            const pdfColorStr = (key) => {
+                if (key === "green-dark")  return "0.122 0.333 0.180 rg";
+                if (key === "green-mid")   return "0.180 0.450 0.231 rg";
+                if (key === "green-light") return "0.604 0.800 0.392 rg";
+                if (key === "white")       return "1 1 1 rg";
+                if (key === "red")         return "0.72 0.16 0.16 rg";
+                return "0 0 0 rg";   // black
+            };
+            const pdfFillStr = (key) => pdfColorStr(key).replace(/ rg$/, " RG").replace(/ rg$/, " RG").replace(/rg/, "rg");
+
+            const objects = [];
+            const push = (s) => { objects.push(s); return objects.length; };
+
+            push("<< /Type /Catalog /Pages 2 0 R >>");  // obj 1
+            // Pages dict built after all page objects known
+            push("");   // placeholder obj 2
+
+            // Page objects and content streams
+            for (let pi = 0; pi < numPages; pi++) {
+                const pageId  = 3 + pi;
+                const contId  = 3 + numPages + pi;
+                push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources << /Font << /F1 ${fontReg} 0 R /F2 ${fontBold} 0 R >> >> /Contents ${contId} 0 R >>`);
+            }
+            // Content streams
+            for (let pi = 0; pi < numPages; pi++) {
+                const rects = this.rects[pi];
+                const texts = this.pageObjs[pi];
+                const parts = [];
+                // Draw rectangles first
+                for (const r of rects) {
+                    parts.push(`${pdfColorStr(r.colorKey)} ${fmt(r.x)} ${fmt(this.H - r.y - r.h)} ${fmt(r.w)} ${fmt(r.h)} re f`);
+                }
+                // Draw text
+                for (const t of texts) {
+                    parts.push(`BT /F${t.bold ? 2 : 1} ${fmt(t.size)} Tf ${pdfColorStr(t.colorKey)} ${fmt(t.x)} ${fmt(this.H - t.y)} Td (${t.text}) Tj ET`);
+                }
+                const content = parts.join("\n");
+                push(`<< /Length ${asciiBytes(content).length} >>\nstream\n${content}\nendstream`);
+            }
+            push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+            push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+            // Fix placeholder Pages dict
+            objects[1] = `<< /Type /Pages /Kids [${Array.from({ length: numPages }, (_, i) => `${3 + i} 0 R`).join(" ")}] /Count ${numPages} >>`;
+
+            let out = "%PDF-1.4\n";
+            const offsets = [];
+            for (let i = 0; i < objects.length; i++) {
+                offsets.push(asciiBytes(out).length);
+                out += `${i + 1} 0 obj\n${objects[i]}\nendobj\n`;
+            }
+            const xref = asciiBytes(out).length;
+            out += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+            for (const off of offsets) {
+                out += `${String(off).padStart(10, "0")} 00000 n \n`;
+            }
+            out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+            return asciiBytes(out);
         }
     }
+
+    // Keep SimplePdf as alias for backward compat
+    const SimplePdf = ScoutPdf;
 
     function wrapText(text, maxChars) {
         const lines = [];
@@ -4832,6 +5177,7 @@
     function setLanguage(language) {
         mutate("Updated language.", () => {
             State.project.languageCode = language;
+                render();
         });
         setStatus(`Language set to ${language}.`);
     }
