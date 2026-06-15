@@ -169,7 +169,7 @@
         ["participant-kit", "Kit List (Participant)", "Personal kit", "K"],
         ["shopping-list", "Shopping List", "Buying lists", "S"],
         ["exports", "Exports", "Print & share", "E"]
-    ].map(([id, title, subtitle, icon]) => ({ id, title, subtitle, icon }));
+    ].map(([id, title, subtitle, icon]) => ({ id, title, subtitle, icon, shortTitle: title.replace("Kit List (group)", "Group Kit").replace("Kit List (Participant)", "My Kit").replace("Shopping List", "Shopping").replace("The Plan", "Plan").replace("Tent Allocation", "Tents").replace("Personnel", "People").replace("Exports", "Export") }));
 
     const SECTION_TITLES = Object.fromEntries(SECTIONS.map(section => [section.id, section.title]));
     const TENT_CARD_WIDTH = 170;
@@ -202,7 +202,8 @@
             revision: 0,
             timer: null,
             uploadTimer: null,
-            applyingRemote: false
+            applyingRemote: false,
+            lastRemoteAt: 0
         },
         pendingFiles: new Map()
     };
@@ -773,6 +774,7 @@
                 item.id = clean(item.id, uid());
                 item.name = clean(item.name);
                 item.quantity = Math.max(0, number(item.quantity, 1));
+                item.checked = Boolean(item.checked);
             });
         });
     }
@@ -1250,15 +1252,33 @@
     }
 
     function bindGlobalEvents() {
-        $("#navToggle").addEventListener("click", () => {
-            const nav = $("#sideNav");
-            if (matchMedia("(max-width: 960px)").matches) {
-                nav.classList.toggle("open");
+        function openNav() {
+            $("#sideNav").classList.add("open");
+            $("#navOverlay").classList.add("visible");
+        }
+        function closeNav() {
+            $("#sideNav").classList.remove("open");
+        $("#navOverlay").classList.remove("visible");
+            $("#navOverlay").classList.remove("visible");
+        }
+        function toggleNav() {
+            const mobile = matchMedia("(max-width: 960px)").matches;
+            if (mobile) {
+                const isOpen = $("#sideNav").classList.contains("open");
+                isOpen ? closeNav() : openNav();
             } else {
                 State.navCollapsed = !State.navCollapsed;
                 renderNav();
             }
+        }
+        // Topbar hamburger (tablet)
+        $("#navToggle").addEventListener("click", toggleNav);
+        // Inner nav collapse button (desktop)
+        $("#sideNav").addEventListener("click", event => {
+            if (event.target.closest("#navToggleInner")) toggleNav();
         });
+        // Overlay tap closes nav
+        $("#navOverlay").addEventListener("click", closeNav);
 
         document.addEventListener("click", event => {
             const menuButton = event.target.closest("[data-menu]");
@@ -1285,11 +1305,18 @@
             }
         });
 
+        // Debounce timer for shopping list inline edits
+        let _shoppingDebounce = null;
+
         document.addEventListener("input", event => {
             const target = event.target;
             if (target.matches("[data-filter-live]")) {
                 State.filters[target.dataset.filterLive] = target.value;
                 renderMain();
+            } else if (target.matches('[data-update-kind="shopping"]')) {
+                // Debounce: wait 600ms after last keystroke before mutating + pushing collab
+                clearTimeout(_shoppingDebounce);
+                _shoppingDebounce = setTimeout(() => updateInline(target), 600);
             }
         });
 
@@ -1350,6 +1377,7 @@
 
     function render() {
         renderNav();
+        renderBottomNav();
         renderShell();
         renderMain();
     }
@@ -1372,6 +1400,21 @@
             </button>
         `).join("");
         while (frag.firstChild) nav.appendChild(frag.firstChild);
+    }
+
+    function renderBottomNav() {
+        const el = $("#bottomNav");
+        if (!el) return;
+        el.innerHTML = SECTIONS.map(section => `
+            <button class="bottom-nav-item ${section.id === State.currentSection ? "active" : ""}"
+                    data-action="switchSection" data-section="${section.id}" type="button">
+                <span class="bnav-icon">${h(section.icon)}</span>
+                <span class="bnav-label">${h(L(section.shortTitle || section.title))}</span>
+            </button>
+        `).join("");
+        // Scroll active item into view
+        const activeBtn = el.querySelector(".bottom-nav-item.active");
+        if (activeBtn) activeBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
     }
 
     function renderShell() {
@@ -2487,22 +2530,49 @@
     }
 
     function renderShoppingListCard(listItem) {
+        const checkedCount = listItem.items.filter(i => i.checked).length;
+        const total = listItem.items.length;
         return `
-            <section class="day-card">
-                <h3>${h(listItem.name)}</h3>
-                <div class="toolbar" style="padding:10px 10px 0">
-                    <button class="small-button secondary" data-action="addShoppingItem" data-id="${attr(listItem.id)}" type="button">Add item</button>
-                    <button class="small-button secondary" data-action="renameShoppingList" data-id="${attr(listItem.id)}" type="button">Rename</button>
-                    <button class="small-button danger" data-action="removeShoppingList" data-id="${attr(listItem.id)}" type="button">Remove list</button>
+            <section class="day-card shopping-card">
+                <div class="shopping-card-header">
+                    <h3 class="shopping-card-title">${h(listItem.name)}</h3>
+                    ${total ? `<span class="shopping-progress">${checkedCount}/${total}</span>` : ""}
+                    <div class="shopping-card-actions">
+                        <button class="small-button secondary" data-action="addShoppingItem" data-id="${attr(listItem.id)}" type="button">+ Add</button>
+                        <button class="small-button secondary" data-action="renameShoppingList" data-id="${attr(listItem.id)}" type="button">Rename</button>
+                        <button class="small-button danger" data-action="removeShoppingList" data-id="${attr(listItem.id)}" type="button">✕</button>
+                    </div>
                 </div>
-                <div class="slot-card">
+                <div class="shopping-items">
                     ${listItem.items.length ? listItem.items.map(item => `
-                        <div class="item-card">
-                            <input data-update-kind="shopping" data-list-id="${attr(listItem.id)}" data-id="${attr(item.id)}" data-field="name" value="${attr(item.name)}" placeholder="Item">
-                            ${qtyControl(item.id, "shopping", item.quantity)}
-                            <button class="small-button danger" data-action="removeShoppingItem" data-list-id="${attr(listItem.id)}" data-id="${attr(item.id)}" type="button">Remove</button>
+                        <div class="shopping-item ${item.checked ? "shopping-item-checked" : ""}">
+                            <button class="shopping-check ${item.checked ? "checked" : ""}"
+                                data-action="toggleShoppingItem"
+                                data-list-id="${attr(listItem.id)}"
+                                data-id="${attr(item.id)}"
+                                aria-label="${item.checked ? "Uncheck" : "Check"} ${h(item.name)}"
+                                type="button">
+                                ${item.checked ? "✓" : ""}
+                            </button>
+                            <input class="shopping-name-input"
+                                data-update-kind="shopping"
+                                data-list-id="${attr(listItem.id)}"
+                                data-id="${attr(item.id)}"
+                                data-field="name"
+                                value="${attr(item.name)}"
+                                placeholder="Item name"
+                                autocomplete="off">
+                            <div class="shopping-qty">
+                                ${qtyControl(item.id, "shopping", item.quantity)}
+                            </div>
+                            <button class="shopping-remove small-button danger"
+                                data-action="removeShoppingItem"
+                                data-list-id="${attr(listItem.id)}"
+                                data-id="${attr(item.id)}"
+                                aria-label="Remove ${h(item.name)}"
+                                type="button">✕</button>
                         </div>
-                    `).join("") : `<div class="empty">No items.</div>`}
+                    `).join("") : `<div class="empty">No items yet — tap + Add to start.</div>`}
                 </div>
             </section>`;
     }
@@ -2662,6 +2732,12 @@
             removeShoppingList: () => removeShoppingList(data.id),
             addShoppingItem: () => addShoppingItem(data.id),
             removeShoppingItem: () => removeShoppingItem(data.listId, data.id),
+            toggleShoppingItem: () => {
+                const list = State.project.shoppingLists.find(l => l.id === data.listId);
+                if (!list) return;
+                const item = list.items.find(i => i.id === data.id);
+                if (item) mutate(item.checked ? "Unchecked item." : "Checked item.", () => { item.checked = !item.checked; });
+            },
             exportCampPackPdf,
             exportMenuPdf,
             exportKitchenMenuPdf,
@@ -3948,7 +4024,7 @@
     function addShoppingItem(listId) {
         mutate("Added shopping item.", () => {
             const listItem = State.project.shoppingLists.find(item => item.id === listId);
-            listItem?.items.push({ id: uid(), name: "", quantity: 1 });
+            listItem?.items.push({ id: uid(), name: "", quantity: 1, checked: false });
         });
     }
 
@@ -5067,23 +5143,100 @@
         if (!State.collab.active) return;
         try {
             const payload = await firebaseGet(State.collab.code);
-            if (!payload || payload.updatedBy === State.collab.clientId || !payload.revision || payload.revision <= State.collab.revision) return;
+            if (!payload || payload.updatedBy === State.collab.clientId) return;
+            if (!payload.revision || payload.revision <= State.collab.revision) return;
             const json = await decryptProjectJson(payload.encryptedProject, State.collab.key);
+            const remote = normalizeProject(JSON.parse(json));
+
+            // Merge remote into local rather than overwriting wholesale.
+            // Shopping lists: keep items from whichever side was edited more recently per item.
             State.collab.applyingRemote = true;
-            State.project = normalizeProject(JSON.parse(json));
+            State.project = mergeCollabProject(State.project, remote);
             State.collab.applyingRemote = false;
             State.collab.revision = payload.revision;
+            // Suppress any upload triggered by the merge for 2 seconds
+            State.collab.lastRemoteAt = Date.now();
             State.dirty = false;
             saveDraft();
             render();
             setStatus(`Received collaboration update: ${State.collab.code}.`);
         } catch (error) {
-            setStatus(`Collaboration connection problem. ${error.message}`);
+            setStatus(`Collaboration sync problem: ${error.message}`);
         }
+    }
+
+    /**
+     * Merge a remote project snapshot into the local project.
+     * For most sections we take the remote value wholesale (last-writer-wins).
+     * For shopping lists we do per-item merging to avoid clobbering concurrent edits.
+     */
+    function mergeCollabProject(local, remote) {
+        // Take remote as the base
+        const merged = { ...remote };
+
+        // ── Shopping list merge: union of items, remote wins on conflicts ──
+        const localLists  = local.shoppingLists  || [];
+        const remoteLists = remote.shoppingLists || [];
+
+        // Index local lists by id
+        const localListMap = new Map(localLists.map(l => [l.id, l]));
+        const remoteListMap = new Map(remoteLists.map(l => [l.id, l]));
+
+        // Start from remote lists (preserves remote adds/removes at list level)
+        const mergedLists = remoteLists.map(remoteList => {
+            const localList = localListMap.get(remoteList.id);
+            if (!localList) return remoteList;   // new list from remote
+
+            // Merge items within this list
+            const localItemMap  = new Map((localList.items  || []).map(i => [i.id, i]));
+            const remoteItemMap = new Map((remoteList.items || []).map(i => [i.id, i]));
+
+            // Union of all known item ids
+            const allIds = new Set([...localItemMap.keys(), ...remoteItemMap.keys()]);
+            const mergedItems = [];
+
+            for (const id of allIds) {
+                const li = localItemMap.get(id);
+                const ri = remoteItemMap.get(id);
+                if (!ri) {
+                    // Item exists locally but not remotely: keep it (local add not yet pushed)
+                    mergedItems.push(li);
+                } else if (!li) {
+                    // Item exists remotely but not locally: take it (remote add)
+                    mergedItems.push(ri);
+                } else {
+                    // Both have it: take remote (remote is newer in the collaboration flow)
+                    // but preserve any local name/qty if remote hasn't changed them from defaults
+                    mergedItems.push(ri);
+                }
+            }
+
+            // Preserve remote item order, then append any local-only items at end
+            const remoteOrder = (remoteList.items || []).map(i => i.id);
+            const localOnly   = mergedItems.filter(i => !remoteOrder.includes(i.id));
+            const ordered     = remoteOrder
+                .map(id => mergedItems.find(i => i.id === id))
+                .filter(Boolean)
+                .concat(localOnly);
+
+            return { ...remoteList, items: ordered };
+        });
+
+        // Also include any lists that exist locally but not remotely (local adds not yet pushed)
+        for (const localList of localLists) {
+            if (!remoteListMap.has(localList.id)) {
+                mergedLists.push(localList);
+            }
+        }
+
+        merged.shoppingLists = mergedLists;
+        return merged;
     }
 
     function scheduleCollaborationUpload() {
         if (!State.collab.active || State.collab.applyingRemote) return;
+        // Suppress echo-back: don't upload for 2.5s after receiving a remote update
+        if (State.collab.lastRemoteAt && Date.now() - State.collab.lastRemoteAt < 2500) return;
         if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
         State.collab.uploadTimer = setTimeout(pushCollaboration, 1200);
     }

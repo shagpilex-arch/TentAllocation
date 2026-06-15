@@ -11,6 +11,8 @@
     <div id="app" class="app">
         <header class="topbar">
             <div class="topbar-main">
+                <!-- Hamburger: visible on tablet (960px), hidden on desktop -->
+                <button id="navToggle" class="icon-button topbar-hamburger" type="button" aria-label="Toggle navigation">☰</button>
                 <div class="brand">
                     <div class="brand-title">Camp Planner</div>
                     <div id="dirtyBadge" class="brand-subtitle">Ready</div>
@@ -20,14 +22,20 @@
             <div id="topbarStrip" class="topbar-strip" aria-label="Application menu and commands"></div>
         </header>
 
+        <!-- Overlay backdrop for mobile nav -->
+        <div id="navOverlay" class="nav-overlay" aria-hidden="true"></div>
+
         <div class="workspace">
             <aside id="sideNav" class="side-nav" aria-label="Sections">
                 <div class="nav-toggle-row">
-                    <button id="navToggle" class="icon-button" type="button" aria-label="Toggle navigation">☰</button>
+                    <button id="navToggleInner" class="icon-button" type="button" aria-label="Collapse navigation">☰</button>
                 </div>
             </aside>
             <main id="mainContent" class="main-content" tabindex="-1"></main>
         </div>
+
+        <!-- Bottom tab bar: phone only -->
+        <nav id="bottomNav" class="bottom-nav" aria-label="Sections"></nav>
 
         <footer class="statusbar">
             <span id="statusText">Ready.</span>
