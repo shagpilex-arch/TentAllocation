@@ -68,6 +68,54 @@
     const TENT_TYPES = ["Patrol tent", "Dome tent", "Hike tent", "Leader tent", "Bunk room", "Other tent"];
     const SITE_ITEM_TYPES = ["Mess tent", "Storage tent", "Kitchen tent", "Event shelter", "Flag pole", "Fire"];
     const PLAN_BOUNDARIES = [TERMS.planBoundaryArrive, TERMS.planBoundaryWakeUp, TERMS.planBoundaryLightsOut, TERMS.planBoundaryGoHome];
+    const BUDGET_PERSON_CAMPER = "Camper";
+    const BUDGET_PERSON_YOUNG_LEADER = "Young Leader";
+    const BUDGET_PERSON_ADULT = "Adult";
+    const BUDGET_PERSON_TYPES = [BUDGET_PERSON_CAMPER, BUDGET_PERSON_YOUNG_LEADER, BUDGET_PERSON_ADULT];
+    const BUDGET_CAMPER_TYPES = [TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer, TERMS.camperTypeStandard];
+    const BUDGET_CONTRIBUTION_STANDARD = "Standard";
+    const BUDGET_CONTRIBUTION_EXCLUDED = "Excluded";
+    const BUDGET_CONTRIBUTION_EXACT = "Exact amount";
+    const BUDGET_CONTRIBUTION_FOOD_ONLY = "Food only";
+    const BUDGET_CONTRIBUTION_DAY_VISITOR_RATE = "Day visitor rate";
+    const BUDGET_CONTRIBUTION_RULES = [BUDGET_CONTRIBUTION_STANDARD, BUDGET_CONTRIBUTION_EXCLUDED, BUDGET_CONTRIBUTION_EXACT, BUDGET_CONTRIBUTION_FOOD_ONLY, BUDGET_CONTRIBUTION_DAY_VISITOR_RATE];
+    const BUDGET_LEADERS_PAY_STANDARD = "Leaders pay Standard";
+    const BUDGET_LEADERS_PAY_NOTHING = "Leaders pay nothing";
+    const BUDGET_LEADERS_PAY_FOOD_ONLY = "Leaders pay food only";
+    const BUDGET_LEADERS_PAY_EXACT = "Leaders pay an exact amount";
+    const BUDGET_LEADER_RULES = [BUDGET_LEADERS_PAY_STANDARD, BUDGET_LEADERS_PAY_NOTHING, BUDGET_LEADERS_PAY_FOOD_ONLY, BUDGET_LEADERS_PAY_EXACT];
+    const BUDGET_YOUNG_LEADERS_AS_CAMPERS = "Young Leaders pay as campers";
+    const BUDGET_YOUNG_LEADERS_AS_LEADERS = "Young Leaders pay as leaders";
+    const BUDGET_YOUNG_LEADERS_PAY_STANDARD = "Young Leaders pay Standard";
+    const BUDGET_YOUNG_LEADERS_PAY_NOTHING = "Young Leaders pay nothing";
+    const BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY = "Young Leaders pay food only";
+    const BUDGET_YOUNG_LEADERS_PAY_EXACT = "Young Leaders pay an exact amount";
+    const BUDGET_YOUNG_LEADER_RULES = [BUDGET_YOUNG_LEADERS_AS_CAMPERS, BUDGET_YOUNG_LEADERS_AS_LEADERS, BUDGET_YOUNG_LEADERS_PAY_STANDARD, BUDGET_YOUNG_LEADERS_PAY_NOTHING, BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY, BUDGET_YOUNG_LEADERS_PAY_EXACT];
+    const BUDGET_DAY_VISITORS_PAY_NOTHING = "Day visitors pay nothing";
+    const BUDGET_DAY_VISITORS_PAY_DAY_RATE = "Day visitors pay day rate";
+    const BUDGET_DAY_VISITORS_PAY_FOOD_ONLY = "Day visitors pay food only";
+    const BUDGET_DAY_VISITORS_PAY_EXACT = "Day visitors pay an exact amount";
+    const BUDGET_DAY_VISITORS_PAY_STANDARD = "Day visitors pay Standard";
+    const BUDGET_DAY_VISITOR_RULES = [BUDGET_DAY_VISITORS_PAY_NOTHING, BUDGET_DAY_VISITORS_PAY_DAY_RATE, BUDGET_DAY_VISITORS_PAY_FOOD_ONLY, BUDGET_DAY_VISITORS_PAY_EXACT, BUDGET_DAY_VISITORS_PAY_STANDARD];
+    const BUDGET_COST_FIXED = "Fixed total cost";
+    const BUDGET_COST_QUANTITY = "Quantity x unit cost";
+    const BUDGET_COST_PER_PERSON = "Per person";
+    const BUDGET_COST_PER_CAMPER = "Per camper";
+    const BUDGET_COST_PER_NIGHT = "Per night";
+    const BUDGET_COST_PER_DAY = "Per day";
+    const BUDGET_COST_METHODS = [BUDGET_COST_FIXED, BUDGET_COST_QUANTITY, BUDGET_COST_PER_PERSON, BUDGET_COST_PER_CAMPER, BUDGET_COST_PER_NIGHT, BUDGET_COST_PER_DAY];
+    const BUDGET_IMPORTED_ACTIVITY_MARKER = "Imported from this camp plan.";
+    const BUDGET_CURRENCY_OPTIONS = [
+        ["£", "£"],
+        ["$", "$"],
+        ["€", "€"],
+        ["¥", "¥"],
+        ["A$", "A$"],
+        ["C$", "C$"],
+        ["CHF", "CHF"],
+        ["kr", "kr"],
+        ["", "None"]
+    ];
 
     const DEFAULT_MENU_LIBRARY = [
         "Porridge and fruit",
@@ -174,6 +222,7 @@
         "group-kit": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v13a1 1 0 01-1 1H5a1 1 0 01-1-1V7z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M9 12h6M12 9v6"/></svg>`,
         "participant-kit": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20h2a2 2 0 002-2V9l-5-5H6a2 2 0 00-2 2v12a2 2 0 002 2h2"/><path d="M14 3v5h5"/><circle cx="12" cy="15" r="3"/><path d="M12 12v1"/></svg>`,
         "shopping-list": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+        "budget": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h4M15 13h2M7 17h2M12 17h5"/></svg>`,
         "exports": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`
     };
 
@@ -187,6 +236,7 @@
         ["group-kit", "Kit List (group)", "Stores kit", "G"],
         ["participant-kit", "Kit List (Participant)", "Personal kit", "K"],
         ["shopping-list", "Shopping List", "Buying lists", "S"],
+        ["budget", "Budget", "Costs & charges", "B"],
         ["exports", "Exports", "Print & share", "E"]
     ].map(([id, title, subtitle, icon]) => ({ id, title, subtitle, icon, shortTitle: title.replace("Kit List (group)", "Group Kit").replace("Kit List (Participant)", "My Kit").replace("Shopping List", "Shopping").replace("The Plan", "Plan").replace("Tent Allocation", "Tents").replace("Personnel", "People").replace("Exports", "Export") }));
 
@@ -211,7 +261,7 @@
         undo: [],
         redo: [],
         filters: {},
-        sort: { people: "group", groupKit: "name", participantKit: "name" },
+        sort: { people: "group", groupKit: "name", participantKit: "name", budgetPeople: "name", budgetPeopleDir: "asc" },
         selected: {},
         dragging: null,
         collab: {
@@ -245,6 +295,7 @@
             "Kit List (group)": "Lista de equipo (grupo)",
             "Kit List (Participant)": "Lista de equipo (participante)",
             "Shopping List": "Lista de compras",
+            "Budget": "Presupuesto",
             "Exports": "Exportaciones",
             "Camp details": "Detalles del campamento",
             "People & teams": "Personas y equipos",
@@ -255,6 +306,7 @@
             "Stores kit": "Equipamiento general",
             "Personal kit": "Equipamiento personal",
             "Buying lists": "Listas de compra",
+            "Costs & charges": "Costes y cuotas",
             "Print & share": "Imprimir y compartir",
             "Add person": "Añadir persona",
             "Add team": "Añadir equipo",
@@ -298,6 +350,7 @@
             "Kit List (group)": "Liste d'équipement (groupe)",
             "Kit List (Participant)": "Liste d'équipement (participant)",
             "Shopping List": "Liste de courses",
+            "Budget": "Budget",
             "Exports": "Exportations",
             "Camp details": "Détails du camp",
             "People & teams": "Personnes et équipes",
@@ -308,6 +361,7 @@
             "Stores kit": "Matériel collectif",
             "Personal kit": "Matériel personnel",
             "Buying lists": "Listes d'achats",
+            "Costs & charges": "Coûts et tarifs",
             "Print & share": "Imprimer et partager",
             "Add person": "Ajouter une personne",
             "Add team": "Ajouter une équipe",
@@ -545,7 +599,8 @@
             choreSessions: ["Morning", "Afternoon", "Evening"],
             choreAllocations: [],
             planItems: [],
-            shoppingLists: []
+            shoppingLists: [],
+            budget: createBudgetState()
         };
     }
 
@@ -587,6 +642,7 @@
         project.choreAllocations = list(project.choreAllocations);
         project.planItems = list(project.planItems);
         project.shoppingLists = list(project.shoppingLists);
+        project.budget = normalizeBudget(project.budget);
 
         normalizePeople(project);
         normalizeTents(project);
@@ -598,6 +654,9 @@
         normalizeChores(project);
         normalizePlan(project);
         normalizeShopping(project);
+        syncBudgetPeople(project);
+        normalizeBudgetCosts(project);
+        updateBudgetCalculatedCosts(project);
         seedInventories(project);
         ensurePlanDefaults(project);
         return project;
@@ -803,6 +862,400 @@
                 item.checked = Boolean(item.checked);
             });
         });
+    }
+
+    function createBudgetState(data = {}) {
+        const settings = normalizeBudgetSettings(data.settings || {});
+        return {
+            ...data,
+            settings,
+            people: list(data.people).map(budgetPerson),
+            costItems: list(data.costItems).map(budgetCostItem),
+            importedSourceSummary: clean(data.importedSourceSummary)
+        };
+    }
+
+    function normalizeBudget(value) {
+        return createBudgetState(value && typeof value === "object" ? value : {});
+    }
+
+    function normalizeBudgetSettings(settings = {}) {
+        return {
+            ...settings,
+            leaderRule: mapBudgetLeaderRule(settings.leaderRule),
+            youngLeaderRule: mapBudgetYoungLeaderRule(settings.youngLeaderRule),
+            dayVisitorRule: mapBudgetDayVisitorRule(settings.dayVisitorRule),
+            proposedStandardCharge: nonNegative(settings.proposedStandardCharge),
+            foodOnlyAmount: nonNegative(settings.foodOnlyAmount),
+            leaderContributionAmount: nonNegative(settings.leaderContributionAmount),
+            youngLeaderContributionAmount: nonNegative(settings.youngLeaderContributionAmount),
+            dayVisitorDayRate: nonNegative(settings.dayVisitorDayRate),
+            dayVisitorCustomContributionAmount: nonNegative(settings.dayVisitorCustomContributionAmount),
+            currencySymbol: normalizeBudgetCurrency(settings.currencySymbol),
+            foodCostPerPersonPerDay: nonNegative(settings.foodCostPerPersonPerDay),
+            foodDays: Math.max(0, Math.round(number(settings.foodDays, 3))),
+            foodPeopleBasis: "All people",
+            notes: clean(settings.notes)
+        };
+    }
+
+    function budgetPerson(data = {}) {
+        return {
+            ...data,
+            id: clean(data.id, uid()),
+            personId: clean(data.personId),
+            name: clean(data.name, "Unnamed person"),
+            personType: mapBudgetPersonType(data.personType),
+            camperType: mapBudgetCamperType(data.camperType),
+            isDayVisitor: Boolean(data.isDayVisitor),
+            contributionRule: mapBudgetContributionRule(data.contributionRule),
+            contributionAmount: nonNegative(data.contributionAmount),
+            notes: clean(data.notes)
+        };
+    }
+
+    function budgetCostItem(data = {}) {
+        const method = mapBudgetCostMethod(data.calculationMethod);
+        const cost = nonNegative(data.cost ?? data.estimatedCost);
+        return {
+            ...data,
+            id: clean(data.id, uid()),
+            description: clean(data.description, "Budget cost"),
+            calculationMethod: method,
+            quantity: method === BUDGET_COST_FIXED ? 1 : Math.max(0.0001, number(data.quantity, 1)),
+            unitCost: method === BUDGET_COST_FIXED ? cost : nonNegative(data.unitCost),
+            cost,
+            notes: clean(data.notes)
+        };
+    }
+
+    function normalizeBudgetCosts(project) {
+        const ids = new Set();
+        project.budget.costItems = project.budget.costItems.map(item => {
+            const normalized = budgetCostItem(item);
+            normalized.id = uniqueId(normalized.id, ids);
+            return normalized;
+        });
+    }
+
+    function syncBudgetPeople(project) {
+        project.budget = normalizeBudget(project.budget);
+        const existingByPerson = new Map(project.budget.people.filter(p => p.personId).map(p => [p.personId, p]));
+        const usedIds = new Set();
+        const synced = orderedProjectPeople(project).map(personItem => {
+            const existing = existingByPerson.get(personItem.id) || {};
+            const result = budgetPerson({
+                ...existing,
+                personId: personItem.id,
+                name: clean(personItem.name, "Unnamed person"),
+                personType: mapProjectPersonToBudgetType(personItem),
+                camperType: mapBudgetCamperType(personItem.camperType),
+                isDayVisitor: Boolean(personItem.isDayVisitor)
+            });
+            result.id = uniqueId(result.id, usedIds);
+            return result;
+        });
+        project.budget.people = synced;
+    }
+
+    function orderedProjectPeople(project) {
+        const group = personItem => {
+            if (personItem.personType === TERMS.personTypeYoungPerson) {
+                return ["Beaver", "Cub", "Scout", "Explorer", "Standard"].indexOf(personItem.camperType) + 1 || 5;
+            }
+            if (personItem.personType === TERMS.personTypeYoungLeader) return 20;
+            return 30;
+        };
+        return [...project.people].sort((a, b) => group(a) - group(b) || localeSort(a.name, b.name));
+    }
+
+    function pushBudgetPeopleToProject(project = State.project) {
+        const peopleById = new Map(project.people.map(personItem => [personItem.id, personItem]));
+        project.budget.people.forEach(budgetRow => {
+            const personItem = peopleById.get(budgetRow.personId);
+            if (!personItem) return;
+            if (clean(budgetRow.name)) personItem.name = clean(budgetRow.name);
+            personItem.personType = budgetRow.personType === BUDGET_PERSON_ADULT
+                ? TERMS.personTypeAdult
+                : budgetRow.personType === BUDGET_PERSON_YOUNG_LEADER
+                    ? TERMS.personTypeYoungLeader
+                    : TERMS.personTypeYoungPerson;
+            personItem.camperType = CAMPER_TYPES.includes(budgetRow.camperType) ? budgetRow.camperType : TERMS.camperTypeStandard;
+            personItem.isDayVisitor = Boolean(budgetRow.isDayVisitor);
+        });
+    }
+
+    function nonNegative(value) {
+        return Math.max(0, number(value, 0));
+    }
+
+    function normalizeBudgetCurrency(symbol) {
+        const cleaned = symbol == null ? "£" : String(symbol).trim();
+        return BUDGET_CURRENCY_OPTIONS.some(option => option[0] === cleaned) ? cleaned : "£";
+    }
+
+    function budgetCurrencyLabel(symbol) {
+        const normalized = normalizeBudgetCurrency(symbol);
+        return BUDGET_CURRENCY_OPTIONS.find(option => option[0] === normalized)?.[1] || "£";
+    }
+
+    function formatBudgetMoney(value, project = State.project) {
+        const symbol = normalizeBudgetCurrency(project?.budget?.settings?.currencySymbol);
+        const sign = number(value, 0) < 0 ? "-" : "";
+        const amount = Math.abs(number(value, 0)).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (!symbol) return sign + amount;
+        const spacer = /^[A-Za-z]+$/.test(symbol) ? " " : "";
+        return `${sign}${symbol}${spacer}${amount}`;
+    }
+
+    function mapBudgetPersonType(value) {
+        const text = clean(value).toLowerCase();
+        if (text.includes("adult") || text === "leader") return BUDGET_PERSON_ADULT;
+        if (text.includes("young") && text.includes("leader")) return BUDGET_PERSON_YOUNG_LEADER;
+        return BUDGET_PERSON_CAMPER;
+    }
+
+    function mapProjectPersonToBudgetType(personItem) {
+        if (personItem.personType === TERMS.personTypeAdult) return BUDGET_PERSON_ADULT;
+        if (personItem.personType === TERMS.personTypeYoungLeader) return BUDGET_PERSON_YOUNG_LEADER;
+        return BUDGET_PERSON_CAMPER;
+    }
+
+    function mapBudgetCamperType(value) {
+        const mapped = mapCamperType(value);
+        return BUDGET_CAMPER_TYPES.includes(mapped) ? mapped : TERMS.camperTypeStandard;
+    }
+
+    function mapBudgetContributionRule(value) {
+        const cleaned = clean(value);
+        if (BUDGET_CONTRIBUTION_RULES.includes(cleaned)) return cleaned;
+        if (["Custom fixed amount", "Percentage of Standard", "Percentage of Standard charge"].includes(cleaned)) return BUDGET_CONTRIBUTION_EXACT;
+        return BUDGET_CONTRIBUTION_STANDARD;
+    }
+
+    function mapBudgetLeaderRule(value) {
+        const cleaned = clean(value);
+        if (cleaned === "Leaders pay a contribution") return BUDGET_LEADERS_PAY_EXACT;
+        return BUDGET_LEADER_RULES.includes(cleaned) ? cleaned : BUDGET_LEADERS_PAY_STANDARD;
+    }
+
+    function mapBudgetYoungLeaderRule(value) {
+        const cleaned = clean(value);
+        if (cleaned === "Young Leaders pay a contribution") return BUDGET_YOUNG_LEADERS_PAY_EXACT;
+        return BUDGET_YOUNG_LEADER_RULES.includes(cleaned) ? cleaned : BUDGET_YOUNG_LEADERS_AS_CAMPERS;
+    }
+
+    function mapBudgetDayVisitorRule(value) {
+        const cleaned = clean(value);
+        if (cleaned === "Day visitors pay custom contribution") return BUDGET_DAY_VISITORS_PAY_EXACT;
+        return BUDGET_DAY_VISITOR_RULES.includes(cleaned) ? cleaned : BUDGET_DAY_VISITORS_PAY_NOTHING;
+    }
+
+    function mapBudgetCostMethod(value) {
+        const cleaned = clean(value);
+        if ([BUDGET_COST_FIXED, "Manual custom amount"].includes(cleaned)) return BUDGET_COST_FIXED;
+        if ([BUDGET_COST_QUANTITY, "Per group/team", "Per activity group"].includes(cleaned)) return BUDGET_COST_QUANTITY;
+        if ([BUDGET_COST_PER_PERSON, "Per paying person", "Per Standard-paying person", "Per person per day", "Per person per night"].includes(cleaned)) return BUDGET_COST_PER_PERSON;
+        if ([BUDGET_COST_PER_CAMPER, "Per camper per night"].includes(cleaned)) return BUDGET_COST_PER_CAMPER;
+        if (cleaned === BUDGET_COST_PER_NIGHT) return BUDGET_COST_PER_NIGHT;
+        if (cleaned === BUDGET_COST_PER_DAY) return BUDGET_COST_PER_DAY;
+        return BUDGET_COST_FIXED;
+    }
+
+    function budgetCounts(project = State.project) {
+        const people = project.budget.people;
+        return {
+            campers: people.filter(p => p.personType === BUDGET_PERSON_CAMPER && !p.isDayVisitor).length,
+            youngLeaders: people.filter(p => p.personType === BUDGET_PERSON_YOUNG_LEADER && !p.isDayVisitor).length,
+            adults: people.filter(p => p.personType === BUDGET_PERSON_ADULT && !p.isDayVisitor).length,
+            dayVisitors: people.filter(p => p.isDayVisitor).length,
+            get totalPeople() { return this.campers + this.youngLeaders + this.adults + this.dayVisitors; }
+        };
+    }
+
+    function budgetDurationDays(project = State.project) {
+        return Math.max(1, Math.round((parseDate(project.endDate) - parseDate(project.startDate)) / 86400000) + 1);
+    }
+
+    function budgetDurationNights(project = State.project) {
+        return Math.max(0, budgetDurationDays(project) - 1);
+    }
+
+    function budgetFoodTotal(project = State.project) {
+        const counts = budgetCounts(project);
+        return project.budget.settings.foodCostPerPersonPerDay * counts.totalPeople * Math.max(0, project.budget.settings.foodDays);
+    }
+
+    function isImportedBudgetActivityCost(item) {
+        return clean(item.notes).toLowerCase().includes(BUDGET_IMPORTED_ACTIVITY_MARKER.toLowerCase())
+            || clean(item.description).toLowerCase().startsWith("activity:");
+    }
+
+    function calculateBudgetCostItem(project, item, counts = budgetCounts(project), standardPayingPeople = 0) {
+        switch (item.calculationMethod) {
+            case BUDGET_COST_FIXED:
+                return nonNegative(item.cost);
+            case BUDGET_COST_QUANTITY:
+                return nonNegative(item.quantity) * nonNegative(item.unitCost);
+            case BUDGET_COST_PER_PERSON:
+                return counts.totalPeople * nonNegative(item.unitCost);
+            case BUDGET_COST_PER_CAMPER:
+                return counts.campers * nonNegative(item.unitCost);
+            case BUDGET_COST_PER_NIGHT:
+                return budgetDurationNights(project) * nonNegative(item.unitCost);
+            case BUDGET_COST_PER_DAY:
+                return budgetDurationDays(project) * nonNegative(item.unitCost);
+            default:
+                return nonNegative(item.cost);
+        }
+    }
+
+    function effectiveBudgetContributionRule(settings, personRow) {
+        if (personRow.contributionRule !== BUDGET_CONTRIBUTION_STANDARD) {
+            return personRow.contributionRule;
+        }
+        if (personRow.isDayVisitor) return effectiveBudgetDayVisitorRule(settings);
+        if (personRow.personType === BUDGET_PERSON_ADULT) return effectiveBudgetLeaderRule(settings);
+        if (personRow.personType === BUDGET_PERSON_YOUNG_LEADER) return effectiveBudgetYoungLeaderRule(settings);
+        return BUDGET_CONTRIBUTION_STANDARD;
+    }
+
+    function effectiveBudgetLeaderRule(settings) {
+        if (settings.leaderRule === BUDGET_LEADERS_PAY_NOTHING) return BUDGET_CONTRIBUTION_EXCLUDED;
+        if (settings.leaderRule === BUDGET_LEADERS_PAY_FOOD_ONLY) return BUDGET_CONTRIBUTION_FOOD_ONLY;
+        if (settings.leaderRule === BUDGET_LEADERS_PAY_EXACT) return BUDGET_LEADERS_PAY_EXACT;
+        return BUDGET_CONTRIBUTION_STANDARD;
+    }
+
+    function effectiveBudgetYoungLeaderRule(settings) {
+        if (settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_AS_LEADERS) return effectiveBudgetLeaderRule(settings);
+        if (settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_NOTHING) return BUDGET_CONTRIBUTION_EXCLUDED;
+        if (settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY) return BUDGET_CONTRIBUTION_FOOD_ONLY;
+        if (settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_EXACT) return BUDGET_YOUNG_LEADERS_PAY_EXACT;
+        return BUDGET_CONTRIBUTION_STANDARD;
+    }
+
+    function effectiveBudgetDayVisitorRule(settings) {
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_DAY_RATE) return BUDGET_CONTRIBUTION_DAY_VISITOR_RATE;
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_FOOD_ONLY) return BUDGET_CONTRIBUTION_FOOD_ONLY;
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_EXACT) return BUDGET_DAY_VISITORS_PAY_EXACT;
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_STANDARD) return BUDGET_CONTRIBUTION_STANDARD;
+        return BUDGET_CONTRIBUTION_EXCLUDED;
+    }
+
+    function budgetContributionProfile(project = State.project) {
+        const settings = project.budget.settings;
+        const profile = { fixedContributionIncome: 0, standardChargeCoefficient: 0, standardPayingPeople: 0, payingPeople: 0 };
+        const add = (rule, exactAmount) => {
+            if (rule === BUDGET_CONTRIBUTION_STANDARD) {
+                profile.standardChargeCoefficient += 1;
+                profile.standardPayingPeople += 1;
+                profile.payingPeople += 1;
+            } else if (rule === BUDGET_CONTRIBUTION_EXACT) {
+                profile.fixedContributionIncome += nonNegative(exactAmount);
+                if (nonNegative(exactAmount) > 0) profile.payingPeople += 1;
+            } else if (rule === BUDGET_CONTRIBUTION_FOOD_ONLY) {
+                profile.fixedContributionIncome += settings.foodOnlyAmount;
+                if (settings.foodOnlyAmount > 0) profile.payingPeople += 1;
+            } else if (rule === BUDGET_CONTRIBUTION_DAY_VISITOR_RATE) {
+                profile.fixedContributionIncome += settings.dayVisitorDayRate;
+                if (settings.dayVisitorDayRate > 0) profile.payingPeople += 1;
+            } else if (rule === BUDGET_LEADERS_PAY_EXACT) {
+                profile.fixedContributionIncome += settings.leaderContributionAmount;
+                if (settings.leaderContributionAmount > 0) profile.payingPeople += 1;
+            } else if (rule === BUDGET_YOUNG_LEADERS_PAY_EXACT) {
+                profile.fixedContributionIncome += settings.youngLeaderContributionAmount;
+                if (settings.youngLeaderContributionAmount > 0) profile.payingPeople += 1;
+            } else if (rule === BUDGET_DAY_VISITORS_PAY_EXACT) {
+                profile.fixedContributionIncome += settings.dayVisitorCustomContributionAmount;
+                if (settings.dayVisitorCustomContributionAmount > 0) profile.payingPeople += 1;
+            }
+        };
+        project.budget.people.forEach(personRow => add(effectiveBudgetContributionRule(settings, personRow), personRow.contributionAmount));
+        return profile;
+    }
+
+    function roundUpToNearestFive(value) {
+        return value <= 0 ? 0 : Math.ceil(value / 5) * 5;
+    }
+
+    function calculateBudgetSnapshot(project = State.project) {
+        const counts = budgetCounts(project);
+        const profile = budgetContributionProfile(project);
+        const costRows = project.budget.costItems.map(item => ({
+            item,
+            amount: calculateBudgetCostItem(project, item, counts, profile.standardPayingPeople)
+        }));
+        const foodCost = budgetFoodTotal(project);
+        const activityCost = costRows.filter(row => isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
+        const otherCost = costRows.filter(row => !isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
+        const totalEstimatedCost = foodCost + activityCost + otherCost;
+        const requiredIncome = totalEstimatedCost;
+        const coefficient = profile.standardChargeCoefficient <= 0 ? 0 : profile.standardChargeCoefficient;
+        const minimumBreakEvenStandardCharge = coefficient <= 0 ? 0 : Math.max(0, (requiredIncome - profile.fixedContributionIncome) / coefficient);
+        const recommendedRoundedStandardCharge = roundUpToNearestFive(minimumBreakEvenStandardCharge);
+        const proposedStandardCharge = project.budget.settings.proposedStandardCharge > 0 ? project.budget.settings.proposedStandardCharge : recommendedRoundedStandardCharge;
+        const totalIncomeAtProposedCharge = profile.fixedContributionIncome + profile.standardChargeCoefficient * proposedStandardCharge;
+        const standardIncome = profile.standardPayingPeople * proposedStandardCharge;
+        return {
+            counts,
+            costRows,
+            foodCost,
+            activityCost,
+            otherCost,
+            totalEstimatedCost,
+            requiredIncome,
+            fixedContributionIncome: profile.fixedContributionIncome,
+            nonStandardContributionIncome: totalIncomeAtProposedCharge - standardIncome,
+            remainingToRecoverFromStandardPayers: Math.max(0, requiredIncome - profile.fixedContributionIncome),
+            standardPayingPeople: profile.standardPayingPeople,
+            payingPeople: profile.payingPeople,
+            minimumBreakEvenStandardCharge,
+            recommendedRoundedStandardCharge,
+            proposedStandardCharge,
+            totalIncomeAtProposedCharge,
+            predictedSurplusShortfall: totalIncomeAtProposedCharge - requiredIncome,
+            surplusShortfallAtRecommendedCharge: profile.fixedContributionIncome + profile.standardChargeCoefficient * recommendedRoundedStandardCharge - requiredIncome
+        };
+    }
+
+    function updateBudgetCalculatedCosts(project = State.project) {
+        if (!project?.budget) return;
+        const snapshot = calculateBudgetSnapshot(project);
+        project.budget.costItems.forEach(item => {
+            if (item.calculationMethod === BUDGET_COST_FIXED) {
+                item.quantity = 1;
+                item.unitCost = item.cost;
+            } else {
+                item.cost = calculateBudgetCostItem(project, item, snapshot.counts, snapshot.standardPayingPeople);
+            }
+        });
+    }
+
+    function budgetWarnings(project = State.project) {
+        const warnings = [];
+        const snapshot = calculateBudgetSnapshot(project);
+        const settings = project.budget.settings;
+        if (!project.people.length) warnings.push("No people have been added yet.");
+        if (!project.budget.costItems.length && settings.foodCostPerPersonPerDay <= 0) warnings.push("No costs or food budget have been entered yet.");
+        if (parseDate(project.endDate) < parseDate(project.startDate)) warnings.push("End date is before start date.");
+        project.budget.costItems.filter(cost => !clean(cost.description)).forEach(() => warnings.push("A cost line has no description."));
+        project.budget.costItems.filter(isImportedBudgetActivityCost).forEach(cost => {
+            const value = calculateBudgetCostItem(project, cost, snapshot.counts, snapshot.standardPayingPeople);
+            if (value <= 0) warnings.push(`Plan activity '${clean(cost.description).replace(/^Activity:\s*/i, "")}' has no cost yet. Leave it at 0 only if it is free.`);
+        });
+        if (snapshot.predictedSurplusShortfall < 0) warnings.push("Total income is below the total required budget.");
+        if (snapshot.standardPayingPeople <= 0) warnings.push("No Standard-paying people exist.");
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_DAY_RATE && settings.dayVisitorDayRate <= 0) warnings.push("Day visitor day rate is selected but no amount is set.");
+        if (settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_EXACT && settings.dayVisitorCustomContributionAmount <= 0) warnings.push("Day visitors exact amount is selected but no amount is set.");
+        if (settings.leaderRule === BUDGET_LEADERS_PAY_EXACT && settings.leaderContributionAmount <= 0) warnings.push("Leaders exact amount is selected but no amount is set.");
+        if (settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_EXACT && settings.youngLeaderContributionAmount <= 0) warnings.push("Young Leaders exact amount is selected but no amount is set.");
+        const usesFoodOnly = settings.leaderRule === BUDGET_LEADERS_PAY_FOOD_ONLY
+            || settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY
+            || settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_FOOD_ONLY
+            || project.budget.people.some(personRow => personRow.contributionRule === BUDGET_CONTRIBUTION_FOOD_ONLY);
+        if (usesFoodOnly && settings.foodOnlyAmount <= 0) warnings.push("Food only is selected somewhere but no food-only amount is set.");
+        return warnings;
     }
 
     function seedInventories(project) {
@@ -1082,6 +1535,14 @@
         return `#${darkened.map(part => part.toString(16).padStart(2, "0")).join("")}`;
     }
 
+    function fadeColourToWhite(value, amount) {
+        const hex = isHexColour(value) ? value : "#4CAF50";
+        const clamped = clamp(number(amount, 0), 0, 1);
+        const parts = [1, 3, 5].map(index => parseInt(hex.slice(index, index + 2), 16));
+        const faded = parts.map(part => Math.round(part + (255 - part) * clamped));
+        return `#${faded.map(part => part.toString(16).padStart(2, "0")).join("")}`;
+    }
+
     function localeSort(a, b) {
         return String(a).localeCompare(String(b), undefined, { sensitivity: "base" });
     }
@@ -1318,7 +1779,6 @@
         bindGlobalErrorHandlers();
         bindOrientationHandling();
         bindConnectivityHandling();
-        registerServiceWorker();
         render();
         setStatus(State._storageBlocked ? "Ready (saving is unavailable on this device)." : "Ready.");
     }
@@ -1333,15 +1793,6 @@
         window.addEventListener("unhandledrejection", event => {
             console.error("Unhandled promise rejection:", event.reason);
             setStatus("Something went wrong with a background task. Your data is safe.");
-        });
-    }
-
-    // Item 29: register the offline-shell service worker (no-op if unsupported, e.g. plain HTTP)
-    function registerServiceWorker() {
-        if (!("serviceWorker" in navigator)) return;
-        if (!window.isSecureContext) return; // service workers require HTTPS or localhost
-        navigator.serviceWorker.register("./sw.js").catch(error => {
-            console.warn("Service worker registration failed:", error);
         });
     }
 
@@ -1375,8 +1826,15 @@
                     $("#navOverlay")?.classList.remove("visible");
                 }
                 renderBottomNav();
+                if (State.currentSection === "exports") {
+                    renderMain();
+                }
             }, 150);
         });
+    }
+
+    function isDesktopMode() {
+        return !matchMedia("(max-width: 960px)").matches;
     }
 
     function bindGlobalEvents() {
@@ -1766,6 +2224,16 @@
                     { label: "Shopping PDF", action: "exportShoppingPdf", style: "slate" },
                     { label: "Shopping RTF", action: "exportShoppingRtf", style: "secondary" }
                 ];
+            case "budget":
+                return [
+                    { label: "Add cost", action: "addBudgetCost" },
+                    { label: "Edit selected", action: "editSelectedBudgetCost", style: "secondary" },
+                    { label: "Remove selected", action: "removeSelectedBudgetCost", style: "danger" },
+                    { label: "Add plan activities", action: "addPlanActivitiesToBudget", style: "amber" },
+                    { label: "Load sample", action: "loadSampleBudget", style: "teal" },
+                    { label: "Use recommended", action: "useRecommendedBudgetCharge", style: "secondary" },
+                    { label: "Budget PDF", action: "exportBudgetPdf", style: "slate" }
+                ];
             case "exports":
                 return [
                     { label: "Camp pack PDF", action: "exportCampPackPdf" },
@@ -1808,6 +2276,9 @@
             case "shopping-list":
                 main.innerHTML = renderShopping();
                 afterRenderShopping();
+                break;
+            case "budget":
+                main.innerHTML = renderBudget();
                 break;
             case "exports":
                 main.innerHTML = renderExports();
@@ -2092,9 +2563,9 @@
         return `
             <svg class="person-graphic" viewBox="0 0 92 46" aria-hidden="true" focusable="false">
                 ${youngPerson ? renderCamperTypeMark(person.camperType) : ""}
+                <circle cx="46" cy="14" r="6" fill="${attr(gender)}" stroke="${attr(outline)}" stroke-width="1"></circle>
                 ${person.personType === TERMS.personTypeAdult ? renderAdultHat() : ""}
                 ${person.personType === TERMS.personTypeYoungLeader ? renderYoungLeaderCap() : ""}
-                <circle cx="46" cy="14" r="6" fill="${attr(gender)}" stroke="${attr(outline)}" stroke-width="1"></circle>
                 <line x1="46" y1="21" x2="46" y2="32" stroke="${attr(gender)}" stroke-width="${youngPerson ? "2.6" : "3.1"}" stroke-linecap="round"></line>
                 <line x1="34" y1="25" x2="58" y2="25" stroke="${attr(gender)}" stroke-width="2.4" stroke-linecap="round"></line>
                 <line x1="46" y1="32" x2="37" y2="43" stroke="${attr(gender)}" stroke-width="2.4" stroke-linecap="round"></line>
@@ -2152,8 +2623,8 @@
 
     function renderAdultHat() {
         return `
-            <rect x="37" y="2" width="18" height="6" rx="2" fill="#ffb74d" stroke="#8b4513" stroke-width="0.8"></rect>
-            <line x1="33" y1="8" x2="59" y2="8" stroke="#8b4513" stroke-width="2" stroke-linecap="round"></line>`;
+            <rect x="37" y="6" width="18" height="6" rx="2" fill="#ffb74d" stroke="#8b4513" stroke-width="0.8"></rect>
+            <line x1="33" y1="12" x2="59" y2="12" stroke="#8b4513" stroke-width="2" stroke-linecap="round"></line>`;
     }
 
     function renderYoungLeaderCap() {
@@ -2248,13 +2719,19 @@
         const colour = isHexColour(tent.colour) ? tent.colour : "#4CAF50";
         const stroke = darkenColour(colour, 0.45);
         if (isBunk) return renderBunkRoomSvg(colour);
-        const shade = darkenColour(colour, 0.18);
+        const front = fadeColourToWhite(colour, 0.72);
         return `
             <svg class="tent-graphic" viewBox="0 0 170 96" aria-hidden="true" focusable="false">
                 <ellipse cx="85" cy="84" rx="48" ry="6" fill="#000000" opacity="0.22"></ellipse>
-                <polygon points="85,10 33,78 137,78" fill="${attr(colour)}" stroke="${attr(stroke)}" stroke-width="2.2"></polygon>
-                <polygon points="85,10 85,78 137,78" fill="${attr(shade)}" stroke="${attr(stroke)}" stroke-width="1"></polygon>
-                <line x1="85" y1="20" x2="85" y2="77" stroke="#111111" stroke-width="1.3" stroke-linecap="round"></line>
+                <polygon points="33,80 85,8 137,80" fill="${attr(colour)}" stroke="${attr(stroke)}" stroke-width="2.2"></polygon>
+                <polygon points="53,74 85,14 117,74" fill="${attr(front)}" stroke="${attr(stroke)}" stroke-width="1.2"></polygon>
+                <line x1="85" y1="14" x2="40" y2="77" stroke="${attr(stroke)}" stroke-width="1.1" stroke-linecap="round"></line>
+                <line x1="85" y1="14" x2="130" y2="77" stroke="${attr(stroke)}" stroke-width="1.1" stroke-linecap="round"></line>
+                <line x1="85" y1="11" x2="85" y2="74" stroke="${attr(stroke)}" stroke-width="1.2" stroke-linecap="round"></line>
+                <polygon points="33,80 40,77 54,80" fill="${attr(colour)}" stroke="${attr(stroke)}" stroke-width="1"></polygon>
+                <polygon points="137,80 130,77 116,80" fill="${attr(colour)}" stroke="${attr(stroke)}" stroke-width="1"></polygon>
+                <line x1="33" y1="80" x2="137" y2="80" stroke="${attr(stroke)}" stroke-width="2" stroke-linecap="round"></line>
+                <line x1="85" y1="8" x2="85" y2="12" stroke="${attr(stroke)}" stroke-width="2" stroke-linecap="round"></line>
             </svg>`;
     }
 
@@ -2919,6 +3396,238 @@
             </section>`;
     }
 
+    function renderBudget() {
+        const project = State.project;
+        const budget = project.budget;
+        const settings = budget.settings;
+        const snapshot = calculateBudgetSnapshot(project);
+        const warnings = budgetWarnings(project);
+        const balanceClass = snapshot.predictedSurplusShortfall < 0 ? "budget-negative" : "budget-positive";
+        const currency = budgetCurrencyLabel(settings.currencySymbol);
+        return `
+            ${sectionHeader("Budget", "Costs, contribution rules and final camp charges. People and dates come from the current camp project.")}
+            <div class="budget-stack">
+                <section class="card budget-hero">
+                    <div class="budget-hero-title">
+                        <span class="budget-icon">${SECTION_ICONS.budget}</span>
+                        <div>
+                            <h2>Budget</h2>
+                            <p>Uses the current camp dates and Personnel list. Add or edit people in Personnel, or update shared person details below.</p>
+                        </div>
+                    </div>
+                    <div class="summary-grid">
+                        ${budgetSummaryTile("Total cost", formatBudgetMoney(snapshot.totalEstimatedCost))}
+                        ${budgetSummaryTile("Recommended", formatBudgetMoney(snapshot.recommendedRoundedStandardCharge))}
+                        ${budgetSummaryTile("Standard charge", formatBudgetMoney(snapshot.proposedStandardCharge))}
+                        ${budgetSummaryTile("Balance", formatBudgetMoney(snapshot.predictedSurplusShortfall), balanceClass)}
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h3>Contribution rules</h3>
+                    <div class="grid three">
+                        ${budgetSelectField("Adults/leaders", "leaderRule", BUDGET_LEADER_RULES, settings.leaderRule)}
+                        ${budgetSelectField("Young Leaders", "youngLeaderRule", BUDGET_YOUNG_LEADER_RULES, settings.youngLeaderRule)}
+                        ${budgetSelectField("Day visitors", "dayVisitorRule", BUDGET_DAY_VISITOR_RULES, settings.dayVisitorRule)}
+                    </div>
+                    <div class="budget-rule-amounts">
+                        ${settings.leaderRule === BUDGET_LEADERS_PAY_EXACT ? budgetNumberField(`Leader exact amount${currency === "None" ? "" : ` (${currency})`}`, "leaderContributionAmount", settings.leaderContributionAmount) : ""}
+                        ${settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_EXACT ? budgetNumberField(`Young Leader exact amount${currency === "None" ? "" : ` (${currency})`}`, "youngLeaderContributionAmount", settings.youngLeaderContributionAmount) : ""}
+                        ${settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_DAY_RATE ? budgetNumberField(`Day visitor day rate${currency === "None" ? "" : ` (${currency})`}`, "dayVisitorDayRate", settings.dayVisitorDayRate) : ""}
+                        ${settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_EXACT ? budgetNumberField(`Day visitor exact amount${currency === "None" ? "" : ` (${currency})`}`, "dayVisitorCustomContributionAmount", settings.dayVisitorCustomContributionAmount) : ""}
+                        ${usesBudgetFoodOnly(project) ? budgetNumberField(`Food-only amount${currency === "None" ? "" : ` (${currency})`}`, "foodOnlyAmount", settings.foodOnlyAmount) : ""}
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h3>People and contributions</h3>
+                    <p class="muted">Editing shared person details here also updates Personnel. Contribution rules and notes stay with the budget.</p>
+                    ${renderBudgetPeopleTable()}
+                </section>
+
+                <section class="card">
+                    <h3>Food settings</h3>
+                    <div class="budget-food-grid">
+                        ${budgetNumberField(`Food per person per day${currency === "None" ? "" : ` (${currency})`}`, "foodCostPerPersonPerDay", settings.foodCostPerPersonPerDay)}
+                        <label>Food days<input data-update-kind="budget-setting" data-field="foodDays" type="number" min="0" step="1" value="${attr(settings.foodDays)}"></label>
+                        <div class="budget-stat">
+                            <span>Food people</span>
+                            <strong>${snapshot.counts.totalPeople} ${snapshot.counts.totalPeople === 1 ? "person" : "people"}</strong>
+                        </div>
+                        <div class="budget-stat">
+                            <span>Automatic food total</span>
+                            <strong>${formatBudgetMoney(snapshot.foodCost)}</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <div class="budget-card-head">
+                        <h3>Cost lines</h3>
+                        <div class="row-actions">
+                            <button class="small-button" data-action="addBudgetCost" type="button">Add cost</button>
+                            <button class="small-button secondary" data-action="editSelectedBudgetCost" type="button">Edit selected cost</button>
+                            <button class="small-button danger" data-action="removeSelectedBudgetCost" type="button">Remove selected</button>
+                            <button class="small-button amber" data-action="addPlanActivitiesToBudget" type="button">Add plan activities</button>
+                            <button class="small-button teal" data-action="loadSampleBudget" type="button">Load sample budget</button>
+                        </div>
+                    </div>
+                    ${renderBudgetCostTable(snapshot)}
+                </section>
+
+                <section class="card">
+                    <h3>Final charge</h3>
+                    <div class="budget-final-top">
+                        ${budgetNumberField(`Standard charge${currency === "None" ? "" : ` (${currency})`}`, "proposedStandardCharge", settings.proposedStandardCharge)}
+                        <button data-action="useRecommendedBudgetCharge" type="button">Use recommended charge</button>
+                        <div class="budget-stat">
+                            <span>Recommended charge</span>
+                            <strong>${formatBudgetMoney(snapshot.recommendedRoundedStandardCharge)}</strong>
+                        </div>
+                        <div class="budget-stat">
+                            <span>Balance</span>
+                            <strong class="${balanceClass}">${formatBudgetMoney(snapshot.predictedSurplusShortfall)}</strong>
+                        </div>
+                    </div>
+                    <div class="grid three budget-breakdown">
+                        ${budgetBreakdownBox("Outgoings", [
+                            ["Food", formatBudgetMoney(snapshot.foodCost)],
+                            ["Activities", formatBudgetMoney(snapshot.activityCost)],
+                            ["Other costs", formatBudgetMoney(snapshot.otherCost)],
+                            ["Total outgoings", formatBudgetMoney(snapshot.totalEstimatedCost), true]
+                        ])}
+                        ${budgetBreakdownBox("Income", [
+                            ["Standard charges", formatBudgetMoney(snapshot.proposedStandardCharge * snapshot.standardPayingPeople)],
+                            ["Exact/fixed contributions", formatBudgetMoney(snapshot.fixedContributionIncome)],
+                            ["Total income", formatBudgetMoney(snapshot.totalIncomeAtProposedCharge), true]
+                        ])}
+                        ${budgetBreakdownBox("Result", [
+                            ["Required income", formatBudgetMoney(snapshot.requiredIncome)],
+                            ["Balance", formatBudgetMoney(snapshot.predictedSurplusShortfall), true, balanceClass]
+                        ])}
+                    </div>
+                    <div class="toolbar">
+                        <button class="teal" data-action="changeBudgetSymbol" type="button">Change symbol</button>
+                        <button class="slate" data-action="exportBudgetPdf" type="button">Export PDF</button>
+                        <button class="teal" data-action="exportBudgetCsv" type="button">Export CSV</button>
+                    </div>
+                </section>
+
+                <section class="card">
+                    <h3>Checks</h3>
+                    <div class="warning-list">
+                        ${warnings.length ? warnings.map(warning => `<div class="warning">${h(warning)}</div>`).join("") : `<div class="empty">No warnings.</div>`}
+                    </div>
+                    ${budget.importedSourceSummary ? `<p class="muted">${h(budget.importedSourceSummary)}</p>` : ""}
+                </section>
+            </div>
+        `;
+    }
+
+    function budgetSummaryTile(label, value, className = "") {
+        return `<div class="summary-tile"><span>${h(label)}</span><strong class="summary-number ${className}">${h(value)}</strong></div>`;
+    }
+
+    function budgetSelectField(label, field, options, value) {
+        return `<label>${h(label)}<select data-update-kind="budget-setting" data-field="${attr(field)}">${options.map(option => `<option value="${attr(option)}" ${option === value ? "selected" : ""}>${h(option)}</option>`).join("")}</select></label>`;
+    }
+
+    function budgetNumberField(label, field, value) {
+        return `<label>${h(label)}<input data-update-kind="budget-setting" data-field="${attr(field)}" type="number" min="0" step="0.01" value="${attr(number(value, 0))}"></label>`;
+    }
+
+    function usesBudgetFoodOnly(project = State.project) {
+        const settings = project.budget.settings;
+        return settings.leaderRule === BUDGET_LEADERS_PAY_FOOD_ONLY
+            || settings.youngLeaderRule === BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY
+            || settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_FOOD_ONLY
+            || project.budget.people.some(personRow => personRow.contributionRule === BUDGET_CONTRIBUTION_FOOD_ONLY);
+    }
+
+    function renderBudgetPeopleTable() {
+        const people = budgetPeopleSorted();
+        if (!people.length) {
+            return `<div class="empty">No people have been added yet. Add people in Personnel and they will appear here automatically.</div>`;
+        }
+        const header = (label, field) => `<button class="table-sort" data-action="sortBudgetPeople" data-field="${attr(field)}" type="button">${h(label)}${State.sort.budgetPeople === field ? (State.sort.budgetPeopleDir === "desc" ? " ↓" : " ↑") : ""}</button>`;
+        return `
+            <div class="table-wrap budget-table-wrap">
+                <table class="compact-table budget-people-table">
+                    <thead>
+                        <tr>
+                            <th>${header("Name", "name")}</th>
+                            <th>${header("Type", "personType")}</th>
+                            <th>${header("Camper type", "camperType")}</th>
+                            <th>${header("Day visitor", "isDayVisitor")}</th>
+                            <th>${header("Contribution rule", "contributionRule")}</th>
+                            <th>${header("Exact amount", "contributionAmount")}</th>
+                            <th>${header("Notes", "notes")}</th>
+                        </tr>
+                    </thead>
+                    <tbody>${people.map(personRow => `
+                        <tr>
+                            <td><input data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="name" value="${attr(personRow.name)}"></td>
+                            <td><select data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="personType">${BUDGET_PERSON_TYPES.map(type => `<option value="${attr(type)}" ${personRow.personType === type ? "selected" : ""}>${h(type)}</option>`).join("")}</select></td>
+                            <td><select data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="camperType">${BUDGET_CAMPER_TYPES.map(type => `<option value="${attr(type)}" ${personRow.camperType === type ? "selected" : ""}>${h(type)}</option>`).join("")}</select></td>
+                            <td class="center-cell"><input data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="isDayVisitor" type="checkbox" ${personRow.isDayVisitor ? "checked" : ""}></td>
+                            <td><select data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="contributionRule">${BUDGET_CONTRIBUTION_RULES.map(rule => `<option value="${attr(rule)}" ${personRow.contributionRule === rule ? "selected" : ""}>${h(rule)}</option>`).join("")}</select></td>
+                            <td><input data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="contributionAmount" type="number" min="0" step="0.01" value="${attr(personRow.contributionAmount)}" ${personRow.contributionRule === BUDGET_CONTRIBUTION_EXACT ? "" : "disabled"}></td>
+                            <td><input data-update-kind="budget-person" data-id="${attr(personRow.id)}" data-field="notes" value="${attr(personRow.notes)}"></td>
+                        </tr>`).join("")}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function budgetPeopleSorted() {
+        const field = State.sort.budgetPeople || "name";
+        const direction = State.sort.budgetPeopleDir === "desc" ? -1 : 1;
+        return [...State.project.budget.people].sort((a, b) => {
+            const av = field === "isDayVisitor" ? Number(Boolean(a[field])) : a[field];
+            const bv = field === "isDayVisitor" ? Number(Boolean(b[field])) : b[field];
+            return direction * localeSort(av, bv);
+        });
+    }
+
+    function renderBudgetCostTable(snapshot) {
+        if (!State.project.budget.costItems.length) {
+            return `<div class="empty">No cost lines yet. Add site fees, activity costs, transport, equipment hire or food settings to build the final charge.</div>`;
+        }
+        return `
+            <div class="table-wrap budget-table-wrap">
+                <table class="compact-table">
+                    <thead><tr><th>Description</th><th>Calculation</th><th>Cost</th><th>Notes</th><th></th></tr></thead>
+                    <tbody>${State.project.budget.costItems.map(item => {
+                        const calculated = calculateBudgetCostItem(State.project, item, snapshot.counts, snapshot.standardPayingPeople);
+                        const selected = State.selected.budgetCostId === item.id;
+                        return `
+                            <tr class="${selected ? "selected-row" : ""}">
+                                <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="description" value="${attr(item.description)}"></td>
+                                <td><select data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="calculationMethod">${BUDGET_COST_METHODS.map(method => `<option value="${attr(method)}" ${item.calculationMethod === method ? "selected" : ""}>${h(method)}</option>`).join("")}</select></td>
+                                <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="cost" type="number" min="0" step="0.01" value="${attr(Number(calculated.toFixed(2)))}" ${item.calculationMethod === BUDGET_COST_FIXED ? "" : "readonly"}></td>
+                                <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
+                                <td class="row-actions">
+                                    <button class="small-button secondary" data-action="selectBudgetCost" data-id="${attr(item.id)}" type="button">${selected ? "Selected" : "Select"}</button>
+                                    <button class="small-button secondary" data-action="editBudgetCost" data-id="${attr(item.id)}" type="button">Edit</button>
+                                    <button class="small-button danger" data-action="removeBudgetCost" data-id="${attr(item.id)}" type="button">Remove</button>
+                                </td>
+                            </tr>`;
+                    }).join("")}</tbody>
+                </table>
+            </div>`;
+    }
+
+    function budgetBreakdownBox(title, rows) {
+        return `
+            <div class="budget-breakdown-box">
+                <h4>${h(title)}</h4>
+                ${rows.map(([label, value, bold, className]) => `
+                    <div class="budget-kv ${bold ? "bold" : ""}">
+                        <span>${h(label)}</span>
+                        <strong class="${className || ""}">${h(value)}</strong>
+                    </div>`).join("")}
+            </div>`;
+    }
+
     function renderExports() {
         const sectionRows = [...SECTIONS].map(section => `
             <div class="card">
@@ -2928,6 +3637,8 @@
                     <button class="small-button secondary" data-action="importSection" data-section="${attr(section.id)}" type="button">Import</button>
                 </div>
             </div>`).join("");
+        const desktopOpen = isDesktopMode();
+        const exportOpen = defaultOpen => defaultOpen || desktopOpen ? " open" : "";
         return `
             ${sectionHeader("Exports", "Create PDFs, CSV data, RTF files, and section files without replacing unrelated camp data.")}
             <div class="card" style="margin-bottom:12px">
@@ -2940,21 +3651,21 @@
                 </label>
             </div>
             <div class="grid two export-grid">
-                <details class="panel export-panel-details" open>
+                <details class="panel export-panel-details"${exportOpen(true)}>
                     <summary>Complete camp pack</summary>
                     <div class="export-panel-body panel-body">
-                        <p>One PDF for the whole camp, including overview, personnel, tent allocation, plan, menu, kit, shopping and chores.</p>
+                        <p>One PDF for the whole camp, including overview, personnel, tent allocation, plan, menu, kit, shopping, budget and chores.</p>
                         <button data-action="exportCampPackPdf" type="button">Export camp pack PDF</button>
                     </div>
                 </details>
-                <details class="panel export-panel-details" open>
+                <details class="panel export-panel-details"${exportOpen(true)}>
                     <summary>Data export</summary>
                     <div class="export-panel-body panel-body">
-                        <p>Creates a ZIP containing people-and-tents.csv, menu.csv, kit-list.csv, and chores.csv.</p>
+                        <p>Creates a ZIP containing people-and-tents.csv, menu.csv, kit-list.csv, chores.csv and budget.csv.</p>
                         <button class="teal" data-action="exportCsvZip" type="button">Export CSV ZIP</button>
                     </div>
                 </details>
-                <details class="panel export-panel-details">
+                <details class="panel export-panel-details"${exportOpen(false)}>
                     <summary>Planning PDFs</summary>
                     <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportMenuPdf" type="button">Menu PDF</button>
@@ -2966,7 +3677,7 @@
                         <button data-action="exportShoppingRtf" type="button">Shopping lists RTF</button>
                     </div>
                 </details>
-                <details class="panel export-panel-details">
+                <details class="panel export-panel-details"${exportOpen(false)}>
                     <summary>Kit list PDFs</summary>
                     <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportKitPdf" type="button">All kit PDF</button>
@@ -2974,7 +3685,7 @@
                         <button data-action="exportParticipantKitPdf" type="button">Participant kit PDF</button>
                     </div>
                 </details>
-                <details class="panel export-panel-details">
+                <details class="panel export-panel-details"${exportOpen(false)}>
                     <summary>Tent allocation</summary>
                     <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportTentTablePdf" type="button">Tent table PDF</button>
@@ -2983,7 +3694,14 @@
                         <button data-action="makeTentTable" type="button">Preview table</button>
                     </div>
                 </details>
-                <details class="panel export-panel-details">
+                <details class="panel export-panel-details"${exportOpen(false)}>
+                    <summary>Budget</summary>
+                    <div class="export-panel-body panel-body row-actions">
+                        <button data-action="exportBudgetPdf" type="button">Budget PDF</button>
+                        <button class="teal" data-action="exportBudgetCsv" type="button">Budget CSV</button>
+                    </div>
+                </details>
+                <details class="panel export-panel-details"${exportOpen(false)}>
                     <summary>Section data files</summary>
                     <div class="export-panel-body panel-body grid two">${sectionRows}</div>
                 </details>
@@ -3090,6 +3808,17 @@
                 const item = list.items.find(i => i.id === data.id);
                 if (item) mutate(item.checked ? "Unchecked item." : "Checked item.", () => { item.checked = !item.checked; });
             },
+            addBudgetCost: () => editBudgetCost(),
+            editBudgetCost: () => editBudgetCost(data.id),
+            selectBudgetCost: () => selectBudgetCost(data.id),
+            editSelectedBudgetCost,
+            removeBudgetCost: () => removeBudgetCost(data.id),
+            removeSelectedBudgetCost,
+            useRecommendedBudgetCharge,
+            changeBudgetSymbol,
+            addPlanActivitiesToBudget,
+            loadSampleBudget,
+            sortBudgetPeople: () => sortBudgetPeople(data.field),
             exportCampPackPdf,
             exportMenuPdf,
             exportKitchenMenuPdf,
@@ -3101,6 +3830,8 @@
             exportPlanPdf,
             exportShoppingPdf,
             exportShoppingRtf,
+            exportBudgetPdf,
+            exportBudgetCsv,
             exportTentTablePdf,
             exportTentTagsPdf,
             exportTentLayoutPdf,
@@ -3165,6 +3896,8 @@
                 ["The Plan PDF", "exportPlanPdf"],
                 ["Shopping lists PDF", "exportShoppingPdf"],
                 ["Shopping lists RTF", "exportShoppingRtf"],
+                ["Budget PDF", "exportBudgetPdf"],
+                ["Budget CSV", "exportBudgetCsv"],
                 ["Tent table PDF", "exportTentTablePdf"],
                 ["Tent tags PDF", "exportTentTagsPdf"],
                 ["Tent layout PDF", "exportTentLayoutPdf"],
@@ -3213,6 +3946,12 @@
                 if (item) {
                     item[field] = field === "quantity" ? number(target.value, item.quantity) : target.value;
                 }
+            } else if (kind === "budget-setting") {
+                updateBudgetSettingField(field, target.type === "checkbox" ? target.checked : target.value);
+            } else if (kind === "budget-person") {
+                updateBudgetPersonField(id, field, target.type === "checkbox" ? target.checked : target.value);
+            } else if (kind === "budget-cost") {
+                updateBudgetCostField(id, field, target.value);
             }
         });
     }
@@ -4408,6 +5147,243 @@
         return name;
     }
 
+    function updateBudgetSettingField(field, value) {
+        const settings = State.project.budget.settings;
+        const numeric = new Set([
+            "proposedStandardCharge",
+            "foodOnlyAmount",
+            "leaderContributionAmount",
+            "youngLeaderContributionAmount",
+            "dayVisitorDayRate",
+            "dayVisitorCustomContributionAmount",
+            "foodCostPerPersonPerDay"
+        ]);
+        if (field === "leaderRule") settings.leaderRule = mapBudgetLeaderRule(value);
+        else if (field === "youngLeaderRule") settings.youngLeaderRule = mapBudgetYoungLeaderRule(value);
+        else if (field === "dayVisitorRule") settings.dayVisitorRule = mapBudgetDayVisitorRule(value);
+        else if (field === "currencySymbol") settings.currencySymbol = normalizeBudgetCurrency(value);
+        else if (field === "foodDays") settings.foodDays = Math.max(0, Math.round(number(value, settings.foodDays)));
+        else if (field === "notes") settings.notes = clean(value);
+        else if (numeric.has(field)) settings[field] = nonNegative(value);
+        updateBudgetCalculatedCosts(State.project);
+    }
+
+    function updateBudgetPersonField(id, field, value) {
+        const item = State.project.budget.people.find(row => row.id === id);
+        if (!item) return;
+        if (field === "personType") item.personType = mapBudgetPersonType(value);
+        else if (field === "camperType") item.camperType = mapBudgetCamperType(value);
+        else if (field === "isDayVisitor") item.isDayVisitor = Boolean(value);
+        else if (field === "contributionRule") item.contributionRule = mapBudgetContributionRule(value);
+        else if (field === "contributionAmount") item.contributionAmount = nonNegative(value);
+        else if (field === "notes") item.notes = clean(value);
+        else if (field === "name") item.name = clean(value, item.name);
+        pushBudgetPeopleToProject(State.project);
+        updateBudgetCalculatedCosts(State.project);
+    }
+
+    function updateBudgetCostField(id, field, value) {
+        const item = State.project.budget.costItems.find(row => row.id === id);
+        if (!item) return;
+        if (field === "calculationMethod") {
+            item.calculationMethod = mapBudgetCostMethod(value);
+            if (item.calculationMethod === BUDGET_COST_FIXED) {
+                item.quantity = 1;
+                item.unitCost = item.cost;
+            }
+        } else if (field === "cost") {
+            if (item.calculationMethod === BUDGET_COST_FIXED) {
+                item.cost = nonNegative(value);
+                item.quantity = 1;
+                item.unitCost = item.cost;
+            }
+        } else if (field === "description") {
+            item.description = clean(value, "Budget cost");
+        } else if (field === "notes") {
+            item.notes = clean(value);
+        }
+        updateBudgetCalculatedCosts(State.project);
+    }
+
+    function selectBudgetCost(id) {
+        State.selected.budgetCostId = id;
+        renderMain();
+    }
+
+    async function editBudgetCost(id) {
+        const existing = State.project.budget.costItems.find(item => item.id === id);
+        const initial = existing ? { ...existing } : budgetCostItem({ description: "", calculationMethod: BUDGET_COST_FIXED, quantity: 1, unitCost: 0, cost: 0 });
+        const result = await promptFields(existing ? "Edit budget cost" : "Add budget cost", [
+            { name: "description", label: "Description", value: initial.description === "Budget cost" ? "" : initial.description, required: true },
+            { name: "calculationMethod", label: "Calculation", type: "select", options: BUDGET_COST_METHODS, value: initial.calculationMethod },
+            { name: "quantity", label: "Quantity", type: "number", step: "0.01", value: initial.quantity },
+            { name: "unitCost", label: "Unit cost", type: "number", step: "0.01", value: initial.unitCost },
+            { name: "cost", label: "Fixed total cost", type: "number", step: "0.01", value: initial.cost },
+            { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true }
+        ], { wide: true, okText: existing ? "Save cost" : "Add cost" });
+        if (!result) return;
+        mutate(existing ? "Updated budget cost." : "Added budget cost.", () => {
+            const method = mapBudgetCostMethod(result.calculationMethod);
+            const target = existing || budgetCostItem();
+            Object.assign(target, {
+                description: clean(result.description, "Budget cost"),
+                calculationMethod: method,
+                quantity: method === BUDGET_COST_FIXED ? 1 : Math.max(0.0001, number(result.quantity, 1)),
+                unitCost: method === BUDGET_COST_FIXED ? nonNegative(result.cost) : nonNegative(result.unitCost),
+                cost: nonNegative(method === BUDGET_COST_FIXED ? result.cost : result.cost),
+                notes: clean(result.notes)
+            });
+            if (!existing) State.project.budget.costItems.push(target);
+            State.selected.budgetCostId = target.id;
+            updateBudgetCalculatedCosts(State.project);
+        });
+    }
+
+    async function editSelectedBudgetCost() {
+        const selected = State.selected.budgetCostId && State.project.budget.costItems.find(item => item.id === State.selected.budgetCostId);
+        if (!selected) {
+            await alertBox("Budget", "Select a budget cost to edit.");
+            return;
+        }
+        await editBudgetCost(selected.id);
+    }
+
+    async function removeBudgetCost(id) {
+        const item = State.project.budget.costItems.find(row => row.id === id);
+        if (!item || !(await confirmBox("Remove budget cost", `Remove ${item.description}?`))) return;
+        mutate("Removed budget cost.", () => {
+            State.project.budget.costItems = State.project.budget.costItems.filter(row => row.id !== id);
+            if (State.selected.budgetCostId === id) State.selected.budgetCostId = "";
+            updateBudgetCalculatedCosts(State.project);
+        });
+    }
+
+    async function removeSelectedBudgetCost() {
+        const selected = State.selected.budgetCostId && State.project.budget.costItems.find(item => item.id === State.selected.budgetCostId);
+        if (!selected) {
+            await alertBox("Budget", "Select a budget cost to remove.");
+            return;
+        }
+        await removeBudgetCost(selected.id);
+    }
+
+    function useRecommendedBudgetCharge() {
+        const snapshot = calculateBudgetSnapshot(State.project);
+        mutate("Standard charge set to recommended charge.", () => {
+            State.project.budget.settings.proposedStandardCharge = snapshot.recommendedRoundedStandardCharge;
+            updateBudgetCalculatedCosts(State.project);
+        });
+    }
+
+    async function changeBudgetSymbol() {
+        const current = State.project.budget.settings.currencySymbol;
+        const result = await promptFields("Change money symbol", [
+            { name: "currencySymbol", label: "Money symbol", type: "select", options: BUDGET_CURRENCY_OPTIONS.map(option => option[0]), labels: Object.fromEntries(BUDGET_CURRENCY_OPTIONS), value: current }
+        ]);
+        if (!result) return;
+        mutate(`Money symbol changed to ${budgetCurrencyLabel(result.currencySymbol)}.`, () => {
+            State.project.budget.settings.currencySymbol = normalizeBudgetCurrency(result.currencySymbol);
+        });
+    }
+
+    function addPlanActivitiesToBudget() {
+        let added = 0;
+        mutate("Added plan activities to the budget.", () => {
+            const existingKeys = new Set(State.project.budget.costItems.filter(isImportedBudgetActivityCost).map(item => budgetActivityKey(item.description, extractBudgetActivityDate(item.notes) || State.project.startDate)));
+            State.project.planItems
+                .filter(item => !clean(item.boundaryKind) && clean(item.title))
+                .sort((a, b) => localeSort(a.date, b.date) || a.startMinute - b.startMinute || localeSort(a.title, b.title))
+                .forEach(item => {
+                    const key = budgetActivityKey(item.title, item.date);
+                    if (existingKeys.has(key)) return;
+                    existingKeys.add(key);
+                    State.project.budget.costItems.push(budgetCostItem({
+                        description: `Activity: ${item.title.trim()}`,
+                        calculationMethod: BUDGET_COST_FIXED,
+                        quantity: 1,
+                        unitCost: 0,
+                        cost: 0,
+                        notes: `${BUDGET_IMPORTED_ACTIVITY_MARKER} ${item.date}. Add a cost here if this activity costs money.${item.notes ? " " + item.notes.trim() : ""}`
+                    }));
+                    added++;
+                });
+            State.project.budget.importedSourceSummary = added === 0
+                ? "No new plan activities needed budget cost lines."
+                : `Added ${added} plan activit${added === 1 ? "y" : "ies"} as editable budget cost lines.`;
+            updateBudgetCalculatedCosts(State.project);
+        });
+        setStatus(State.project.budget.importedSourceSummary);
+    }
+
+    function budgetActivityKey(title, date) {
+        return `${isoDate(date)}|${clean(title).replace(/^Activity:\s*/i, "").toLowerCase().split(/\s+/).join(" ")}`;
+    }
+
+    function extractBudgetActivityDate(notes) {
+        const match = /\b\d{4}-\d{2}-\d{2}\b/.exec(clean(notes));
+        return match ? match[0] : "";
+    }
+
+    async function loadSampleBudget() {
+        if (!(await confirmBox("Load sample budget", "Load sample budget settings and cost lines? This replaces budget cost lines and budget contribution settings, but it does not change camp details or Personnel."))) return;
+        mutate("Loaded sample budget.", () => {
+            State.project.budget.settings = normalizeBudgetSettings({
+                leaderRule: BUDGET_LEADERS_PAY_EXACT,
+                youngLeaderRule: BUDGET_YOUNG_LEADERS_PAY_FOOD_ONLY,
+                dayVisitorRule: BUDGET_DAY_VISITORS_PAY_DAY_RATE,
+                proposedStandardCharge: 55,
+                foodOnlyAmount: 15,
+                leaderContributionAmount: 20,
+                dayVisitorDayRate: 12.5,
+                currencySymbol: "£",
+                foodCostPerPersonPerDay: 4.25,
+                foodDays: budgetDurationDays(State.project),
+                notes: "Sample budget settings. People still come from Personnel."
+            });
+            State.project.budget.costItems = [
+                sampleBudgetCost("Site hire", BUDGET_COST_FIXED, 1, 180, 180, "Fixed total cost example."),
+                sampleBudgetCost("Badges", BUDGET_COST_QUANTITY, 12, 1.25, 15, "Quantity x unit example."),
+                sampleBudgetCost("Craft materials", BUDGET_COST_PER_PERSON, 1, 2.5, 0, "Calculated from total people."),
+                sampleBudgetCost("Necker activity pack", BUDGET_COST_PER_CAMPER, 1, 3, 0, "Calculated from campers only."),
+                sampleBudgetCost("Generator hire", BUDGET_COST_PER_NIGHT, 1, 18, 0, "Calculated from camp nights."),
+                sampleBudgetCost("Toilet cleaning", BUDGET_COST_PER_DAY, 1, 10, 0, "Calculated from camp days."),
+                sampleBudgetCost("Activity: Archery", BUDGET_COST_FIXED, 1, 45, 45, `${BUDGET_IMPORTED_ACTIVITY_MARKER} Sample paid activity.`),
+                sampleBudgetCost("Activity: Campfire", BUDGET_COST_FIXED, 1, 0, 0, `${BUDGET_IMPORTED_ACTIVITY_MARKER} Sample free activity.`)
+            ];
+            State.project.budget.people.forEach(personRow => {
+                personRow.contributionRule = BUDGET_CONTRIBUTION_STANDARD;
+                personRow.contributionAmount = 0;
+                personRow.notes = "";
+            });
+            const people = [...State.project.budget.people].sort((a, b) => budgetPersonSortGroup(a) - budgetPersonSortGroup(b) || localeSort(a.name, b.name));
+            if (people[1]) Object.assign(people[1], { contributionRule: BUDGET_CONTRIBUTION_EXACT, contributionAmount: 30, notes: "Sample exact amount contribution." });
+            if (people[2]) Object.assign(people[2], { contributionRule: BUDGET_CONTRIBUTION_FOOD_ONLY, notes: "Sample food-only contribution." });
+            if (people[3]) Object.assign(people[3], { contributionRule: BUDGET_CONTRIBUTION_EXCLUDED, notes: "Sample excluded person." });
+            State.project.budget.importedSourceSummary = "Loaded sample budget settings and cost lines. Personnel was not changed.";
+            updateBudgetCalculatedCosts(State.project);
+        });
+    }
+
+    function sampleBudgetCost(description, calculationMethod, quantity, unitCost, cost, notes) {
+        return budgetCostItem({ description, calculationMethod, quantity, unitCost, cost, notes });
+    }
+
+    function budgetPersonSortGroup(personRow) {
+        if (personRow.personType === BUDGET_PERSON_ADULT) return 3;
+        if (personRow.personType === BUDGET_PERSON_YOUNG_LEADER) return 2;
+        return 1;
+    }
+
+    function sortBudgetPeople(field) {
+        if (State.sort.budgetPeople === field) {
+            State.sort.budgetPeopleDir = State.sort.budgetPeopleDir === "desc" ? "asc" : "desc";
+        } else {
+            State.sort.budgetPeople = field;
+            State.sort.budgetPeopleDir = "asc";
+        }
+        renderMain();
+    }
+
     function showModal(title, body, actions = [], options = {}) {
         const host = $("#modalHost");
         // Item 33: remember what had focus so we can restore it on close
@@ -4784,7 +5760,8 @@
             "chores.csv": [
                 "Date,Session,Chore,Assigned to,Notes",
                 ...project.choreAllocations.map(allocation => [allocation.date, allocation.session, choreName(allocation.choreItemId), choreAllocationAssigneeNames(allocation), allocation.notes].map(csv).join(","))
-            ].join("\n")
+            ].join("\n"),
+            "budget.csv": buildBudgetCsv()
         };
     }
 
@@ -4901,6 +5878,7 @@
             "group-kit": { kitItems: groupKit(), groupKitInventory: p.groupKitInventory },
             "participant-kit": { kitItems: participantKit(), participantKitInventory: p.participantKitInventory },
             "shopping-list": { shoppingLists: p.shoppingLists },
+            budget: { budget: p.budget },
             exports: {}
         }[sectionKey];
         return { type: "scout-camp-section", version: 1, sectionKey, sectionLabel: SECTION_TITLES[sectionKey], data };
@@ -4964,6 +5942,12 @@
             case "shopping-list":
                 p.shoppingLists = list(d.shoppingLists);
                 break;
+            case "budget":
+                p.budget = normalizeBudget(d.budget);
+                syncBudgetPeople(p);
+                normalizeBudgetCosts(p);
+                updateBudgetCalculatedCosts(p);
+                break;
         }
     }
 
@@ -4971,7 +5955,7 @@
         const lines = [];
         const sections = [addExportOverview, addExportPeople, addExportTents, addExportPlan,
                            (l) => addExportMenu(l, false), addExportShopping,
-                           (l) => addExportKit(l, null), addExportChores];
+                           addExportBudget, (l) => addExportKit(l, null), addExportChores];
         // Item 13/17: each top-level section starts on its own fresh page so the
         // auto-generated table of contents page numbers line up with where a
         // reader actually lands when they flip to that page
@@ -4983,16 +5967,17 @@
     }
 
     async function exportMenuPdf() {
-        const lines = [];
-        buildMenuWarnings(State.project).forEach(warning => lines.push({ text: warning, color: "red" }));
-        addExportMenu(lines, false);
-        await savePdf("menu.pdf", "Camp menu", lines);
+        const pdf = new ScoutPdf("Camp menu", State.project, { toc: false });
+        const warnings = buildMenuWarnings(State.project);
+        if (warnings.length) pdf.addWarningBox(warnings.join("  |  "));
+        pdf.addTwoColumnSections(enumerateDates(State.project.startDate, State.project.endDate).map(menuDayPdfSection));
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("menu.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     async function exportKitchenMenuPdf() {
-        const lines = [];
-        addExportMenu(lines, true);
-        await savePdf("kitchen-menu.pdf", "Kitchen menu", lines);
+        const pdf = new ScoutPdf("Kitchen menu", State.project, { toc: false });
+        addKitchenMenuPdf(pdf);
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("kitchen-menu.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     async function exportKitPdf() {
@@ -5013,84 +5998,75 @@
         await savePdf("participant-kit.pdf", "Participant kit", lines);
     }
 
-    // Item 18: standalone Chore Rota gets a real per-day table (session × chore ×
-    // assignee) rather than indented text — this is the version meant to be pinned
-    // up for quick reference, so scanability matters far more than in the bundled
-    // Camp Pack copy, which stays in the simpler flat format for that document's
-    // overall flow.
+    // Item 18: standalone Chore Rota uses the improved day blocks with sessions as
+    // columns, matching the desktop export.
     async function exportChoresPdf() {
-        const pdf = new ScoutPdf("Chore rota", State.project);
+        const pdf = new ScoutPdf("Chore rota", State.project, { toc: false });
         enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
-            if (index > 0) pdf._addNewPage();
-            pdf.addSectionBanner(displayDate(date, true));
-            const rows = [];
-            State.project.choreSessions.forEach(session => {
-                const allocations = State.project.choreAllocations.filter(a => a.date === date && a.session === session);
-                allocations.forEach(a => {
-                    rows.push([session, choreName(a.choreItemId), choreAllocationAssigneeNames(a), a.notes || "—"]);
-                });
-            });
-            if (!rows.length) {
-                pdf.addText("No chore allocations for this day.");
-            } else {
-                pdf.addTable(
-                    [
-                        { label: "Session", width: 0.16 },
-                        { label: "Chore",   width: 0.26 },
-                        { label: "Assigned",width: 0.32 },
-                        { label: "Notes" }
-                    ],
-                    rows
-                );
-            }
+            if (index > 0) pdf.y += 4;
+            addChoreRotaDay(pdf, date);
         });
         await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("chores.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     async function exportPlanPdf() {
-        const lines = [];
-        addExportPlan(lines);
-        await savePdf("the-plan.pdf", "The Plan", lines);
+        const pdf = new ScoutPdf("The Plan", State.project, { toc: false });
+        pdf.addTwoColumnSections(enumerateDates(State.project.startDate, State.project.endDate).map(planDayPdfSection));
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("the-plan.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     async function exportShoppingPdf() {
-        const lines = [];
-        addExportShopping(lines);
-        await savePdf("shopping-lists.pdf", "Shopping lists", lines);
+        const pdf = new ScoutPdf("Shopping lists", State.project, { toc: false });
+        addShoppingListPdfTables(pdf, State.project.shoppingLists || []);
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("shopping-lists.pdf")}`, "application/pdf", pdf.bytes());
     }
 
-    // Item 18: a genuine ruled table — capacity, occupancy and names are now
-    // columns you can scan down rather than parsing out of a run-on sentence
+    async function exportBudgetPdf() {
+        const lines = [];
+        addExportBudget(lines);
+        await savePdf("budget.pdf", "Budget", lines);
+    }
+
+    async function exportBudgetCsv() {
+        await saveTextFile(`${safeFileName(State.project.campName)}-${datedFileName("budget.csv")}`, "text/csv", buildBudgetCsv());
+    }
+
+    // Desktop-style landscape allocation table.
     async function exportTentTablePdf() {
-        const pdf = new ScoutPdf("Tent allocation table", State.project);
+        const pdf = new ScoutPdf("Tent allocation table", State.project, { orientation: "landscape", toc: false });
         pdf.addSectionBanner("Tent allocation table");
 
         const warnings = buildTentWarnings(State.project);
-        if (warnings.length) {
-            pdf.addWarningBox(warnings.join("  |  "));
-        }
-
+        const showWarnings = State.project.tents.some(tent => tentSpecificWarnings(tent, warnings).length);
+        if (showWarnings) pdf.addWarningBox(warnings.join("  |  "));
         const rows = State.project.tents.map(tent => {
             const occupants = orderedPeople().filter(p => p.tentId === tent.id);
             const names = occupants.map(p => p.name).join(", ") || "—";
-            const overCapacity = tent.capacity && occupants.length > tent.capacity;
-            return [
+            const row = [
                 tent.name,
-                tent.type || "—",
-                { text: `${occupants.length}/${tent.capacity || "—"}`, color: overCapacity ? "red" : null },
-                { text: names, color: overCapacity ? "red" : null }
+                tentTypeLabel(tent),
+                names,
+                tentOccupantSummary(occupants) || "—"
             ];
+            if (showWarnings) row.push(tentSpecificWarnings(tent, warnings).join("; ") || "—");
+            return row;
         });
 
-        pdf.addTable(
-            [
-                { label: "Tent",     width: 0.18 },
-                { label: "Type",     width: 0.16 },
-                { label: "Occ/Cap",  width: 0.12 },
+        const columns = showWarnings
+            ? [
+                { label: "Tent name", width: 0.16 },
+                { label: "Type", width: 0.14 },
+                { label: "People allocated", width: 0.34 },
+                { label: "Occupants", width: 0.20 },
+                { label: "Warnings" }
+            ]
+            : [
+                { label: "Tent name", width: 0.18 },
+                { label: "Type", width: 0.16 },
+                { label: "People allocated", width: 0.42 },
                 { label: "Occupants" }
-            ],
-            rows
-        );
+            ];
+        pdf.addWrappedTable(columns, rows, { minRowHeight: 28, maxLines: 4 });
 
         const unallocated = orderedPeople().filter(p => !p.tentId);
         if (unallocated.length) {
@@ -5101,21 +6077,14 @@
         await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-table.pdf")}`, "application/pdf", pdf.bytes());
     }
 
-    // Item 9: one full-page, cuttable tag per tent — large bold name, capacity,
-    // and a clear occupant list, with a dashed cut-line border. This is meant to
-    // be printed, cut out, and physically attached to the tent — not read as a
-    // reference document, so it gets its own distinct layout entirely.
+    // Desktop-style cut-out tags: three per page, left details, right black marker.
     async function exportTentTagsPdf() {
-        const pdf = new ScoutPdf("Tent tags", State.project);
+        const pdf = new ScoutPdf("Tent tags", State.project, { plain: true, toc: false });
         if (!State.project.tents.length) {
-            pdf.addSectionBanner("Tent tags");
+            pdf.y = 72;
             pdf.addText("No tents have been added yet.");
         } else {
-            State.project.tents.forEach((tent, index) => {
-                const occupants = orderedPeople().filter(p => p.tentId === tent.id);
-                if (index > 0) pdf._addNewPage();
-                pdf.addTentTag(tent, occupants);
-            });
+            pdf.addTentTags(State.project.tents.map(tent => ({ tent, occupants: orderedPeople().filter(p => p.tentId === tent.id) })));
         }
         await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-tags.pdf")}`, "application/pdf", pdf.bytes());
     }
@@ -5124,17 +6093,18 @@
     // site items drawn as positioned rectangles with a legend, not raw coordinates
     // as text, so the printout actually functions as a map you can navigate by.
     async function exportTentLayoutPdf() {
-        const pdf = new ScoutPdf("Tent layout", State.project);
+        const pdf = new ScoutPdf("Tent layout", State.project, { toc: false });
         pdf.addSectionBanner("Site map");
 
         const allItems = [
             ...State.project.tents.map(t => ({
-                x: t.x || 0, y: t.y || 0, w: 170, h: 96,
-                label: t.name, kind: "tent"
+                x: t.x || 0, y: t.y || 0, w: 170 * number(t.sizeScale, 1), h: 145 * number(t.sizeScale, 1),
+                label: t.name, kind: "tent", colour: t.colour, isBunk: isBunkTent(t),
+                occupants: orderedPeople().filter(p => p.tentId === t.id)
             })),
             ...State.project.siteItems.map(s => ({
-                x: s.x || 0, y: s.y || 0, w: 92, h: 62,
-                label: s.name, kind: "site"
+                x: s.x || 0, y: s.y || 0, w: 92 * number(s.sizeScale, 1), h: 90 * number(s.sizeScale, 1),
+                label: s.name, kind: "site", colour: s.colour
             }))
         ];
 
@@ -5153,6 +6123,228 @@
         });
 
         await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-layout.pdf")}`, "application/pdf", pdf.bytes());
+    }
+
+    function menuDayPdfSection(date) {
+        const lines = [];
+        const note = State.project.menuDayNotes.find(n => n.date === date);
+        if (note?.notes) lines.push(`Day note: ${note.notes}`);
+        activeMealSlots(State.project, date).forEach(slot => {
+            const items = State.project.menuItems
+                .filter(item => item.date === date && item.slot === slot && hasMenuContent(item))
+                .sort((a, b) => localeSort(a.meal, b.meal) || localeSort(a.pudding, b.pudding));
+            if (!items.length) {
+                lines.push(`${slot}: not planned`);
+                return;
+            }
+            items.forEach(item => {
+                const parts = [
+                    item.meal || "No food recorded",
+                    item.pudding ? `Pudding: ${item.pudding}` : "",
+                    item.dietaryNotes ? `Dietary: ${item.dietaryNotes}` : "",
+                    item.notes
+                ].filter(Boolean);
+                lines.push(`${slot}: ${parts.join(" | ")}`);
+            });
+        });
+        return { title: displayDate(date, true), lines };
+    }
+
+    function planDayPdfSection(date) {
+        return { title: displayDate(date, true), lines: planLinesForDate(date) };
+    }
+
+    function planLinesForDate(date) {
+        const groups = new Map();
+        State.project.planItems
+            .filter(item => item.date === date)
+            .forEach(item => {
+                const key = `${item.startMinute}-${item.endMinute}`;
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(item);
+            });
+        const lines = [];
+        [...groups.entries()]
+            .map(([key, items]) => ({ key, items, start: items[0]?.startMinute || 0, end: items[0]?.endMinute || 0 }))
+            .sort((a, b) => a.start - b.start || a.end - b.end)
+            .forEach(group => {
+                const items = group.items.slice().sort((a, b) => localeSort(planAudienceText(a), planAudienceText(b)) || localeSort(a.title, b.title));
+                const range = `${planTime(group.start)}-${planTime(group.end)}`;
+                if (items.length === 1) {
+                    const item = items[0];
+                    const details = [planAudienceText(item), item.notes].filter(Boolean).join(" | ");
+                    lines.push(`${range} - ${item.title}${details ? " - " + details : ""}`);
+                } else {
+                    lines.push(`${range} - Parallel activities (all run at the same time)`);
+                    items.forEach(item => lines.push(`${planAudienceText(item)} - ${item.title}${item.notes ? " | " + item.notes : ""}`));
+                }
+            });
+        return lines.length ? lines : ["No plan items."];
+    }
+
+    function choreDayPdfSection(date) {
+        const lines = [];
+        State.project.choreSessions.forEach(session => {
+            const allocations = State.project.choreAllocations
+                .filter(allocation => allocation.date === date && allocation.session === session)
+                .sort((a, b) => number(a.sortOrder) - number(b.sortOrder) || localeSort(choreName(a.choreItemId), choreName(b.choreItemId)) || localeSort(choreAllocationAssigneeNames(a), choreAllocationAssigneeNames(b)));
+            if (!allocations.length) {
+                lines.push(`${session}: no allocations`);
+                return;
+            }
+            allocations.forEach(allocation => {
+                lines.push(`${session}: ${choreName(allocation.choreItemId)} - ${choreAllocationAssigneeNames(allocation)}${allocation.notes ? " | " + allocation.notes : ""}`);
+            });
+        });
+        return { title: displayDate(date, true), lines };
+    }
+
+    function addKitchenMenuPdf(pdf) {
+        const warnings = buildMenuWarnings(State.project);
+        if (warnings.length) pdf.addWarningBox(warnings.join("  |  "));
+        const dietary = State.project.people.filter(person => clean(person.dietaryNotes));
+        if (dietary.length) {
+            pdf.addSectionBanner("People with dietary notes");
+            dietary
+                .slice()
+                .sort((a, b) => localeSort(a.name, b.name))
+                .forEach(person => pdf.addWarningBox(`${person.name}: ${person.dietaryNotes}`));
+        }
+        enumerateDates(State.project.startDate, State.project.endDate).forEach(date => addKitchenMenuDay(pdf, date));
+    }
+
+    function addKitchenMenuDay(pdf, date) {
+        pdf.addSectionBanner(displayDate(date, true));
+        const note = State.project.menuDayNotes.find(n => n.date === date);
+        if (note?.notes) pdf.addText(`Day note: ${note.notes}`, { bold: true });
+        activeMealSlots(State.project, date).forEach(slot => {
+            const items = State.project.menuItems
+                .filter(item => item.date === date && item.slot === slot && hasMenuContent(item))
+                .sort((a, b) => localeSort(a.meal, b.meal));
+            if (!items.length) {
+                addKitchenDetailBlock(pdf, slot, { meal: "Not planned", pudding: "", dietaryNotes: "", notes: "" });
+            } else {
+                items.forEach(item => addKitchenDetailBlock(pdf, slot, item));
+            }
+        });
+    }
+
+    function addKitchenDetailBlock(pdf, slot, item) {
+        const leftWidth = 84;
+        const rightWidth = pdf.textWidth() - leftWidth - 8;
+        const lines = [];
+        lines.push(item.meal || "No food recorded");
+        if (item.pudding) lines.push(`Pudding: ${item.pudding}`);
+        if (item.dietaryNotes) lines.push(`Dietary: ${item.dietaryNotes}`);
+        if (item.notes) lines.push(`Notes: ${item.notes}`);
+        const wrappedCount = lines.reduce((sum, line) => sum + wrapText(line, Math.floor(rightWidth / 4.5)).length, 0);
+        const height = Math.max(28, wrappedCount * 11 + 12);
+        pdf.reserveBlock(height + 4);
+        const y = pdf.y;
+        pdf._line(pdf.ML, y, pdf.W - pdf.MR, y, "green-light", 0.7);
+        pdf._text(slot, pdf.ML, y + 16, 9, true, "green-dark");
+        let ty = y + 14;
+        lines.forEach((line, index) => {
+            wrapText(line, Math.floor(rightWidth / 4.5)).forEach(wrapped => {
+                pdf._text(wrapped, pdf.ML + leftWidth + 8, ty, 8.6, index === 0, line.startsWith("Dietary:") ? "red" : "black");
+                ty += 11;
+            });
+        });
+        pdf.y += height + 4;
+    }
+
+    function addChoreRotaDay(pdf, date) {
+        const sessions = State.project.choreSessions.length ? State.project.choreSessions : ["Morning", "Afternoon", "Evening"];
+        pdf.addSubHeading(displayDate(date, true));
+        const row = sessions.map(session => {
+            const allocations = State.project.choreAllocations
+                .filter(allocation => allocation.date === date && allocation.session === session)
+                .sort((a, b) => number(a.sortOrder) - number(b.sortOrder) || localeSort(choreName(a.choreItemId), choreName(b.choreItemId)));
+            if (!allocations.length) return "No allocations";
+            return allocations.map(allocation => `${choreName(allocation.choreItemId)} - ${choreAllocationAssigneeNames(allocation)}${allocation.notes ? " | " + allocation.notes : ""}`).join("\n");
+        });
+        pdf.addWrappedTable(sessions.map(session => ({ label: session })), [row], { minRowHeight: 46, fontSize: 8.2, maxLines: 10 });
+    }
+
+    function addShoppingListPdfTables(pdf, lists) {
+        const shoppingLists = lists || [];
+        if (!shoppingLists.length) {
+            pdf.addText("No shopping lists have been added.");
+            return;
+        }
+        shoppingLists.forEach(listItem => {
+            const items = (listItem.items || []).filter(item => clean(item.name)).sort((a, b) => localeSort(a.name, b.name));
+            pdf.addSubHeading(listItem.name || "Shopping list");
+            if (!items.length) {
+                pdf.addText("No items in this list.");
+                return;
+            }
+            pdf.addWrappedTable(
+                [
+                    { label: "", width: 0.08 },
+                    { label: "Item", width: 0.72 },
+                    { label: "Quantity" }
+                ],
+                items.map(item => ["", item.name, formatQty(item.quantity)]),
+                { minRowHeight: 22, fontSize: 8.8 }
+            );
+        });
+    }
+
+    function isBunkTent(tent) {
+        return tent.accommodationType === TERMS.accommodationBunkRoom || clean(tent.type).toLowerCase().includes("bunk");
+    }
+
+    function tentTypeLabel(tent) {
+        return `${tentColourName(tent.colour)} ${isBunkTent(tent) ? "bunk room" : "tent"}`;
+    }
+
+    function tentColourName(value) {
+        const key = (isHexColour(value) ? value : "#4CAF50").toUpperCase();
+        return {
+            "#D7C8A2": "Beige",
+            "#212121": "Black",
+            "#2196F3": "Blue",
+            "#795548": "Brown",
+            "#4CAF50": "Green",
+            "#00A86B": "Jade",
+            "#FF9800": "Orange",
+            "#FF8FD2": "Pink",
+            "#9C27B0": "Purple",
+            "#D32F2F": "Red",
+            "#FFFFFF": "White",
+            "#FDD835": "Yellow"
+        }[key] || "Green";
+    }
+
+    function tentOccupantSummary(people) {
+        const parts = [];
+        addTentSummaryPart(parts, people, TERMS.genderMale, TERMS.personTypeYoungPerson, "male camper");
+        addTentSummaryPart(parts, people, TERMS.genderFemale, TERMS.personTypeYoungPerson, "female camper");
+        addTentSummaryPart(parts, people, TERMS.genderOther, TERMS.personTypeYoungPerson, "other-gender camper");
+        addTentSummaryPart(parts, people, TERMS.genderMale, TERMS.personTypeAdult, "male adult");
+        addTentSummaryPart(parts, people, TERMS.genderFemale, TERMS.personTypeAdult, "female adult");
+        addTentSummaryPart(parts, people, TERMS.genderOther, TERMS.personTypeAdult, "other-gender adult");
+        addTentSummaryPart(parts, people, TERMS.genderMale, TERMS.personTypeYoungLeader, "male young leader");
+        addTentSummaryPart(parts, people, TERMS.genderFemale, TERMS.personTypeYoungLeader, "female young leader");
+        addTentSummaryPart(parts, people, TERMS.genderOther, TERMS.personTypeYoungLeader, "other-gender young leader");
+        const dayVisitors = people.filter(person => person.isDayVisitor).length;
+        if (dayVisitors) parts.push(`${dayVisitors} day visitor${dayVisitors === 1 ? "" : "s"}`);
+        return parts.join(", ");
+    }
+
+    function addTentSummaryPart(parts, people, gender, type, label) {
+        const count = people.filter(person => person.gender === gender && person.personType === type).length;
+        if (count) parts.push(`${count} ${label}${count === 1 ? "" : "s"}`);
+    }
+
+    function tentSpecificWarnings(tent, warnings) {
+        const lowerName = clean(tent.name).toLowerCase();
+        return warnings
+            .filter(warning => clean(warning).toLowerCase().includes(lowerName))
+            .map(warning => clean(warning).toLowerCase().startsWith(lowerName)
+                ? clean(warning).slice(clean(tent.name).length).trim().replace(/^has\s+/i, "")
+                : warning);
     }
 
     function addExportOverview(lines) {
@@ -5190,19 +6382,26 @@
             const role = personRoleText(person);
             (byType[role] = byType[role] || []).push(person);
         });
-        Object.entries(byType).forEach(([role, people]) => {
-            lines.push({ text: role, heading: true });
-            people.forEach(person => {
+        lines.push({
+            twoColumnSections: true,
+            sections: Object.entries(byType).map(([role, people]) => ({
+                title: role,
+                lines: people.map(person => {
                 const tent = tentName(person.tentId) || "No tent";
                 const diet = person.dietaryNotes ? `  Diet: ${person.dietaryNotes}` : "";
                 const med  = person.medicalNotes  ? `  Medical: ${person.medicalNotes}` : "";
-                lines.push({ text: `${person.name}  (${person.gender !== "Not set" ? person.gender + ", " : ""}${tent})${diet}${med}` });
-            });
+                    return `${person.name}  (${person.gender !== "Not set" ? person.gender + ", " : ""}${tent})${diet}${med}`;
+                })
+            }))
         });
         if (State.project.choreTeams.length) {
             lines.push({ text: "Teams", heading: true });
-            State.project.choreTeams.forEach(team => {
-                lines.push({ text: `${team.name}: ${peopleForTeam(team.id).map(p => p.name).join(", ") || "No members"}` });
+            lines.push({
+                twoColumnSections: true,
+                sections: State.project.choreTeams.map(team => ({
+                    title: team.name,
+                    lines: [peopleForTeam(team.id).map(p => p.name).join(", ") || "No members"]
+                }))
             });
         }
     }
@@ -5213,15 +6412,18 @@
             lines.push({ text: "No tents added." });
             return;
         }
-        State.project.tents.forEach(tent => {
+        lines.push({ twoColumnSections: true, sections: State.project.tents.map(tent => {
             const occupants = orderedPeople().filter(p => p.tentId === tent.id);
-            lines.push({ text: `${tent.name}  –  ${tent.type}  ·  Capacity: ${tent.capacity}`, heading: true });
-            if (occupants.length) {
-                occupants.forEach((p, i) => lines.push({ text: `  ${i + 1}. ${p.name}  (${personRoleText(p)})` }));
-            } else {
-                lines.push({ text: "  No occupants allocated." });
-            }
-        });
+            return {
+                title: tent.name,
+                lines: [
+                    tentTypeLabel(tent),
+                    ...(occupants.length
+                        ? occupants.map((p, i) => `${i + 1}. ${p.name} (${personRoleText(p)})`)
+                        : ["No occupants allocated."])
+                ]
+            };
+        }) });
         const unallocated = orderedPeople().filter(p => !p.tentId);
         if (unallocated.length) {
             lines.push({ text: "Unallocated people", heading: true, color: "red" });
@@ -5242,8 +6444,10 @@
             const summary = "Dietary requirements: " + dietary.map(p => `${p.name} — ${p.dietaryNotes}`).join("  |  ");
             lines.push({ text: summary, warningBox: true });
         }
-        // Item 17: each day starts on a fresh page so a printed sheet for "today"
-        // never has yesterday's leftovers or tomorrow's start sharing the page
+        if (!kitchen) {
+            lines.push({ twoColumnSections: true, sections: enumerateDates(State.project.startDate, State.project.endDate).map(menuDayPdfSection) });
+            return;
+        }
         enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
             if (index > 0) lines.push({ text: "", pageBreak: true });
             lines.push({ text: displayDate(date, true), heading: true });
@@ -5266,19 +6470,7 @@
 
     function addExportPlan(lines) {
         lines.push({ text: "The Plan", size: 15 });
-        enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
-            if (index > 0) lines.push({ text: "", pageBreak: true });
-            lines.push({ text: displayDate(date, true), heading: true });
-            const items = State.project.planItems.filter(i => i.date === date).sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
-            if (!items.length) {
-                lines.push({ text: "  No items planned for this day." });
-            } else {
-                items.forEach(item => {
-                    lines.push({ text: `  ${planTime(item.startMinute)} – ${planTime(item.endMinute)}  ${item.title}`, bold: true });
-                    lines.push({ text: `    ${planAudienceText(item)}${item.notes ? "  ·  " + item.notes : ""}` });
-                });
-            }
-        });
+        lines.push({ twoColumnSections: true, sections: enumerateDates(State.project.startDate, State.project.endDate).map(planDayPdfSection) });
     }
 
     function addExportKit(lines, participant) {
@@ -5291,33 +6483,23 @@
         // Group by category
         const cats = {};
         items.forEach(item => { (cats[item.category || "General"] = cats[item.category || "General"] || []).push(item); });
-        Object.entries(cats).forEach(([cat, catItems]) => {
-            lines.push({ text: cat, heading: true });
-            catItems.forEach(item => {
+        lines.push({
+            twoColumnSections: true,
+            sections: Object.entries(cats).map(([cat, catItems]) => ({
+                title: cat,
+                lines: catItems.map(item => {
                 const status = participant ? "" : `  [${item.status}]`;
                 const qty = item.quantity !== undefined ? `  Qty: ${formatQty(item.quantity)}` : "";
                 const notes = item.notes ? `  – ${item.notes}` : "";
-                // Item 15: a real drawn checkbox, not a Unicode glyph that can render
-                // as a missing-glyph box depending on the printer's font substitution
-                lines.push({ text: `${item.name}${qty}${status}${notes}`, checklist: true });
-            });
+                    return `[ ] ${item.name}${qty}${status}${notes}`;
+                })
+            }))
         });
     }
 
     function addExportChores(lines) {
         lines.push({ text: "Chore Rota", size: 15 });
-        enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
-            lines.push({ text: displayDate(date, true), heading: true });
-            State.project.choreSessions.forEach(session => {
-                const allocations = State.project.choreAllocations.filter(a => a.date === date && a.session === session);
-                if (allocations.length) {
-                    lines.push({ text: `  ${session}`, bold: true, size: 9 });
-                    allocations.forEach(a => {
-                        lines.push({ text: `    ${choreName(a.choreItemId)}: ${choreAllocationAssigneeNames(a)}${a.notes ? "  ·  " + a.notes : ""}` });
-                    });
-                }
-            });
-        });
+        lines.push({ twoColumnSections: true, sections: enumerateDates(State.project.startDate, State.project.endDate).map(choreDayPdfSection) });
     }
 
     function addExportShopping(lines) {
@@ -5332,10 +6514,172 @@
             if (!shopItems.length) {
                 lines.push({ text: "  No items in this list." });
             } else {
-                // Item 15: drawn checkbox, real tick target for a printed shop run
-                shopItems.forEach(item => lines.push({ text: `${item.name}  ×${formatQty(item.quantity)}`, checklist: true }));
+                lines.push({
+                    table: true,
+                    columns: [
+                        { label: "", width: 0.08 },
+                        { label: "Item", width: 0.72 },
+                        { label: "Quantity" }
+                    ],
+                    rows: shopItems
+                        .slice()
+                        .sort((a, b) => localeSort(a.name, b.name))
+                        .map(item => ["", item.name, formatQty(item.quantity)]),
+                    options: { minRowHeight: 22, fontSize: 8.8 }
+                });
             }
         });
+    }
+
+    function addExportBudget(lines) {
+        const project = State.project;
+        const snapshot = calculateBudgetSnapshot(project);
+        lines.push({ text: "Budget", size: 15 });
+        lines.push({ text: `Total cost: ${formatBudgetMoney(snapshot.totalEstimatedCost)}  ·  Recommended: ${formatBudgetMoney(snapshot.recommendedRoundedStandardCharge)}  ·  Standard charge: ${formatBudgetMoney(snapshot.proposedStandardCharge)}  ·  Balance: ${formatBudgetMoney(snapshot.predictedSurplusShortfall)}`, bold: true });
+        lines.push({ text: "Camp details", heading: true });
+        [
+            ["Camp", project.campName],
+            ["Location", project.location || "Not set"],
+            ["Dates", dateRange(project)],
+            ["Generated", new Date().toLocaleString("en-GB")]
+        ].forEach(([label, value]) => lines.push({ text: `${label}: ${value}` }));
+
+        lines.push({ text: "People included", heading: true });
+        [
+            ["Campers", snapshot.counts.campers],
+            ["Young Leaders", snapshot.counts.youngLeaders],
+            ["Adults/leaders", snapshot.counts.adults],
+            ["Day visitors", snapshot.counts.dayVisitors],
+            ["Standard payers", snapshot.standardPayingPeople]
+        ].forEach(([label, value]) => lines.push({ text: `${label}: ${value}` }));
+
+        lines.push({ text: "Charging rules", heading: true });
+        lines.push({ text: `Leaders: ${budgetRuleWithAmount(project.budget.settings.leaderRule, project.budget.settings.leaderContributionAmount)}` });
+        lines.push({ text: `Young Leaders: ${budgetRuleWithAmount(project.budget.settings.youngLeaderRule, project.budget.settings.youngLeaderContributionAmount)}` });
+        lines.push({ text: `Day visitors: ${budgetDayVisitorRuleWithAmount(project)}` });
+        lines.push({ text: `Food: ${formatBudgetMoney(project.budget.settings.foodCostPerPersonPerDay)} per person per day for ${project.budget.settings.foodDays} days. People counted: ${snapshot.counts.totalPeople}. Total: ${formatBudgetMoney(snapshot.foodCost)}` });
+
+        const activityRows = snapshot.costRows.filter(row => isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
+        const otherRows = snapshot.costRows.filter(row => !isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
+        addBudgetCostExportRows(lines, "Activities", activityRows);
+        addBudgetCostExportRows(lines, "Other costs", otherRows);
+
+        lines.push({ text: "Final charge", heading: true });
+        lines.push({ text: `Outgoings: Food ${formatBudgetMoney(snapshot.foodCost)} | Activities ${formatBudgetMoney(snapshot.activityCost)} | Other ${formatBudgetMoney(snapshot.otherCost)} | Total ${formatBudgetMoney(snapshot.totalEstimatedCost)}` });
+        lines.push({ text: `Income: Standard charges ${formatBudgetMoney(snapshot.proposedStandardCharge * snapshot.standardPayingPeople)} | Exact/fixed contributions ${formatBudgetMoney(snapshot.fixedContributionIncome)} | Total ${formatBudgetMoney(snapshot.totalIncomeAtProposedCharge)}` });
+        lines.push({ text: `Required income: ${formatBudgetMoney(snapshot.requiredIncome)} | Balance: ${formatBudgetMoney(snapshot.predictedSurplusShortfall)}`, bold: true, color: snapshot.predictedSurplusShortfall < 0 ? "red" : undefined });
+
+        if (project.budget.people.length) {
+            lines.push({ text: "People and contribution rules", heading: true });
+            [...project.budget.people]
+                .sort((a, b) => localeSort(a.personType, b.personType) || localeSort(a.camperType, b.camperType) || localeSort(a.name, b.name))
+                .forEach(personRow => {
+                    const type = personRow.isDayVisitor ? `${personRow.personType} day visitor` : personRow.personType;
+                    const exact = personRow.contributionAmount > 0 ? `  ·  Exact: ${formatBudgetMoney(personRow.contributionAmount)}` : "";
+                    const notes = personRow.notes ? `  ·  ${personRow.notes}` : "";
+                    lines.push({ text: `${personRow.name}: ${type}  ·  ${personRow.contributionRule}${exact}${notes}` });
+                });
+        }
+
+        const warnings = budgetWarnings(project);
+        if (warnings.length) {
+            lines.push({ text: "Checks", heading: true, color: "red" });
+            warnings.forEach(warning => lines.push({ text: warning, color: "red" }));
+        }
+    }
+
+    function addBudgetCostExportRows(lines, title, rows) {
+        if (!rows.length) return;
+        lines.push({ text: title, heading: true });
+        rows.forEach(row => {
+            const method = row.item.calculationMethod.replace(" cost", "");
+            lines.push({ text: `${row.item.description}  ·  ${method}  ·  ${formatBudgetMoney(row.amount)}${row.item.notes ? "  ·  " + row.item.notes : ""}` });
+        });
+        lines.push({ text: `Total ${title.toLowerCase()}: ${formatBudgetMoney(rows.reduce((sum, row) => sum + row.amount, 0))}`, bold: true });
+    }
+
+    function budgetRuleWithAmount(rule, amount) {
+        const cleaned = clean(rule)
+            .replace("Leaders pay ", "")
+            .replace("Young Leaders pay ", "")
+            .replace("Day visitors pay ", "");
+        return amount > 0 ? `${cleaned} (${formatBudgetMoney(amount)})` : cleaned;
+    }
+
+    function budgetDayVisitorRuleWithAmount(project) {
+        const settings = project.budget.settings;
+        const amount = settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_DAY_RATE
+            ? settings.dayVisitorDayRate
+            : settings.dayVisitorRule === BUDGET_DAY_VISITORS_PAY_EXACT
+                ? settings.dayVisitorCustomContributionAmount
+                : 0;
+        return budgetRuleWithAmount(settings.dayVisitorRule, amount);
+    }
+
+    function budgetCostSort(a, b) {
+        return budgetCostSortKey(a).localeCompare(budgetCostSortKey(b)) || localeSort(a, b);
+    }
+
+    function budgetCostSortKey(item) {
+        const text = clean(item).toLowerCase();
+        if (text.includes("site") || text.includes("camp")) return "1";
+        if (text.includes("transport") || text.includes("coach") || text.includes("bus")) return "2";
+        if (text.includes("equipment") || text.includes("material") || text.includes("craft")) return "3";
+        if (text.includes("badge") || text.includes("admin")) return "4";
+        return "9";
+    }
+
+    function buildBudgetCsv() {
+        const project = State.project;
+        const snapshot = calculateBudgetSnapshot(project);
+        const rows = ["Section,Field,Value"];
+        budgetSummaryRows(project, snapshot).forEach(row => rows.push(["Summary", row[0], row[1]].map(csv).join(",")));
+        rows.push("");
+        rows.push("People,Name,Type,Camper type,Day visitor,Contribution rule,Exact amount,Notes");
+        project.budget.people.slice().sort((a, b) => localeSort(a.name, b.name)).forEach(personRow => {
+            rows.push(["People", personRow.name, personRow.personType, personRow.camperType, personRow.isDayVisitor ? "Yes" : "No", personRow.contributionRule, number(personRow.contributionAmount).toFixed(2), personRow.notes].map(csv).join(","));
+        });
+        rows.push("");
+        rows.push("Costs,Description,Calculation method,Quantity,Unit cost,Cost,Notes");
+        project.budget.costItems.slice().sort((a, b) => localeSort(a.description, b.description)).forEach(item => {
+            const amount = calculateBudgetCostItem(project, item, snapshot.counts, snapshot.standardPayingPeople);
+            rows.push(["Costs", item.description, item.calculationMethod, number(item.quantity).toFixed(2), number(item.unitCost).toFixed(2), number(amount).toFixed(2), item.notes].map(csv).join(","));
+        });
+        return rows.join("\n");
+    }
+
+    function budgetSummaryRows(project, snapshot) {
+        const rows = [
+            ["Camp name", project.campName],
+            ["Location", project.location],
+            ["Dates", dateRange(project)],
+            ["Currency symbol", budgetCurrencyLabel(project.budget.settings.currencySymbol)],
+            ["Total people", snapshot.counts.totalPeople],
+            ["Campers", snapshot.counts.campers],
+            ["Young Leaders", snapshot.counts.youngLeaders],
+            ["Adults/leaders", snapshot.counts.adults],
+            ["Day visitors", snapshot.counts.dayVisitors],
+            ["Standard-paying people", snapshot.standardPayingPeople],
+            ["Food cost", snapshot.foodCost.toFixed(2)],
+            ["Activity costs", snapshot.activityCost.toFixed(2)],
+            ["Other costs", snapshot.otherCost.toFixed(2)],
+            ["Total costs", snapshot.totalEstimatedCost.toFixed(2)],
+            ["Required income", snapshot.requiredIncome.toFixed(2)],
+            ["Fixed/exact contribution income", snapshot.fixedContributionIncome.toFixed(2)],
+            ["Remaining amount to recover from Standard payers", snapshot.remainingToRecoverFromStandardPayers.toFixed(2)],
+            ["Minimum break-even charge", snapshot.minimumBreakEvenStandardCharge.toFixed(2)],
+            ["Recommended rounded Standard charge", snapshot.recommendedRoundedStandardCharge.toFixed(2)],
+            ["Standard charge", snapshot.proposedStandardCharge.toFixed(2)],
+            ["Predicted surplus/shortfall", snapshot.predictedSurplusShortfall.toFixed(2)],
+            ["Leader rule", project.budget.settings.leaderRule],
+            ["Young Leader rule", project.budget.settings.youngLeaderRule],
+            ["Day visitor rule", project.budget.settings.dayVisitorRule],
+            ["Food cost per person per day", project.budget.settings.foodCostPerPersonPerDay.toFixed(2)],
+            ["Food days", project.budget.settings.foodDays],
+            ["Food people counted", snapshot.counts.totalPeople]
+        ];
+        if (project.budget.importedSourceSummary) rows.push(["Plan activity sync", project.budget.importedSourceSummary]);
+        return rows;
     }
 
     // Item 19: stamp export filenames with the export date so re-exporting during
@@ -5359,6 +6703,10 @@
         lines.forEach(line => {
             if (line.pageBreak) {
                 pdf._addNewPage();
+            } else if (line.twoColumnSections) {
+                pdf.addTwoColumnSections(line.sections || []);
+            } else if (line.table) {
+                pdf.addWrappedTable(line.columns || [], line.rows || [], line.options || {});
             } else if (line.section) {
                 pdf.addSectionBanner(line.text);
             } else if (line.size >= 15) {
@@ -5387,24 +6735,29 @@
     };
 
     class ScoutPdf {
-        constructor(title, project) {
+        constructor(title, project, options = {}) {
             const size = PDF_PAGE_SIZES[project.paperSize] || PDF_PAGE_SIZES.a4;
-            this.W = size.w;
-            this.H = size.h;
+            const landscape = options.orientation === "landscape";
+            this.W = landscape ? size.h : size.w;
+            this.H = landscape ? size.w : size.h;
             this.ML = 42;   // margin left
             this.MR = 42;   // margin right
             this.MT = 42;   // margin top
             this.MB = 48;   // margin bottom (footer space)
             this.title = title;
             this.project = project;
+            this.plain = Boolean(options.plain);
+            this.tocEnabled = options.toc !== false && !this.plain;
             this.pageObjs = [];     // text draw calls per page
             this.rects    = [];     // filled rect draw calls per page
             this.lines    = [];     // stroked line draw calls per page (Item 11: real table grids)
+            this.polys    = [];     // filled/stroked polygon draw calls per page
+            this.circles  = [];     // filled/stroked circle draw calls per page
             this.currentPage = -1;
             this.y = this.MT;
             this.tocEntries = [];   // Item 13: {text, page} for an auto-generated table of contents
             this._addNewPage();
-            this._drawCoverBand();
+            if (!this.plain) this._drawCoverBand();
         }
 
         _drawCoverBand() {
@@ -5423,7 +6776,13 @@
             this.pageObjs.push([]);
             this.rects.push([]);
             this.lines.push([]);
+            this.polys.push([]);
+            this.circles.push([]);
             this.y = this.MT;
+            if (this.plain) {
+                this.y = this.MT;
+                return;
+            }
             if (this.currentPage > 0) this._drawCoverBandSmall();
             // Footer stripe — page number added at bytes() time once total is known
             this._rect(0, this.H - 30, this.W, 30, "green-dark");
@@ -5443,6 +6802,8 @@
         _page() { return this.pageObjs[this.currentPage]; }
         _pageRects() { return this.rects[this.currentPage]; }
         _pageLines() { return this.lines[this.currentPage]; }
+        _pagePolys() { return this.polys[this.currentPage]; }
+        _pageCircles() { return this.circles[this.currentPage]; }
 
         _needSpace(h) {
             if (this.y + h > this.H - this.MB) {
@@ -5467,6 +6828,15 @@
         // Item 11: stroked line primitive — enables real ruled table grids
         _line(x1, y1, x2, y2, colorKey, widthPt) {
             this._pageLines().push({ x1, y1, x2, y2, colorKey: colorKey || "line-grey", widthPt: widthPt || 0.75 });
+        }
+
+        _poly(points, fillKey, strokeKey, widthPt) {
+            if (!points || points.length < 3) return;
+            this._pagePolys().push({ points, fillKey: fillKey || "white", strokeKey: strokeKey || "line-dark", widthPt: widthPt || 0.75 });
+        }
+
+        _circle(cx, cy, radius, fillKey, strokeKey, widthPt) {
+            this._pageCircles().push({ cx, cy, radius, fillKey: fillKey || "black", strokeKey: strokeKey || fillKey || "black", widthPt: widthPt || 0.8 });
         }
 
         _text(text, x, y, size, bold, colorKey, page) {
@@ -5609,75 +6979,242 @@
             this.y += 8;
         }
 
-        /**
-         * Item 10: draw a literal to-scale spatial site map — tents and site items
-         * positioned exactly as they appear on the in-app canvas, with a legend.
-         * items: [{ x, y, w, h, label, kind: 'tent'|'site', occupantCount }]
-         */
-        addSiteMap(items, canvasWidth, canvasHeight) {
-            const mapWidth  = this.textWidth();
-            const mapHeight = Math.min(420, mapWidth * (canvasHeight / canvasWidth || 0.7));
-            const scale = mapWidth / (canvasWidth || 1);
+        addWrappedTable(columns, rows, options = {}) {
+            const totalWidth = this.textWidth();
+            const fixed = columns.filter(c => c.width).reduce((sum, c) => sum + c.width, 0);
+            const flexCols = columns.filter(c => !c.width).length;
+            const flexWidth = flexCols ? (1 - fixed) / flexCols : 0;
+            const widths = columns.map(c => (c.width || flexWidth) * totalWidth);
+            const headerHeight = options.headerHeight || 18;
+            const fontSize = options.fontSize || 8;
 
-            this.reserveBlock(mapHeight + 30);
-            // Grass-green map background + border
-            this._rect(this.ML, this.y, mapWidth, mapHeight, "grass");
-            this._line(this.ML, this.y, this.ML + mapWidth, this.y, "line-grey", 1);
-            this._line(this.ML, this.y + mapHeight, this.ML + mapWidth, this.y + mapHeight, "line-grey", 1);
-            this._line(this.ML, this.y, this.ML, this.y + mapHeight, "line-grey", 1);
-            this._line(this.ML + mapWidth, this.y, this.ML + mapWidth, this.y + mapHeight, "line-grey", 1);
+            const drawHeader = () => {
+                this._rect(this.ML, this.y, totalWidth, headerHeight, "green-mid");
+                let x = this.ML;
+                columns.forEach((col, i) => {
+                    this._text(col.label, x + 5, this.y + 12, 8, true, "white");
+                    if (i > 0) this._line(x, this.y, x, this.y + headerHeight, "white", 0.35);
+                    x += widths[i];
+                });
+                this.y += headerHeight;
+            };
 
-            const mapTop = this.y;
-            items.forEach(item => {
-                const x = this.ML + item.x * scale;
-                const y = mapTop + item.y * scale;
-                const w = Math.max(28, item.w * scale);
-                const h = Math.max(18, item.h * scale);
-                if (y + h > mapTop + mapHeight) return; // off the bottom of the drawable area
-                this._rect(x, y, w, h, item.kind === "site" ? "amber-fill" : "white-fill");
-                this._line(x, y, x + w, y, "line-dark", 0.75);
-                this._line(x, y + h, x + w, y + h, "line-dark", 0.75);
-                this._line(x, y, x, y + h, "line-dark", 0.75);
-                this._line(x + w, y, x + w, y + h, "line-dark", 0.75);
-                const labelSize = 7;
-                this._text(truncateForWidth(item.label, w - 4, labelSize), x + 3, y + h / 2 + 2, labelSize, true, "black");
+            this._needSpace(headerHeight + 22);
+            drawHeader();
+            let pageTableTop = this.y - headerHeight;
+            rows.forEach((row, rowIndex) => {
+                const wrappedCells = row.map((cell, i) => {
+                    const text = typeof cell === "object" ? cell.text : cell;
+                    const chars = Math.max(7, Math.floor((widths[i] - 10) / (fontSize * 0.48)));
+                    const lines = wrapText(String(text ?? "—"), chars);
+                    return options.maxLines ? lines.slice(0, options.maxLines) : lines;
+                });
+                const rowHeight = Math.max(options.minRowHeight || 24, Math.max(...wrappedCells.map(lines => lines.length)) * (fontSize + 3) + 10);
+                if (this.y + rowHeight > this.H - this.MB) {
+                    this._line(this.ML, pageTableTop, this.ML, this.y, "line-grey", 0.75);
+                    this._line(this.ML + totalWidth, pageTableTop, this.ML + totalWidth, this.y, "line-grey", 0.75);
+                    this._addNewPage();
+                    drawHeader();
+                    pageTableTop = this.y - headerHeight;
+                }
+                if (rowIndex % 2 === 1) this._rect(this.ML, this.y, totalWidth, rowHeight, "row-stripe");
+                let x = this.ML;
+                wrappedCells.forEach((lines, i) => {
+                    const cell = row[i];
+                    const color = typeof cell === "object" && cell.color === "red" ? "red" : "black";
+                    lines.forEach((line, lineIndex) => this._text(line, x + 5, this.y + 11 + lineIndex * (fontSize + 3), fontSize, false, color));
+                    if (i > 0) this._line(x, this.y, x, this.y + rowHeight, "line-grey", 0.45);
+                    x += widths[i];
+                });
+                this._line(this.ML, this.y + rowHeight, this.ML + totalWidth, this.y + rowHeight, "line-grey", 0.5);
+                this.y += rowHeight;
             });
-            this.y = mapTop + mapHeight + 10;
+            this._line(this.ML, pageTableTop, this.ML, this.y, "line-grey", 0.75);
+            this._line(this.ML + totalWidth, pageTableTop, this.ML + totalWidth, this.y, "line-grey", 0.75);
+            this.y += 8;
+        }
 
-            // Legend
-            this._rect(this.ML, this.y, 12, 10, "white-fill");
-            this._text("Tent", this.ML + 16, this.y + 8, 8, false, "black");
-            this._rect(this.ML + 60, this.y, 12, 10, "amber-fill");
-            this._text("Site item", this.ML + 76, this.y + 8, 8, false, "black");
-            this.y += 22;
+        addTwoColumnSections(sections) {
+            const entries = sections.filter(section => clean(section?.title));
+            if (!entries.length) return;
+            const gap = 10;
+            const width = (this.textWidth() - gap) / 2;
+            for (let i = 0; i < entries.length; i += 2) {
+                const left = entries[i];
+                const right = entries[i + 1];
+                const height = Math.max(58, this._columnSectionHeight(left, width), right ? this._columnSectionHeight(right, width) : 0);
+                this.reserveBlock(Math.min(height + 10, this.H - this.MT - this.MB));
+                this._drawColumnSection(this.ML, this.y, width, height, left);
+                if (right) this._drawColumnSection(this.ML + width + gap, this.y, width, height, right);
+                this.y += height + 10;
+            }
+        }
+
+        _columnSectionHeight(section, width) {
+            const lines = (section.lines || []).filter(line => clean(line)).length ? section.lines : ["No items."];
+            return 40 + lines.reduce((sum, line) => sum + wrapText(String(line), Math.max(12, Math.floor((width - 14) / 4.4))).length * 11.4 + 3, 0);
+        }
+
+        _drawColumnSection(x, y, width, height, section) {
+            this._rect(x, y, width, height, "white");
+            this._line(x, y, x + width, y, "line-grey", 0.75);
+            this._line(x, y + height, x + width, y + height, "line-grey", 0.75);
+            this._line(x, y, x, y + height, "line-grey", 0.75);
+            this._line(x + width, y, x + width, y + height, "line-grey", 0.75);
+            this._rect(x, y, width, 23, "row-stripe");
+            this._text(section.title, x + 7, y + 15.5, 9.5, true, "green-dark");
+            let textY = y + 36;
+            const lines = (section.lines || []).filter(line => clean(line)).length ? section.lines : ["No items."];
+            lines.forEach(line => {
+                wrapText(String(line), Math.max(12, Math.floor((width - 14) / 4.4))).forEach(wrapped => {
+                    if (textY < y + height - 4) this._text(wrapped, x + 7, textY, 8.4, false, "black");
+                    textY += 11.4;
+                });
+                textY += 3;
+            });
         }
 
         /**
-         * Item 9: render one cuttable tent tag per tent (or per page, large format),
-         * including a dashed cut-line border, the tent name large and bold, capacity,
-         * and a clear occupant list — meant to be printed, cut out, and physically
-         * attached to a tent rather than read as a reference document.
+         * Draw a printable tent layout that mirrors the canvas positions while using
+         * the newer tent/bunk-room artwork from the desktop planner.
          */
-        addTentTag(tent, occupants) {
-            this._addNewPage();
-            const pad = 20;
-            const x0 = this.ML, y0 = 70, x1 = this.W - this.MR, y1 = this.H - 80;
-            // Dashed cut-line border
-            this._dashedRect(x0, y0, x1 - x0, y1 - y0);
-            this._rect(x0 + 4, y0 + 4, x1 - x0 - 8, 50, "green-mid");
-            this._text(tent.name, x0 + pad, y0 + 36, 26, true, "white");
-            this._text(`${tent.type || "Tent"}  ·  Capacity ${tent.capacity}`, x0 + pad, y0 + 70, 11, false, "green-dark");
-            let ty = y0 + 100;
-            this._text("Occupants:", x0 + pad, ty, 12, true, "green-dark");
-            ty += 18;
-            if (!occupants.length) {
-                this._text("(none allocated)", x0 + pad + 10, ty, 11, false, "black");
-            } else {
-                occupants.forEach((person, i) => {
-                    this._text(`${i + 1}.  ${person.name}`, x0 + pad + 10, ty, 13, false, "black");
-                    ty += 20;
-                });
-            }
+        addSiteMap(items, canvasWidth, canvasHeight) {
+            const mapWidth = this.textWidth();
+            const availableHeight = this.H - this.y - this.MB - 10;
+            const mapHeight = Math.max(260, Math.min(availableHeight, 430, mapWidth * (canvasHeight / canvasWidth || 0.7)));
+            if (mapHeight < 260) this._addNewPage();
+            const finalHeight = Math.max(260, Math.min(this.H - this.y - this.MB - 10, 430, mapWidth * (canvasHeight / canvasWidth || 0.7)));
+            const scale = Math.min(mapWidth / (canvasWidth || 1), finalHeight / (canvasHeight || 1));
+            const mapTop = this.y;
+            const mapLeft = this.ML;
+
+            this._rect(mapLeft, mapTop, mapWidth, finalHeight, "white");
+            this._line(mapLeft, mapTop, mapLeft + mapWidth, mapTop, "line-grey", 0.75);
+            this._line(mapLeft, mapTop + finalHeight, mapLeft + mapWidth, mapTop + finalHeight, "line-grey", 0.75);
+            this._line(mapLeft, mapTop, mapLeft, mapTop + finalHeight, "line-grey", 0.75);
+            this._line(mapLeft + mapWidth, mapTop, mapLeft + mapWidth, mapTop + finalHeight, "line-grey", 0.75);
+
+            items.forEach(item => {
+                const x = mapLeft + item.x * scale;
+                const y = mapTop + item.y * scale;
+                const w = Math.max(36, item.w * scale);
+                const h = Math.max(30, item.h * scale);
+                if (x > mapLeft + mapWidth || y > mapTop + finalHeight) return;
+                if (item.kind === "site") {
+                    this._rect(x, y, w, h, "white");
+                    this._line(x, y, x + w, y, "line-dark", 0.75);
+                    this._line(x, y + h, x + w, y + h, "line-dark", 0.75);
+                    this._line(x, y, x, y + h, "line-dark", 0.75);
+                    this._line(x + w, y, x + w, y + h, "line-dark", 0.75);
+                    this._centeredTextLines(truncateForWidth(item.label, w - 8, 7.4), x + w / 2, y + h / 2 + 3, w - 8, 7.4, true);
+                    return;
+                }
+
+                const fill = item.colour || "#4CAF50";
+                const stroke = darkenColour(fill, 0.45);
+                const shapeHeight = Math.max(24, h * 0.58);
+                if (item.isBunk) this._drawBunkRoomShape(x, y, w, shapeHeight, fill, stroke);
+                else this._drawTentShape(x, y, w, shapeHeight, fill, stroke);
+                this._centeredTextLines(item.label, x + w / 2, y + shapeHeight - 5, w - 8, 7.4, true);
+                this._drawOccupantBoxes(x, y + shapeHeight + 4, w, item.occupants || []);
+            });
+            this.y = mapTop + finalHeight + 12;
+        }
+
+        addTentTags(tentEntries) {
+            const pageMargin = 36;
+            const gap = 18;
+            const tagWidth = this.W - pageMargin * 2;
+            const tagHeight = (this.H - pageMargin * 2 - gap * 2) / 3;
+            tentEntries.forEach((entry, index) => {
+                if (index > 0 && index % 3 === 0) this._addNewPage();
+                const row = index % 3;
+                this._drawTentTag(entry.tent, entry.occupants, pageMargin, pageMargin + row * (tagHeight + gap), tagWidth, tagHeight);
+            });
+        }
+
+        _drawTentTag(tent, occupants, x, y, width, height) {
+            this._line(x, y, x + width, y, "line-dark", 0.95);
+            this._line(x, y + height, x + width, y + height, "line-dark", 0.95);
+            this._line(x, y, x, y + height, "line-dark", 0.95);
+            this._line(x + width, y, x + width, y + height, "line-dark", 0.95);
+            const split = x + width / 2;
+            this._line(split, y, split, y + height, "line-dark", 0.75);
+
+            const names = occupants.map(person => person.name).join(", ") || "No occupants";
+            const titleLines = wrapText(tent.name || "Tent", Math.max(10, Math.floor((width / 2 - 34) / 8.2))).slice(0, 2);
+            const occupantLines = wrapText(names, Math.max(12, Math.floor((width / 2 - 34) / 5.6))).slice(0, 5);
+            const totalHeight = titleLines.length * 18 + 8 + occupantLines.length * 11;
+            let ty = y + height / 2 - totalHeight / 2 + 14;
+            titleLines.forEach(line => {
+                this._centeredTextLines(line, x + width / 4, ty, width / 2 - 30, 15, true);
+                ty += 18;
+            });
+            ty += 4;
+            occupantLines.forEach(line => {
+                this._centeredTextLines(line, x + width / 4, ty, width / 2 - 30, 9.2, false);
+                ty += 11;
+            });
+            this._circle(x + width * 0.75, y + height / 2, 10, "black", "black", 0.8);
+        }
+
+        _drawTentShape(x, y, width, height, fill, stroke) {
+            const leftBaseX = x + width * 0.08;
+            const rightBaseX = x + width * 0.92;
+            const peakX = x + width * 0.50;
+            const baseY = y + height;
+            this._poly([{ x: leftBaseX, y: baseY }, { x: peakX, y }, { x: rightBaseX, y: baseY }], fill, stroke, 1.2);
+            this._poly([
+                { x: x + width * 0.24, y: y + height * 0.92 },
+                { x: peakX, y: y + height * 0.08 },
+                { x: x + width * 0.76, y: y + height * 0.92 }
+            ], fadeColourToWhite(fill, 0.72), stroke, 0.8);
+            this._line(peakX, y + height * 0.08, x + width * 0.18, y + height * 0.96, stroke, 0.7);
+            this._line(peakX, y + height * 0.08, x + width * 0.82, y + height * 0.96, stroke, 0.7);
+            this._line(peakX, y + height * 0.04, peakX, y + height * 0.92, stroke, 0.8);
+            this._poly([{ x: leftBaseX, y: baseY }, { x: x + width * 0.18, y: y + height * 0.96 }, { x: x + width * 0.26, y: baseY }], fill, stroke, 0.7);
+            this._poly([{ x: rightBaseX, y: baseY }, { x: x + width * 0.82, y: y + height * 0.96 }, { x: x + width * 0.74, y: baseY }], fill, stroke, 0.7);
+            this._line(leftBaseX, baseY, rightBaseX, baseY, stroke, 1.2);
+            this._line(peakX, y, peakX, y + height * 0.06, stroke, 1.4);
+        }
+
+        _drawBunkRoomShape(x, y, width, height, fill, stroke) {
+            const roofHeight = height * 0.34;
+            this._poly([
+                { x: x + width * 0.08, y: y + roofHeight },
+                { x: x + width * 0.50, y },
+                { x: x + width * 0.92, y: y + roofHeight }
+            ], fill, stroke, 1.0);
+            this._rect(x + width * 0.12, y + roofHeight, width * 0.76, height - roofHeight, "white");
+            this._line(x + width * 0.12, y + roofHeight, x + width * 0.88, y + roofHeight, stroke, 0.75);
+            this._line(x + width * 0.12, y + height, x + width * 0.88, y + height, stroke, 0.75);
+            this._line(x + width * 0.12, y + roofHeight, x + width * 0.12, y + height, stroke, 0.75);
+            this._line(x + width * 0.88, y + roofHeight, x + width * 0.88, y + height, stroke, 0.75);
+            this._rect(x + width * 0.20, y + roofHeight + 8, width * 0.60, Math.max(10, height * 0.22), fill);
+        }
+
+        _drawOccupantBoxes(x, y, width, occupants) {
+            const boxHeight = 26;
+            const gap = 3;
+            const names = occupants.length ? occupants.map(person => person.name) : ["Empty"];
+            names.slice(0, 8).forEach((name, index) => {
+                const boxY = y + index * (boxHeight + gap);
+                this._rect(x, boxY, width, boxHeight, "white");
+                this._line(x, boxY, x + width, boxY, "line-grey", 0.6);
+                this._line(x, boxY + boxHeight, x + width, boxY + boxHeight, "line-grey", 0.6);
+                this._line(x, boxY, x, boxY + boxHeight, "line-grey", 0.6);
+                this._line(x + width, boxY, x + width, boxY + boxHeight, "line-grey", 0.6);
+                this._centeredTextLines(name, x + width / 2, boxY + boxHeight / 2 + 3, width - 8, 7.2, false, 2);
+            });
+        }
+
+        _centeredTextLines(text, centerX, centerY, width, size, bold, maxLines = 1) {
+            const lines = wrapText(String(text ?? ""), Math.max(8, Math.floor(width / (size * 0.52)))).slice(0, maxLines);
+            const startY = centerY - ((lines.length - 1) * (size + 2)) / 2;
+            lines.forEach((line, index) => {
+                const x = centerX - Math.min(width, line.length * size * 0.52) / 2;
+                this._text(line, x, startY + index * (size + 2), size, bold, "black");
+            });
         }
 
         _dashedRect(x, y, w, h) {
@@ -5704,7 +7241,7 @@
          * collected as addSectionBanner was called, then spliced in before bytes().
          */
         insertTableOfContents() {
-            if (this.tocEntries.length < 2) return; // not worth a ToC for a 1-section doc
+            if (!this.tocEnabled || this.tocEntries.length < 2) return; // not worth a ToC for a 1-section doc
             const tocPageObjs = [];
             const tocRects = [];
             const tocLines = [];
@@ -5724,6 +7261,8 @@
             this.pageObjs.unshift(tocPageObjs);
             this.rects.unshift(tocRects);
             this.lines.unshift(tocLines);
+            this.polys.unshift([]);
+            this.circles.unshift([]);
             this.currentPage++;
         }
 
@@ -5736,6 +7275,12 @@
 
             const pdfColorStr = (key, stroke) => {
                 const suffix = stroke ? "RG" : "rg";
+                if (typeof key === "string" && /^#[0-9a-f]{6}$/i.test(key)) {
+                    const r = parseInt(key.slice(1, 3), 16) / 255;
+                    const g = parseInt(key.slice(3, 5), 16) / 255;
+                    const b = parseInt(key.slice(5, 7), 16) / 255;
+                    return `${fmt(r)} ${fmt(g)} ${fmt(b)} ${suffix}`;
+                }
                 if (key === "green-dark")  return `0.122 0.333 0.180 ${suffix}`;
                 if (key === "green-mid")   return `0.180 0.450 0.231 ${suffix}`;
                 if (key === "green-light") return `0.604 0.800 0.392 ${suffix}`;
@@ -5765,10 +7310,34 @@
             for (let pi = 0; pi < numPages; pi++) {
                 const rects = this.rects[pi] || [];
                 const lines = this.lines[pi] || [];
+                const polys = this.polys[pi] || [];
+                const circles = this.circles[pi] || [];
                 const texts = this.pageObjs[pi] || [];
                 const parts = [];
                 for (const r of rects) {
                     parts.push(`${pdfColorStr(r.colorKey)} ${fmt(r.x)} ${fmt(this.H - r.y - r.h)} ${fmt(r.w)} ${fmt(r.h)} re f`);
+                }
+                for (const p of polys) {
+                    const first = p.points[0];
+                    const path = [
+                        `${fmt(first.x)} ${fmt(this.H - first.y)} m`,
+                        ...p.points.slice(1).map(point => `${fmt(point.x)} ${fmt(this.H - point.y)} l`),
+                        "h B"
+                    ].join(" ");
+                    parts.push(`${pdfColorStr(p.fillKey)} ${pdfColorStr(p.strokeKey, true)} ${fmt(p.widthPt)} w ${path}`);
+                }
+                for (const c of circles) {
+                    const k = 0.5522847498;
+                    const r = c.radius;
+                    const bx = c.cx;
+                    const by = this.H - c.cy;
+                    const cp = r * k;
+                    parts.push(`${pdfColorStr(c.fillKey)} ${pdfColorStr(c.strokeKey, true)} ${fmt(c.widthPt)} w ` +
+                        `${fmt(bx + r)} ${fmt(by)} m ` +
+                        `${fmt(bx + r)} ${fmt(by + cp)} ${fmt(bx + cp)} ${fmt(by + r)} ${fmt(bx)} ${fmt(by + r)} c ` +
+                        `${fmt(bx - cp)} ${fmt(by + r)} ${fmt(bx - r)} ${fmt(by + cp)} ${fmt(bx - r)} ${fmt(by)} c ` +
+                        `${fmt(bx - r)} ${fmt(by - cp)} ${fmt(bx - cp)} ${fmt(by - r)} ${fmt(bx)} ${fmt(by - r)} c ` +
+                        `${fmt(bx + cp)} ${fmt(by - r)} ${fmt(bx + r)} ${fmt(by - cp)} ${fmt(bx + r)} ${fmt(by)} c B`);
                 }
                 for (const l of lines) {
                     parts.push(`${fmt(l.widthPt)} w ${pdfColorStr(l.colorKey, true)} ${fmt(l.x1)} ${fmt(this.H - l.y1)} m ${fmt(l.x2)} ${fmt(this.H - l.y2)} l S`);
@@ -5777,7 +7346,9 @@
                     parts.push(`BT /F${t.bold ? 2 : 1} ${fmt(t.size)} Tf ${pdfColorStr(t.colorKey)} ${fmt(t.x)} ${fmt(this.H - t.y)} Td (${t.text}) Tj ET`);
                 }
                 // Item 13: page numbers ("Page N of M") on every page footer
-                parts.push(`BT /F1 7 Tf 1 1 1 rg ${fmt(this.W - this.MR - 60)} ${fmt(16)} Td (Page ${pi + 1} of ${numPages}) Tj ET`);
+                if (!this.plain) {
+                    parts.push(`BT /F1 7 Tf 1 1 1 rg ${fmt(this.W - this.MR - 60)} ${fmt(16)} Td (Page ${pi + 1} of ${numPages}) Tj ET`);
+                }
                 const content = parts.join("\n");
                 push(`<< /Length ${asciiBytes(content).length} >>\nstream\n${content}\nendstream`);
             }
@@ -5896,7 +7467,27 @@
     }
 
     function buildRtf(title, lines) {
-        return `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Segoe UI;}}{\\colortbl;\\red0\\green0\\blue0;\\red46\\green115\\blue59;\\red184\\green45\\blue45;}\\paperw11907\\paperh16840\\margl900\\margr900\\margt760\\margb760\n\\pard\\qc\\b\\fs36\\cf2 ${rtfEscape(title)}\\b0\\par\n${lines.map(line => `\\pard\\ql\\fs${line.size && line.size >= 15 ? 26 : 18}${line.bold ? "\\b" : ""}\\cf${line.color === "red" ? 3 : line.color === "green" ? 2 : 1} ${rtfEscape(line.text)}${line.bold ? "\\b0" : ""}\\par`).join("\n")}\n}`;
+        const flatLines = flattenExportLinesForRtf(lines);
+        return `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Segoe UI;}}{\\colortbl;\\red0\\green0\\blue0;\\red46\\green115\\blue59;\\red184\\green45\\blue45;}\\paperw11907\\paperh16840\\margl900\\margr900\\margt760\\margb760\n\\pard\\qc\\b\\fs36\\cf2 ${rtfEscape(title)}\\b0\\par\n${flatLines.map(line => `\\pard\\ql\\fs${line.size && line.size >= 15 ? 26 : 18}${line.bold ? "\\b" : ""}\\cf${line.color === "red" ? 3 : line.color === "green" ? 2 : 1} ${rtfEscape(line.text)}${line.bold ? "\\b0" : ""}\\par`).join("\n")}\n}`;
+    }
+
+    function flattenExportLinesForRtf(lines) {
+        const flat = [];
+        lines.forEach(line => {
+            if (line.twoColumnSections) {
+                (line.sections || []).forEach(section => {
+                    flat.push({ text: section.title, bold: true, color: "green" });
+                    (section.lines || []).forEach(text => flat.push({ text: `  ${text}` }));
+                });
+            } else if (line.table) {
+                const headings = (line.columns || []).map(column => column.label).filter(Boolean).join(" | ");
+                if (headings) flat.push({ text: headings, bold: true });
+                (line.rows || []).forEach(row => flat.push({ text: row.join(" | ") }));
+            } else if (line.text !== undefined) {
+                flat.push(line);
+            }
+        });
+        return flat;
     }
 
     function rtfEscape(value) {
@@ -5929,6 +7520,10 @@
             `  chores.csv`,
             `    One row per chore allocation: date, session, the chore, who's`,
             `    assigned, and any notes.`,
+            ``,
+            `  budget.csv`,
+            `    Camp charges, contribution rules, people contribution rows,`,
+            `    cost lines, food settings and final budget totals.`,
             ``,
             `Open any of these in Excel, Google Sheets, or Numbers.`
         ].join("\n");
@@ -6058,7 +7653,7 @@
                 createdBy: State.collab.clientId,
                 updatedAt: now,
                 updatedBy: State.collab.clientId,
-                revision: now,
+                revision: 1,
                 encryptionVersion: 1,
                 encryptionAlgorithm: "AES-256-GCM",
                 kdf: "PBKDF2-SHA256",
@@ -6067,7 +7662,7 @@
                 encryptedProject: await encryptProjectJson(projectJson, keyData.key)
             };
             await firebasePut(code, payload);
-            startCollaboration(code, keyData.key, now);
+            startCollaboration(code, keyData.key, 1);
             return code;
         }
         throw new Error("Could not generate a free collaboration code. Please try again.");
@@ -6152,6 +7747,10 @@
     function mergeArrayById(localArr, remoteArr) {
         const local  = localArr  || [];
         const remote = remoteArr || [];
+        if ([...local, ...remote].some(item => !item || typeof item !== "object" || !("id" in item))) {
+            return mergeStringArray(local, remote);
+        }
+
         const localMap  = new Map(local.map(i => [i.id, i]));
         const remoteMap = new Map(remote.map(i => [i.id, i]));
         const allIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
@@ -6170,6 +7769,30 @@
         return remoteOrder.map(id => merged.find(i => i.id === id)).filter(Boolean).concat(localOnly);
     }
 
+    function mergeStringArray(localArr, remoteArr) {
+        const merged = [];
+        const seen = new Set();
+        for (const value of [...(remoteArr || []), ...(localArr || [])]) {
+            const text = clean(value);
+            if (!text) continue;
+            const key = text.toLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            merged.push(text);
+        }
+        return merged;
+    }
+
+    function mergeBudget(localBudget, remoteBudget) {
+        if (!remoteBudget) return localBudget;
+        if (!localBudget) return remoteBudget;
+        return {
+            ...remoteBudget,
+            people: mergeArrayById(localBudget.people || [], remoteBudget.people || []),
+            costItems: mergeArrayById(localBudget.costItems || [], remoteBudget.costItems || [])
+        };
+    }
+
     /**
      * Merge a remote project snapshot into the local project.
      * Item 1: every id-keyed collection now gets the same per-item union merge that
@@ -6186,14 +7809,21 @@
         // Flat id-keyed collections: generic union merge
         const idKeyedCollections = [
             "people", "tents", "siteItems", "friendLinks", "foeLinks",
-            "menuSlots", "menuDayNotes", "menuLibraryItems", "menuItems",
+            "menuDayNotes", "menuItems",
             "kitItems", "groupKitInventory", "participantKitInventory",
-            "choreItems", "choreTeams", "choreSessions", "choreAllocations",
+            "choreItems", "choreTeams", "choreAllocations",
             "planItems"
         ];
         for (const key of idKeyedCollections) {
             merged[key] = mergeArrayById(local[key], remote[key]);
         }
+
+        // Ordered string collections are part of the desktop project model but do
+        // not have item IDs. Keep the confirmed remote order, then append any
+        // local-only additions so slot/library edits are not lost or collapsed.
+        merged.menuSlots = mergeStringArray(local.menuSlots, remote.menuSlots);
+        merged.menuLibraryItems = mergeStringArray(local.menuLibraryItems, remote.menuLibraryItems);
+        merged.choreSessions = mergeStringArray(local.choreSessions, remote.choreSessions);
 
         // Shopping lists: nested merge (lists, then items within each list)
         const localLists  = local.shoppingLists  || [];
@@ -6210,6 +7840,7 @@
             if (!remoteListMap.has(localList.id)) mergedLists.push(localList);
         }
         merged.shoppingLists = mergedLists;
+        merged.budget = mergeBudget(local.budget, remote.budget);
 
         return merged;
     }

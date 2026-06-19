@@ -265,6 +265,7 @@ label.field-invalid::after {
 .topbar-strip .cmd-btn.teal    { background: rgba(33, 119, 119, 0.85); border-color: rgba(33,119,119,0.6); }
 .topbar-strip .cmd-btn.amber   { background: rgba(185, 111, 34, 0.85); border-color: rgba(185,111,34,0.6); }
 .topbar-strip .cmd-btn.slate   { background: rgba(75, 101, 112, 0.85); border-color: rgba(75,101,112,0.6); }
+.topbar-strip .cmd-btn.danger  { background: rgba(184, 58, 53, 0.90); border-color: rgba(184,58,53,0.68); }
 .topbar-strip .cmd-btn.secondary { background: rgba(255,255,255,0.1); color: #d4f0d4; border-color: rgba(255,255,255,0.2); }
 
 /* Item 4: visible Undo/Redo buttons in the topbar */
@@ -961,6 +962,270 @@ button.person-display-card {
     padding: 10px 12px;
     background: var(--green-700);
     color: #fff;
+}
+
+/* ── Shopping list cards ────────────────────── */
+
+.shopping-card-header {
+    background: var(--green-700);
+    color: #fff;
+}
+
+.shopping-card-title {
+    margin: 0;
+}
+
+.shopping-progress {
+    display: inline-block;
+    padding: 0 12px 8px;
+    color: #fff;
+    font-weight: 800;
+}
+
+.shopping-card-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0 8px 8px;
+}
+
+.shopping-items {
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+}
+
+.shopping-item {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    grid-template-areas:
+        "check name name"
+        "qty qty remove";
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 6px;
+    padding: 8px;
+    border: 1px solid #dfe9d9;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.shopping-check {
+    grid-area: check;
+    width: 36px;
+    min-height: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: 4px;
+    border: 2px solid var(--green-700);
+    background: #fff;
+    color: var(--green-800);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.shopping-check.checked {
+    background: var(--green-700);
+    color: #fff;
+}
+
+.shopping-name-input {
+    grid-area: name;
+    min-height: 36px;
+    padding: 7px 9px;
+}
+
+.shopping-qty {
+    grid-area: qty;
+    display: flex;
+    align-items: center;
+}
+
+.shopping-qty .qty-control {
+    grid-template-columns: 34px 34px 34px;
+    gap: 5px;
+}
+
+.shopping-qty .qty-control button {
+    width: 34px;
+    min-height: 34px;
+}
+
+.shopping-qty .qty-control .qty {
+    min-width: 34px;
+}
+
+.shopping-remove {
+    grid-area: remove;
+    justify-self: end;
+    align-self: center;
+    min-height: 34px;
+}
+
+.shopping-item-checked .shopping-name-input {
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+/* ── Budget ─────────────────────────────────── */
+
+.budget-stack {
+    display: grid;
+    gap: 12px;
+}
+
+.budget-hero {
+    display: grid;
+    gap: 14px;
+}
+
+.budget-hero-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.budget-hero-title h2 {
+    margin: 0;
+    color: var(--green-900);
+}
+
+.budget-hero-title p {
+    margin: 2px 0 0;
+    color: var(--muted);
+}
+
+.budget-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 38px;
+    border-radius: 8px;
+    background: var(--green-700);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.budget-icon svg {
+    width: 22px;
+    height: 22px;
+}
+
+.budget-rule-amounts,
+.budget-food-grid,
+.budget-final-top {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.budget-stat {
+    min-height: 70px;
+    display: grid;
+    align-content: center;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid #b9d5ae;
+    border-radius: 8px;
+    background: linear-gradient(180deg, #fff, var(--green-050));
+    color: var(--green-900);
+}
+
+.budget-stat span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.budget-stat strong {
+    color: var(--green-900);
+    font-size: 20px;
+}
+
+.budget-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.budget-card-head h3 {
+    margin-top: 6px;
+}
+
+.budget-table-wrap input,
+.budget-table-wrap select {
+    min-height: 34px;
+    padding: 6px 7px;
+    border-radius: 6px;
+}
+
+.budget-table-wrap input[type="checkbox"] {
+    width: 18px;
+    min-height: 18px;
+}
+
+.center-cell {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-sort {
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--green-900);
+    font-size: 13px;
+    text-align: left;
+}
+
+.selected-row td {
+    background: #eef8e7;
+}
+
+.budget-breakdown-box {
+    padding: 12px;
+    border: 1px solid #b9d5ae;
+    border-radius: 8px;
+    background: var(--green-050);
+}
+
+.budget-breakdown-box h4 {
+    margin: 0 0 8px;
+    color: var(--green-900);
+}
+
+.budget-kv {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 3px 0;
+    color: var(--muted);
+}
+
+.budget-kv strong {
+    color: var(--ink);
+    text-align: right;
+}
+
+.budget-kv.bold {
+    border-top: 1px solid #cfe2c5;
+    margin-top: 5px;
+    padding-top: 7px;
+    color: var(--green-900);
+    font-weight: 900;
+}
+
+.budget-positive {
+    color: var(--green-800) !important;
+}
+
+.budget-negative {
+    color: var(--red) !important;
 }
 
 .slot-card {
