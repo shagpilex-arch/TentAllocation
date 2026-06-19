@@ -1,0 +1,12 @@
+{
+  "name": "Scout Camp Planner",
+  "short_name": "Camp Planner",
+  "description": "Plan personnel, tents, menus, chores, kit and shopping for a scout camp.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#9ccc65",
+  "theme_color": "#1f552e",
+  "icons": []
+}

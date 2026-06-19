@@ -29,7 +29,8 @@ body {
     min-height: 100%;
     margin: 0;
     color: var(--ink);
-    font: 15px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Item 29: tighter line-height base; cards override to 1.3 */
+    font: 15px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background-color: #9ccc65;
     background-image: var(--grass-tile);
     background-size: 48px 48px;
@@ -43,7 +44,7 @@ textarea {
 }
 
 button {
-    min-height: 42px;
+    min-height: 44px;
     border: 0;
     border-radius: 8px;
     padding: 0 14px;
@@ -93,7 +94,7 @@ input,
 select,
 textarea {
     width: 100%;
-    min-height: 42px;
+    min-height: 44px;
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 9px 10px;
@@ -111,6 +112,25 @@ label {
     gap: 5px;
     color: var(--green-900);
     font-weight: 700;
+}
+
+/* Item 3: visible feedback when a required field is left empty on submit */
+label.field-invalid {
+    color: var(--red);
+}
+
+label.field-invalid input,
+label.field-invalid select,
+label.field-invalid textarea {
+    border-color: var(--red);
+    background: #fff6f5;
+}
+
+label.field-invalid::after {
+    content: "This field is required.";
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--red);
 }
 
 /* ── App shell ───────────────────────────────── */
@@ -161,14 +181,36 @@ label {
 .summary-pill {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.13);
-    color: #f0fff0;
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+}
+
+.spill-name {
+    font-weight: 800;
+    color: #fff;
+    font-size: 13px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.spill-chip {
+    flex-shrink: 0;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #e8f5e4;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.spill-chip.spill-warn {
+    background: rgba(185, 111, 34, 0.75);
+    color: #fff;
+    font-weight: 700;
 }
 
 /* Single scrollable strip containing both menu and command buttons */
@@ -225,6 +267,28 @@ label {
 .topbar-strip .cmd-btn.slate   { background: rgba(75, 101, 112, 0.85); border-color: rgba(75,101,112,0.6); }
 .topbar-strip .cmd-btn.secondary { background: rgba(255,255,255,0.1); color: #d4f0d4; border-color: rgba(255,255,255,0.2); }
 
+/* Item 4: visible Undo/Redo buttons in the topbar */
+.icon-button-flat {
+    flex: 0 0 auto;
+    min-height: 34px;
+    min-width: 34px;
+    padding: 0 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 17px;
+    border-radius: 7px;
+    line-height: 1;
+}
+
+.icon-button-flat:disabled {
+    opacity: 0.35;
+}
+
+.icon-button-flat:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.22);
+}
+
 /* ── Workspace ───────────────────────────────── */
 
 .workspace {
@@ -244,6 +308,7 @@ label {
     padding: 0 8px 18px;
     background: rgba(255, 255, 255, 0.82);
     border-right: 1px solid rgba(46, 115, 59, 0.2);
+    -webkit-backdrop-filter: blur(14px);
     backdrop-filter: blur(14px);
 }
 
@@ -306,8 +371,13 @@ label {
     border-radius: 8px;
     background: var(--green-100);
     color: var(--green-900);
-    font-weight: 900;
     flex-shrink: 0;
+}
+
+/* Item 5: SVG icons inside the nav box */
+.nav-icon svg {
+    width: 18px;
+    height: 18px;
 }
 
 .nav-item.active .nav-icon {
@@ -367,7 +437,7 @@ label {
 .section-header h1 {
     margin: 0;
     color: var(--green-900);
-    font-size: clamp(20px, 2.4vw, 28px);
+    font-size: clamp(18px, 3vw, 28px);
 }
 
 .section-header p {
@@ -383,15 +453,15 @@ label {
 }
 
 .grid.two {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
 }
 
 .grid.three {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 }
 
 .grid.four {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
 }
 
 /* ── Cards & panels ──────────────────────────── */
@@ -405,6 +475,45 @@ label {
 }
 
 .card {
+    padding: 13px;
+    line-height: 1.35;
+}
+
+
+/* ── Export panels as <details> (collapsible on phone, open look on desktop) ── */
+
+.export-panel-details {
+    overflow: hidden;
+}
+
+.export-panel-details > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 13px;
+    background: var(--green-700);
+    color: #fff;
+    border-radius: 7px 7px 0 0;
+    cursor: pointer;
+    font-weight: 800;
+    list-style: none;
+}
+
+.export-panel-details > summary::-webkit-details-marker {
+    display: none;
+}
+
+.export-panel-details > summary::after {
+    content: "▾";
+    font-size: 14px;
+    opacity: 0.85;
+}
+
+.export-panel-details[open] > summary::after {
+    content: "▴";
+}
+
+.export-panel-body {
     padding: 13px;
 }
 
@@ -427,7 +536,7 @@ label {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
     gap: 10px;
 }
 
@@ -570,7 +679,12 @@ tr:last-child td {
 
 .tent-layout {
     position: relative;
-    min-height: 520px;
+    /* Item 23: vh fallback first for browsers without svh/dvh support; clamp() with an
+       unsupported unit is entirely invalid, so the fallback must be a separate declaration */
+    min-height: clamp(280px, 55vh, 520px);
+    min-height: clamp(280px, 55svh, 520px);
+    height: clamp(280px, 55vh, 620px);
+    height: clamp(280px, 55svh, 620px);
     overflow: auto;
     border: 1px solid #6c963d;
     border-radius: 8px;
@@ -831,7 +945,7 @@ button.person-display-card {
 
 .day-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 12px;
 }
 
@@ -850,8 +964,8 @@ button.person-display-card {
 }
 
 .slot-card {
-    margin: 10px;
-    padding: 10px;
+    margin: 8px;
+    padding: 8px;
     border-radius: 8px;
     background: var(--green-050);
     border: 1px solid #cbe0c2;
@@ -874,20 +988,21 @@ button.person-display-card {
     border: 1px solid var(--line);
     border-radius: 8px;
     background: #fff;
+    line-height: 1.3;
 }
 
 /* ── Quantity controls ───────────────────────── */
 
 .qty-control {
     display: inline-grid;
-    grid-template-columns: 34px minmax(42px, auto) 34px;
+    grid-template-columns: 40px minmax(42px, auto) 40px;
     align-items: center;
     gap: 6px;
 }
 
 .qty-control button {
-    width: 34px;
-    min-height: 32px;
+    width: 40px;
+    min-height: 40px;
     padding: 0;
 }
 
@@ -1042,6 +1157,25 @@ button.person-display-card {
     color: #fff;
     background: rgba(23, 63, 37, 0.96);
     box-shadow: var(--shadow);
+    pointer-events: auto;
+}
+
+.toast.toast-with-action {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-right: 8px;
+}
+
+.toast-undo {
+    flex-shrink: 0;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-weight: 800;
+    font-size: 13px;
 }
 
 .statusbar {
@@ -1064,6 +1198,44 @@ button.person-display-card {
 .collab-badge {
     color: var(--green-800);
     font-weight: 800;
+}
+
+.collab-badge.collab-pending {
+    color: var(--amber);
+}
+
+
+/* ── Item 31: loading state for export buttons ─ */
+
+button.is-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+button.is-loading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 16px;
+    height: 16px;
+    top: calc(50% - 8px);
+    left: calc(50% - 8px);
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+button.secondary.is-loading::after,
+button.quiet.is-loading::after {
+    border-color: rgba(46,115,59,0.3);
+    border-top-color: var(--green-700);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .hidden {
@@ -1097,547 +1269,458 @@ button.person-display-card {
     display: none;
 }
 
-/* ── Responsive: tablet (961px – 1200px) ─────── */
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVE — fluid from 1400px desktop down to 320px phone
+   Breakpoints:
+     1200px — wide tablet / small laptop
+      960px — tablet portrait / nav becomes drawer
+      700px — small tablet
+      600px — large phone
+      480px — standard phone
+      360px — small phone
+   ═══════════════════════════════════════════════════════════ */
 
-@media (max-width: 1200px) {
-    .summary-pill {
-        display: none;
+/* ── Item 34: Reduced motion ─────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }
 
+/* ── 1200px: summary pill hides ──────────────── */
+@media (max-width: 1200px) {
+    .summary-pill { display: none; }
+}
+
+/* ── 960px: nav becomes slide-down drawer ────── */
 @media (max-width: 960px) {
-    /* Show hamburger in topbar */
-    .topbar-hamburger {
-        display: grid;
-    }
+    .topbar-hamburger { display: grid; }
+    .nav-toggle-row   { display: none; }
 
-    /* Hide the inner nav toggle (it is only useful on desktop) */
-    .nav-toggle-row {
-        display: none;
-    }
+    .workspace { grid-template-columns: 1fr; }
 
-    .workspace {
-        grid-template-columns: 1fr;
-    }
-
-    /* Side nav becomes a slide-down drawer */
     .side-nav {
         position: fixed;
-        left: 0;
-        right: 0;
-        top: 0;
+        inset: 0 0 auto 0;
         z-index: 25;
         max-height: min(65vh, 560px);
         overflow-y: auto;
         transform: translateY(-110%);
         transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         border-right: none;
-        border-bottom: 2px solid rgba(46, 115, 59, 0.3);
+        border-bottom: 2px solid rgba(46,115,59,0.3);
         border-radius: 0 0 14px 14px;
         padding-top: calc(env(safe-area-inset-top) + 8px);
-        box-shadow: 0 8px 32px rgba(10, 26, 14, 0.28);
+        box-shadow: 0 8px 32px rgba(10,26,14,0.28);
+    }
+    .side-nav.open { transform: translateY(0); }
+    .side-nav.collapsed { width: auto; }
+    .side-nav.collapsed .nav-copy { display: block; }
+
+    /* Item 8: close button inside drawer */
+    .nav-drawer-close {
+        display: flex !important;
+        justify-content: flex-end;
+        padding: 8px 10px 4px;
     }
 
-    .side-nav.open {
-        transform: translateY(0);
-    }
+    .main-content { padding-top: 14px; }
 
-    /* When collapsed state is carried over from desktop, reset it */
-    .side-nav.collapsed {
-        width: auto;
-    }
-
-    .side-nav.collapsed .nav-copy {
-        display: block;
-    }
-
-    .main-content {
-        padding-top: 14px;
-    }
+    /* Item 16: Chores 3-col becomes tabs on tablet */
+    .chores-top-grid { display: block; }
+    .chores-top-grid > .panel { display: none; }
+    .chores-top-grid > .panel.chores-tab-active { display: block; }
+    .chores-tabs-bar { display: flex !important; }
 }
 
-/* ── Responsive: phone (≤ 600px) ─────────────── */
+/* ── 700px: small tablet ─────────────────────── */
+@media (max-width: 700px) {
+    body { font-size: 14px; }
 
+    .topbar-strip button { min-height: 32px; padding: 0 10px; font-size: 12px; }
+
+    /* Section header stacks */
+    .section-header { flex-direction: column; gap: 8px; }
+    .section-header h1 { font-size: clamp(17px, 4vw, 22px); }
+
+    /* Toolbar wraps */
+    .toolbar { flex-wrap: wrap; }
+    .toolbar input, .toolbar select { max-width: none; flex: 1 1 100%; }
+    .toolbar button { flex: 1 1 auto; }
+
+    /* Item 15: hide low-priority table columns on tablet */
+    .people-table .col-dietary,
+    .people-table .col-medical { display: none; }
+
+    /* Item 19: add data-label support to td for card stacking */
+    .table-wrap { overflow-x: auto; }
+}
+
+/* ── 600px: phone ────────────────────────────── */
 @media (max-width: 600px) {
-    body {
-        font-size: 14px;
-    }
-
-    /* Hide the slide-down nav entirely — bottom tab bar takes over */
-    .side-nav {
-        display: none !important;
-    }
-
-    .nav-overlay {
-        display: none !important;
-    }
-
-    /* Bottom tab bar */
+    /* Item 6: bottom nav edge-fade scroll hint */
     .bottom-nav {
         display: flex;
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
+        inset: auto 0 0 0;
         z-index: 30;
         overflow-x: auto;
-        scroll-snap-type: x mandatory;
         background: var(--green-800);
         border-top: 2px solid rgba(255,255,255,0.15);
         padding-bottom: env(safe-area-inset-bottom);
-        box-shadow: 0 -4px 18px rgba(10, 26, 14, 0.22);
+        box-shadow: 0 -4px 18px rgba(10,26,14,0.22);
         scrollbar-width: none;
         -webkit-overflow-scrolling: touch;
+        /* Fade at edges to hint scrollability */
+        -webkit-mask-image: linear-gradient(to right, transparent 0, black 18px, black calc(100% - 18px), transparent 100%);
+        mask-image: linear-gradient(to right, transparent 0, black 18px, black calc(100% - 18px), transparent 100%);
     }
-
-    .bottom-nav::-webkit-scrollbar {
-        display: none;
-    }
+    .bottom-nav::-webkit-scrollbar { display: none; }
 
     .bottom-nav-item {
         flex: 0 0 auto;
-        scroll-snap-align: start;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 2px;
-        min-width: 64px;
+        min-width: 60px;
         padding: 6px 4px;
         background: transparent;
         border: none;
         border-radius: 0;
-        color: rgba(255,255,255,0.65);
+        color: rgba(255,255,255,0.6);
         font-size: 9px;
         font-weight: 700;
         letter-spacing: 0.3px;
         line-height: 1.1;
-        text-align: center;
         min-height: 54px;
         cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
     }
-
     .bottom-nav-item.active {
         color: #fff;
         background: rgba(255,255,255,0.12);
         border-top: 2px solid #7ee887;
     }
-
-    .bottom-nav-item .bnav-icon {
-        font-size: 18px;
-        line-height: 1;
-        display: block;
-    }
-
+    .bottom-nav-item .bnav-icon { font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 22px; }
+.bottom-nav-item .bnav-icon svg { width: 20px; height: 20px; }
     .bottom-nav-item .bnav-label {
         display: block;
-        max-width: 60px;
+        max-width: 58px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    /* Push main content up above the bottom nav */
-    .main-content {
-        padding-bottom: calc(70px + env(safe-area-inset-bottom));
-    }
+    /* Hide tablet drawer — bottom nav is navigation on phone */
+    .side-nav { display: none !important; }
+    .nav-overlay { display: none !important; }
+    .topbar-hamburger { display: none !important; }
+
+    /* Push content above bottom nav + statusbar */
+    .main-content { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+
+    /* Item 32: toast above bottom nav */
+    .toast-host { bottom: calc(68px + env(safe-area-inset-bottom) + 8px); }
 
     /* Statusbar sits above bottom nav */
-    .statusbar {
-        bottom: calc(54px + env(safe-area-inset-bottom));
-    }
+    .statusbar { bottom: calc(54px + env(safe-area-inset-bottom)); }
 
-    /* Topbar hamburger not needed on phone — bottom nav covers navigation */
-    .topbar-hamburger {
-        display: none;
-    }
-
-    /* Responsive grid collapses */
-    .summary-grid,
-    .grid.two,
-    .grid.three,
-    .grid.four,
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section-header {
-        display: block;
-    }
-
-    .toolbar {
-        flex-wrap: wrap;
-    }
-
-    .toolbar input,
-    .toolbar select {
-        max-width: none;
-        width: 100%;
-    }
+    /* Item 27: scoped font-size 16px - only inputs (prevents iOS zoom), not button text */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+    select,
+    textarea { font-size: 16px !important; }
 
     /* Modals as bottom sheets */
-    .modal-host {
-        padding: 0;
-        align-items: flex-end;
+    .modal-host { padding: 0; align-items: flex-end; }
+    .modal { width: 100%; max-height: 92vh; max-height: 92dvh; border-radius: 16px 16px 0 0; }
+    .modal-actions { flex-wrap: wrap; }
+    .modal-actions button { flex: 1 1 42%; min-height: 48px; }
+
+    /* Item 33: focus visible inside modal for accessibility */
+    .modal *:focus-visible {
+        outline: 3px solid var(--green-600);
+        outline-offset: 2px;
     }
 
-    .modal {
-        width: 100%;
-        max-height: 92dvh;
-        border-radius: 16px 16px 0 0;
+    /* Item 2: grids fully single-col on phone */
+    .grid.two, .grid.three, .grid.four,
+    .form-grid, .summary-grid { grid-template-columns: 1fr; }
+
+    /* Summary grid stays 2-col */
+    .summary-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* Item 3: tent canvas fluid on phone */
+    .tent-layout {
+        height: clamp(260px, 50vh, 400px);
+        height: clamp(260px, 50svh, 400px);
+        min-height: 260px;
+        -webkit-overflow-scrolling: touch;
     }
 
-    .modal-actions {
-        flex-wrap: wrap;
+    /* Item 12: canvas scroll hint overlay */
+    .canvas-scroll-hint {
+        position: sticky;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 6px 10px;
+        background: rgba(23,63,37,0.82);
+        color: #fff;
+        font-size: 11px;
+        border-radius: 8px 0 0 0;
+        pointer-events: none;
     }
 
-    .modal-actions button {
-        flex: 1 1 42%;
+    /* Canvas cards slightly smaller */
+    .tent-card  { min-width: 148px; min-height: 128px; }
+    .site-card  { min-width: 80px;  min-height: 78px; }
+
+    /* Item 10: canvas action button larger tap target */
+    .canvas-action-button {
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+        top: -10px;
+        right: -10px;
+        font-size: 16px;
     }
 
-    /* Canvas cards slightly tighter */
-    .canvas-card:not(.site-card) {
-        min-width: 132px;
-    }
-
-    .site-card {
-        min-width: 92px;
-    }
-}
-
-
-
-/* ── Shopping list cards ─────────────────────── */
-
-.shopping-card {
-    overflow: hidden;
-    padding: 0;
-}
-
-.shopping-card-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 13px;
-    background: var(--green-700);
-    border-radius: 7px 7px 0 0;
-}
-
-.shopping-card-title {
-    flex: 1 1 auto;
-    margin: 0;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 800;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.shopping-progress {
-    flex-shrink: 0;
-    padding: 3px 9px;
-    border-radius: 999px;
-    background: rgba(255,255,255,0.2);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.shopping-card-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-
-.shopping-card-actions .small-button {
-    min-height: 30px;
-    padding: 0 9px;
-    font-size: 12px;
-    border-color: rgba(255,255,255,0.35);
-    background: rgba(255,255,255,0.15);
-    color: #fff;
-}
-
-.shopping-card-actions .small-button.danger {
-    background: rgba(184,58,53,0.8);
-    border-color: rgba(255,255,255,0.2);
-}
-
-.shopping-items {
-    padding: 8px 10px 10px;
-}
-
-.shopping-item {
-    display: grid;
-    grid-template-columns: 38px 1fr auto auto;
-    align-items: center;
-    gap: 7px;
-    padding: 5px 0;
-    border-bottom: 1px solid #edf0eb;
-}
-
-.shopping-item:last-child {
-    border-bottom: none;
-}
-
-.shopping-item.shopping-item-checked .shopping-name-input {
-    opacity: 0.5;
-    text-decoration: line-through;
-}
-
-.shopping-check {
-    width: 34px;
-    height: 34px;
-    min-height: 34px;
-    padding: 0;
-    border-radius: 8px;
-    border: 2px solid var(--line);
-    background: #fff;
-    color: var(--green-700);
-    font-size: 16px;
-    font-weight: 900;
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-}
-
-.shopping-check.checked {
-    background: var(--green-700);
-    border-color: var(--green-700);
-    color: #fff;
-}
-
-.shopping-name-input {
-    min-height: 38px;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    background: transparent;
-    padding: 6px 8px;
-    font-size: 14px;
-    transition: border-color 0.15s, background 0.15s;
-}
-
-.shopping-name-input:focus {
-    border-color: var(--green-600);
-    background: #fff;
-    outline: none;
-}
-
-.shopping-qty {
-    display: flex;
-    align-items: center;
-}
-
-.shopping-remove {
-    min-height: 34px;
-    width: 34px;
-    padding: 0;
-    display: grid;
-    place-items: center;
-    opacity: 0.7;
-}
-
-.shopping-remove:hover {
-    opacity: 1;
-}
-
-/* ── Mobile UI optimisations (≤ 600px) ─────────────────────────────────────── */
-
-@media (max-width: 600px) {
-
-    /* ── Topbar ── */
-    .brand-title { font-size: 15px; }
-    .topbar-strip { gap: 3px; padding: 0 8px 7px; }
-    .topbar-strip button { min-height: 30px; padding: 0 9px; font-size: 12px; }
-
-    /* ── Section header ── */
-    .section-header h1 { font-size: 18px; }
-    .section-header p   { font-size: 13px; }
-
-    /* ── Summary tiles: 2 columns on phone ── */
-    .summary-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .summary-tile { min-height: 70px; padding: 10px; }
-    .summary-number { font-size: 20px; }
-
-    /* ── Toolbar buttons wrap and fill width ── */
-    .toolbar {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 7px;
-    }
-    .toolbar button { width: 100%; }
-    .toolbar input,
-    .toolbar select { grid-column: 1 / -1; }
-
-    /* ── Tables: convert to stacked card layout on phone ── */
-    .table-wrap { border: none; background: transparent; }
+    /* Item 19: tables to card stacks */
+    .table-wrap { border: none; background: transparent; overflow-x: visible; }
     table, thead, tbody, tr { display: block; width: 100%; }
-    thead { display: none; }  /* hide column headers */
+    thead { display: none; }
     tr {
         display: grid;
+        grid-template-columns: 1fr auto;
         gap: 4px;
         margin-bottom: 8px;
         padding: 10px;
         border: 1px solid var(--line);
         border-radius: 8px;
         background: #fff;
+        box-shadow: 0 2px 6px rgba(30,42,32,0.06);
     }
     td {
-        display: flex;
-        align-items: flex-start;
-        gap: 6px;
-        padding: 0;
+        display: block;
+        padding: 2px 0;
         border: none;
         font-size: 13px;
+        grid-column: 1 / -1;
     }
-    td::before {
-        content: attr(data-label);
+    td[data-label]::before {
+        content: attr(data-label) ": ";
         font-weight: 800;
         color: var(--green-900);
-        min-width: 80px;
-        flex-shrink: 0;
         font-size: 11px;
-        padding-top: 2px;
     }
-    /* Row actions inside table cells */
-    td .row-actions { flex-wrap: wrap; }
+    td.row-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 6px;
+        border-top: 1px solid var(--line);
+        margin-top: 4px;
+    }
+    td.row-actions button { flex: 1 1 auto; min-height: 40px; }
 
-    /* ── Person cards: larger touch targets ── */
+    /* Item 14: people table - name col spans, actions full-width */
+    .people-table tr { grid-template-columns: 1fr; }
+
+    /* Person cards bigger tap targets */
     .person-display-card {
-        width: 100px;
-        height: 92px;
-        min-width: 100px;
-        min-height: 92px;
+        width: 100px; height: 92px;
+        min-width: 100px; min-height: 92px;
     }
     .person-card-list { gap: 10px; }
 
-    /* ── Shopping list cards on mobile ── */
-    .shopping-item {
-        grid-template-columns: 40px 1fr;
-        grid-template-rows: auto auto;
-        gap: 6px;
-        padding: 8px 0;
+    /* Item 15: personnel toolbar - secondary actions wrap */
+    .toolbar.people-toolbar { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .toolbar.people-toolbar input { grid-column: 1 / -1; }
+    .toolbar.people-toolbar .toolbar-primary { grid-column: 1 / -1; }
+
+    /* Item 20: kit table fields each get own row */
+    .kit-table tr { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; }
+    .kit-table td.col-name  { grid-column: 1 / -1; }
+    .kit-table td.col-qty   { grid-column: 1; align-self: center; }
+    .kit-table td.col-status { grid-column: 2; }
+    .kit-table td.col-notes { grid-column: 1 / -1; }
+    .kit-table td.col-notes input { width: 100%; }
+    .kit-table td.row-actions { grid-column: 1 / -1; }
+
+    /* Item 22: plan item card as header+footer */
+    .plan-item-card { display: grid; gap: 4px; }
+    .plan-item-time { font-weight: 900; color: var(--green-800); font-size: 13px; }
+    .plan-item-title { font-weight: 700; font-size: 15px; }
+    .plan-item-meta  { color: var(--muted); font-size: 12px; }
+    .plan-item-actions {
+        display: flex; flex-wrap: wrap; gap: 6px;
+        padding-top: 8px; border-top: 1px solid var(--line); margin-top: 4px;
     }
-    .shopping-check {
-        grid-row: 1 / 3;
-        align-self: center;
-        width: 40px;
-        height: 40px;
-        min-height: 40px;
+    .plan-item-actions button { flex: 1 1 auto; min-height: 40px; }
+
+    /* Item 18: nested slot/plan padding collapses */
+    .slot-card { margin: 6px; padding: 7px; }
+    .item-card { padding: 8px; }
+    .day-card h3 { padding: 8px 10px; font-size: 14px; }
+
+    /* Item 16: chores panels as accordion on phone */
+    .chores-top-grid { display: grid; gap: 8px; }
+
+    /* Item 25: exports panels collapsible */
+    .export-panel-details { display: block; }
+    .export-panel-details summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 11px 13px;
+        background: var(--green-700);
+        color: #fff;
+        border-radius: 7px;
+        cursor: pointer;
+        font-weight: 800;
+        list-style: none;
+        -webkit-appearance: none;
     }
-    .shopping-name-input {
-        font-size: 16px !important; /* prevents iOS zoom */
-        min-height: 44px;
+    .export-panel-details[open] summary { border-radius: 7px 7px 0 0; }
+    .export-panel-details summary::after { content: "▾"; font-size: 16px; }
+    .export-panel-details[open] summary::after { content: "▴"; }
+    .export-panel-body {
+        padding: 12px;
         border: 1px solid var(--line);
+        border-top: none;
+        border-radius: 0 0 7px 7px;
         background: #fff;
     }
-    .shopping-qty { grid-column: 2; }
-    .shopping-remove {
-        position: absolute;
-        right: 4px;
-        top: 50%;
-        transform: translateY(-50%);
-    }
-    .shopping-item { position: relative; padding-right: 44px; }
-    .shopping-card-header { flex-wrap: wrap; }
-    .shopping-card-actions { flex-wrap: wrap; }
+    /* Item 26: export buttons full-width on phone */
+    .export-panel-body .row-actions { flex-direction: column; }
+    .export-panel-body .row-actions button { width: 100%; min-height: 44px; text-align: left; }
 
-    /* ── Prevent iOS zoom on ALL inputs/selects/textareas ── */
-    input, select, textarea {
-        font-size: 16px !important;
-    }
+    /* Item 21: qty bigger on touch */
+    .qty-control button { width: 44px; min-height: 44px; }
+    .qty-control { grid-template-columns: 44px minmax(42px, auto) 44px; }
 
-    /* ── Day grid: single column ── */
-    .day-grid { grid-template-columns: 1fr; }
+    /* Toolbar grid */
+    .toolbar { display: flex; flex-wrap: wrap; gap: 7px; }
+    .toolbar button { flex: 1 1 auto; min-height: 44px; }
+    .toolbar input, .toolbar select { width: 100%; flex: 1 1 100%; max-width: none; }
 
-    /* ── Tent canvas: horizontal scroll with hint ── */
-    .tent-layout {
-        min-height: 320px;
-        max-height: 60vh;
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-        scroll-snap-type: none;
-    }
-    /* Scroll hint shadow */
-    .tent-layout::after {
-        content: "";
-        position: sticky;
-        right: 0;
-        top: 0;
-        display: block;
-        width: 32px;
-        height: 100%;
-        background: linear-gradient(to right, transparent, rgba(0,0,0,0.12));
-        pointer-events: none;
-    }
+    /* Panel header wraps */
+    
+/* ── Export panels as <details> (collapsible on phone, open look on desktop) ── */
 
-    /* ── Canvas cards slightly smaller on phone ── */
-    .tent-card  { min-width: 148px; min-height: 130px; }
-    .site-card  { min-width: 86px; min-height: 82px; }
+.export-panel-details {
+    overflow: hidden;
+}
 
-    /* ── Slot / plan cards: full width ── */
-    .slot-card  { margin: 8px; padding: 9px; }
-    .slot-title { font-size: 13px; }
+.export-panel-details > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 13px;
+    background: var(--green-700);
+    color: #fff;
+    border-radius: 7px 7px 0 0;
+    cursor: pointer;
+    font-weight: 800;
+    list-style: none;
+}
 
-    /* ── Tabs: scroll horizontally ── */
-    .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
-    .tabs button { min-height: 36px; font-size: 13px; }
+.export-panel-details > summary::-webkit-details-marker {
+    display: none;
+}
 
-    /* ── Row actions: larger tap targets ── */
-    .row-actions button,
-    .small-button {
-        min-height: 38px;
-        padding: 0 12px;
-        font-size: 14px;
-    }
+.export-panel-details > summary::after {
+    content: "▾";
+    font-size: 14px;
+    opacity: 0.85;
+}
 
-    /* ── Panel headers ── */
-    .panel > .panel-header {
-        flex-wrap: wrap;
-        gap: 7px;
-        padding: 10px 11px;
-    }
+.export-panel-details[open] > summary::after {
+    content: "▴";
+}
 
-    /* ── Card padding ── */
+.export-panel-body {
+    padding: 13px;
+}
+
+.panel > .panel-header { flex-wrap: wrap; gap: 6px; }
+    .panel > .panel-body { padding: 10px; }
     .card { padding: 10px; }
 
-    /* ── Qty control: bigger buttons ── */
-    .qty-control button {
-        width: 38px;
-        min-height: 38px;
-    }
-    .qty-control { gap: 8px; }
+    /* Day grid single column on phone */
+    .day-grid { grid-template-columns: 1fr; }
 
-    /* ── Kit list checkboxes: larger ── */
-    .checkbox-row input[type="checkbox"] {
-        width: 22px;
-        height: 22px;
-    }
+    /* Tabs scroll */
+    .tabs { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button { min-height: 40px; font-size: 13px; }
 
-    /* ── Chore session pills ── */
-    .pill { min-height: 34px; }
+    /* Pill list wraps more compactly */
+    .pill { min-height: 34px; font-size: 13px; }
 
-    /* ── Export section: single column ── */
-    .grid.two { grid-template-columns: 1fr; }
+    /* Row actions in cards */
+    .row-actions button, .small-button { min-height: 40px; padding: 0 12px; font-size: 13px; }
 
-    /* ── Canvas person cards: bigger ── */
-    .canvas-person-card .person-display-card {
-        width: 100px;
-        height: 92px;
-    }
+    /* Item 24: swipe-to-delete visual affordance */
+    .shopping-item { position: relative; overflow: hidden; }
 
-    /* ── Empty states ── */
-    .empty { font-size: 14px; padding: 14px; }
+    /* Empty states */
+    .empty { font-size: 13px; padding: 12px; }
 }
+
+/* ── 480px: standard phone ───────────────────── */
+@media (max-width: 480px) {
+    .brand-title { font-size: 14px; }
+    .brand-subtitle { display: none; }
+    .topbar-strip button { padding: 0 8px; font-size: 11px; }
+
+    /* Summary tiles 2-col stays but smaller text */
+    .summary-number { font-size: 22px; }
+    .summary-tile   { min-height: 64px; padding: 9px 10px; }
+
+    /* Item 23: shopping add-item sticky per-list affordance */
+    .shopping-list-add {
+        position: sticky;
+        bottom: 0;
+        background: rgba(255,255,255,0.95);
+        padding: 8px;
+        border-top: 1px solid var(--line);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+    }
+    .shopping-list-add button { width: 100%; min-height: 44px; }
+
+    .modal-header h2 { font-size: 17px; }
+    .modal-body { padding: 12px; }
+}
+
+/* ── 360px: small phone ──────────────────────── */
+@media (max-width: 360px) {
+    html { font-size: 13px; }
+    .bottom-nav-item { min-width: 54px; font-size: 8px; }
+    .bottom-nav-item .bnav-icon { font-size: 16px; }
+    .topbar-strip button { padding: 0 6px; font-size: 10px; min-height: 28px; }
+    .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .qty-control button { width: 40px; min-height: 40px; }
+}
+
 
 /* ── Print ───────────────────────────────────── */
 
 @media print {
     .topbar,
     .side-nav,
+    .nav-overlay,
+    .bottom-nav,
     .statusbar,
     .modal-host,
     .toast-host {
@@ -1651,4 +1734,58 @@ button.person-display-card {
     .main-content {
         padding: 0;
     }
+
+    /* Item 32: always print real tables, even if the page is currently showing
+       the mobile card-stacked view — printing on a phone shouldn't waste paper
+       re-deriving column labels from data-label pseudo-elements per row */
+    .table-wrap {
+        overflow: visible !important;
+        border: 1px solid #ccc !important;
+        background: #fff !important;
+    }
+    table, thead, tbody, tr {
+        display: revert !important;
+    }
+    thead {
+        display: table-header-group !important;
+    }
+    tr {
+        display: table-row !important;
+        border: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        page-break-inside: avoid;
+    }
+    td {
+        display: table-cell !important;
+        padding: 6px 8px !important;
+        border-bottom: 1px solid #ddd !important;
+        font-size: 11px !important;
+    }
+    td::before {
+        content: none !important;
+    }
+    td.row-actions {
+        display: none !important;
+    }
+    th {
+        position: static !important;
+    }
+
+    /* Backgrounds/colours print as-is rather than browser defaults stripping them */
+    .panel > .panel-header,
+    .day-card h3,
+    .shopping-card-header {
+        background: var(--green-700) !important;
+        color: #fff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    /* Cards avoid splitting mid-block across a page where possible */
+    .card, .panel, .day-card, .item-card, .slot-card {
+        page-break-inside: avoid;
+    }
+
+    a { color: inherit; text-decoration: none; }
 }

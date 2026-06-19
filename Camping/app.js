@@ -158,6 +158,25 @@
         ["Site sweep", "Site", "Litter pick and check shared areas."]
     ];
 
+
+    // Item 5: real SVG pictograms for each section — previously single uppercase
+    // letters that read as unfinished placeholders next to the otherwise
+    // considered visual design of the rest of the app.
+    // All icons share the same style: 24×24 viewBox, stroke-based line icons,
+    // 1.8px stroke-width, round caps, currentColor so they inherit active/inactive tint.
+    const SECTION_ICONS = {
+        "overview": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>`,
+        "personnel": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="8" r="2.5"/><path d="M22 20c0-2.8-2.2-5-5-5"/></svg>`,
+        "tent-allocation": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3L3 18h18L12 3z"/><path d="M12 3l4 15"/><path d="M12 3L8 18"/><path d="M6 18h12"/></svg>`,
+        "chores": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12l2 2 4-4"/></svg>`,
+        "menu": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/><circle cx="19" cy="6" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="19" cy="18" r="1.5" fill="currentColor" stroke="none"/></svg>`,
+        "plan": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h1M12 14h1M16 14h1M8 18h1M12 18h1"/></svg>`,
+        "group-kit": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16v13a1 1 0 01-1 1H5a1 1 0 01-1-1V7z"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M9 12h6M12 9v6"/></svg>`,
+        "participant-kit": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20h2a2 2 0 002-2V9l-5-5H6a2 2 0 00-2 2v12a2 2 0 002 2h2"/><path d="M14 3v5h5"/><circle cx="12" cy="15" r="3"/><path d="M12 12v1"/></svg>`,
+        "shopping-list": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>`,
+        "exports": `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`
+    };
+
     const SECTIONS = [
         ["overview", "Overview", "Camp details", "O"],
         ["personnel", "Personnel", "People & teams", "P"],
@@ -185,6 +204,7 @@
         project: null,
         currentSection: "overview",
         menuTab: "planner",
+        choresTab: "assign",
         navCollapsed: false,
         dirty: false,
         fileName: "camp.scoutcamp",
@@ -203,7 +223,11 @@
             timer: null,
             uploadTimer: null,
             applyingRemote: false,
-            lastRemoteAt: 0
+            lastRemoteAt: 0,
+            pendingPush: false,
+            lastSyncedAt: 0,
+            etag: null,
+            badgeTimer: null
         },
         pendingFiles: new Map()
     };
@@ -534,6 +558,8 @@
         project.languageCode = [TERMS.languageEnglish, TERMS.languageSpanish, TERMS.languageFrench].includes(project.languageCode)
             ? project.languageCode
             : TERMS.languageEnglish;
+        // Item 20: PDF export page size preference
+        project.paperSize = ["a4", "letter"].includes(project.paperSize) ? project.paperSize : "a4";
         project.startDate = isoDate(project.startDate);
         project.endDate = isoDate(project.endDate);
         if (parseDate(project.endDate) < parseDate(project.startDate)) {
@@ -1081,22 +1107,49 @@
         operation();
         normalizeProject(State.project);
         State.project.lastModified = new Date().toISOString();
-        markDirty(label || "Updated.");
+        markDirty(label || "Updated.", options);
         render();
     }
 
-    function markDirty(message) {
+    function markDirty(message, options = {}) {
         if (!State.collab.applyingRemote) {
             State.dirty = true;
         }
         saveDraft();
         setStatus(message || "Updated.");
+        // Item 2: discrete add/remove actions (as opposed to continuous field
+        // edits like typing in a name box) get a toast as well as the statusbar
+        // update — these are exactly the actions where confirmation that
+        // something actually happened matters most, and the quiet statusbar text
+        // is easy to miss, especially on mobile right above the bottom nav bar.
+        // Field-edit mutations use different generic labels ("Updated camp
+        // details.", "Updated item.") so they're naturally excluded by this
+        // pattern and won't spam a toast on every keystroke.
+        // skipToast lets a caller that already shows its own toast (e.g. an
+        // Undo-enabled removal) avoid a duplicate plain toast right after it.
+        if (!State.collab.applyingRemote && !options.skipToast && /^(Added|Removed)\b/.test(message || "")) {
+            toast(message);
+        }
         scheduleCollaborationUpload();
     }
 
     function saveDraft() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(State.project));
-        localStorage.setItem(DRAFT_KEY, State.fileName || "camp.scoutcamp");
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(State.project));
+            localStorage.setItem(DRAFT_KEY, State.fileName || "camp.scoutcamp");
+            if (State._storageBlocked) {
+                State._storageBlocked = false;
+                setStatus("Local saving is working again.");
+            }
+        } catch (error) {
+            // Item 24: Safari private browsing (and full storage) throws here on every edit.
+            // Without this guard the error is silent and future saves keep failing invisibly.
+            if (!State._storageBlocked) {
+                State._storageBlocked = true;
+                console.error("localStorage save failed:", error);
+                setStatus("Warning: changes can't be saved on this device (private browsing or storage full). Export a backup before closing.");
+            }
+        }
     }
 
     function setStatus(message) {
@@ -1243,12 +1296,87 @@
     }
 
     function init() {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        State.project = stored ? normalizeProject(JSON.parse(stored)) : normalizeProject(createProject());
-        State.fileName = localStorage.getItem(DRAFT_KEY) || `${safeFileName(State.project.campName)}.scoutcamp`;
+        // Item 24/25: guard startup against blocked/corrupted storage so the app
+        // always boots to a usable (if blank) project rather than a white screen
+        let stored = null;
+        let draftName = null;
+        try {
+            stored = localStorage.getItem(STORAGE_KEY);
+            draftName = localStorage.getItem(DRAFT_KEY);
+        } catch (error) {
+            console.error("localStorage unavailable at startup:", error);
+            State._storageBlocked = true;
+        }
+        try {
+            State.project = stored ? normalizeProject(JSON.parse(stored)) : normalizeProject(createProject());
+        } catch (error) {
+            console.error("Saved project data was corrupted, starting a fresh project:", error);
+            State.project = normalizeProject(createProject());
+        }
+        State.fileName = draftName || `${safeFileName(State.project.campName)}.scoutcamp`;
         bindGlobalEvents();
+        bindGlobalErrorHandlers();
+        bindOrientationHandling();
+        bindConnectivityHandling();
+        registerServiceWorker();
         render();
-        setStatus("Ready.");
+        setStatus(State._storageBlocked ? "Ready (saving is unavailable on this device)." : "Ready.");
+    }
+
+    // Item 25: catch anything outside the known runAction/collab try-catch paths
+    // so the user sees a message instead of a silent white-screen freeze
+    function bindGlobalErrorHandlers() {
+        window.addEventListener("error", event => {
+            console.error("Unhandled error:", event.error || event.message);
+            setStatus("Something went wrong. Your data is safe — try reloading if the app seems stuck.");
+        });
+        window.addEventListener("unhandledrejection", event => {
+            console.error("Unhandled promise rejection:", event.reason);
+            setStatus("Something went wrong with a background task. Your data is safe.");
+        });
+    }
+
+    // Item 29: register the offline-shell service worker (no-op if unsupported, e.g. plain HTTP)
+    function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return;
+        if (!window.isSecureContext) return; // service workers require HTTPS or localhost
+        navigator.serviceWorker.register("./sw.js").catch(error => {
+            console.warn("Service worker registration failed:", error);
+        });
+    }
+
+    // Item 4: pause collaboration polling while offline, resume and immediately
+    // resync (push any pending edit, then poll) the moment connectivity returns
+    function bindConnectivityHandling() {
+        window.addEventListener("offline", () => {
+            if (State.collab.active) setStatus("Offline — your changes are saved locally and will sync when reconnected.");
+        });
+        window.addEventListener("online", () => {
+            if (!State.collab.active) return;
+            setStatus("Back online — syncing…");
+            if (State.collab.pendingPush) pushCollaboration();
+            pollCollaboration();
+        });
+    }
+
+    // Item 30: re-check layout-sensitive state on rotation/resize rather than only
+    // relying on CSS — matchMedia-driven JS logic (swipe thresholds, nav mode) can
+    // otherwise go stale immediately after a tablet is rotated mid-session.
+    function bindOrientationHandling() {
+        let resizeTimer = null;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                // Closing an open mobile/tablet nav on rotation avoids a half-open drawer
+                // ending up mismatched with the new layout's breakpoint.
+                const isMobileOrTablet = matchMedia("(max-width: 960px)").matches;
+                if (!isMobileOrTablet) {
+                    $("#sideNav")?.classList.remove("open");
+                    $("#navOverlay")?.classList.remove("visible");
+                }
+                renderBottomNav();
+            }, 150);
+        });
     }
 
     function bindGlobalEvents() {
@@ -1258,9 +1386,28 @@
         }
         function closeNav() {
             $("#sideNav").classList.remove("open");
-        $("#navOverlay").classList.remove("visible");
             $("#navOverlay").classList.remove("visible");
         }
+
+        // Item 4: Ctrl+Z / Cmd+Z to undo, Ctrl+Y or Ctrl+Shift+Z / Cmd+Shift+Z to
+        // redo — these are the universal shortcuts and previously did nothing at
+        // all, despite undo/redo being available (just buried in the Edit menu)
+        document.addEventListener("keydown", event => {
+            const ctrlOrCmd = event.ctrlKey || event.metaKey;
+            if (!ctrlOrCmd) return;
+            // Don't hijack the shortcut while focus is in a text field where the
+            // browser's own undo (e.g. for a textarea) should take priority
+            const tag = document.activeElement?.tagName;
+            const isTextInput = tag === "INPUT" || tag === "TEXTAREA";
+            if (isTextInput) return;
+            if (event.key.toLowerCase() === "z" && !event.shiftKey) {
+                event.preventDefault();
+                undo();
+            } else if (event.key.toLowerCase() === "y" || (event.key.toLowerCase() === "z" && event.shiftKey)) {
+                event.preventDefault();
+                redo();
+            }
+        });
         function toggleNav() {
             const mobile = matchMedia("(max-width: 960px)").matches;
             if (mobile) {
@@ -1279,6 +1426,31 @@
         });
         // Overlay tap closes nav
         $("#navOverlay").addEventListener("click", closeNav);
+        // Item 8: inner drawer close button
+        $("#sideNav").addEventListener("click", e => {
+            if (e.target.closest("#navDrawerClose")) closeNav();
+        });
+
+        // Item 9: left-edge swipe → previous section, right-edge swipe → next section
+        (function bindSwipe() {
+            let startX = 0, startY = 0, startT = 0;
+            const EDGE = 32; // px from edge to start swipe
+            document.addEventListener("touchstart", e => {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startT = Date.now();
+            }, { passive: true });
+            document.addEventListener("touchend", e => {
+                if (e.target.closest(".tent-layout,.modal,.bottom-nav,.topbar,.side-nav")) return;
+                const dx = e.changedTouches[0].clientX - startX;
+                const dy = e.changedTouches[0].clientY - startY;
+                const dt = Date.now() - startT;
+                if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.8 || dt > 500) return;
+                const idx = SECTIONS.findIndex(s => s.id === State.currentSection);
+                if (dx < 0 && idx < SECTIONS.length - 1) switchSection(SECTIONS[idx + 1].id);
+                if (dx > 0 && idx > 0) switchSection(SECTIONS[idx - 1].id);
+            }, { passive: true });
+        })();
 
         document.addEventListener("click", event => {
             const menuButton = event.target.closest("[data-menu]");
@@ -1289,9 +1461,32 @@
             const action = event.target.closest("[data-action]");
             if (action) {
                 event.preventDefault();
-                runAction(action.dataset.action, action.dataset, action).catch(showError);
+                const isExport = /^export[A-Z]/.test(action.dataset.action);
+                if (isExport) {
+                    // Item 31: visual loading state while PDF/CSV/RTF generates
+                    const originalText = action.textContent;
+                    action.disabled = true;
+                    action.dataset.originalText = originalText;
+                    action.textContent = "Generating…";
+                    action.classList.add("is-loading");
+                    runAction(action.dataset.action, action.dataset, action)
+                        .catch(showError)
+                        .finally(() => {
+                            action.disabled = false;
+                            action.textContent = action.dataset.originalText;
+                            action.classList.remove("is-loading");
+                        });
+                } else {
+                    runAction(action.dataset.action, action.dataset, action).catch(showError);
+                }
             }
         });
+
+        // Item 13: chores tabs now go through the standard switchChoresTab
+        // dispatch action (same pattern as Menu's switchMenuTab) instead of a
+        // bespoke DOM-manipulation handler — this also fixes a real bug where
+        // the active tab silently reset to "Assign" on every re-render because
+        // the previous version never stored which tab was selected in State.
 
         document.addEventListener("change", event => {
             const target = event.target;
@@ -1305,14 +1500,27 @@
             }
         });
 
-        // Debounce timer for shopping list inline edits
+        // Debounce timers
         let _shoppingDebounce = null;
+        let _filterDebounce = null;
 
         document.addEventListener("input", event => {
             const target = event.target;
             if (target.matches("[data-filter-live]")) {
+                // Item 30: debounce filter re-render so typing doesn't cause a full
+                // innerHTML replace (and focus loss) on every keystroke
                 State.filters[target.dataset.filterLive] = target.value;
-                renderMain();
+                clearTimeout(_filterDebounce);
+                const selStart = target.selectionStart, selEnd = target.selectionEnd, name = target.dataset.filterLive;
+                _filterDebounce = setTimeout(() => {
+                    renderMain();
+                    // Restore focus + cursor position on the same filter input after re-render
+                    const restored = document.querySelector(`[data-filter-live="${name}"]`);
+                    if (restored) {
+                        restored.focus();
+                        try { restored.setSelectionRange(selStart, selEnd); } catch(_) {}
+                    }
+                }, 180);
             } else if (target.matches('[data-update-kind="shopping"]')) {
                 // Debounce: wait 600ms after last keystroke before mutating + pushing collab
                 clearTimeout(_shoppingDebounce);
@@ -1390,9 +1598,12 @@
         nav.innerHTML = "";
         if (toggleRow) nav.appendChild(toggleRow);
         const frag = document.createElement("div");
-        frag.innerHTML = SECTIONS.map(section => `
+        // Item 8: close button visible inside drawer on tablet
+        frag.innerHTML = `<div class="nav-drawer-close" style="display:none">
+            <button class="icon-button" id="navDrawerClose" type="button" aria-label="Close navigation">✕</button>
+        </div>` + SECTIONS.map(section => `
             <button class="nav-item ${section.id === State.currentSection ? "active" : ""}" data-action="switchSection" data-section="${section.id}" type="button">
-                <span class="nav-icon">${h(section.icon)}</span>
+                <span class="nav-icon">${SECTION_ICONS[section.id] || h(section.icon)}</span>
                 <span class="nav-copy">
                     <span class="nav-title">${h(L(section.title))}</span>
                     <span class="nav-subtitle">${h(L(section.subtitle))}</span>
@@ -1408,22 +1619,49 @@
         el.innerHTML = SECTIONS.map(section => `
             <button class="bottom-nav-item ${section.id === State.currentSection ? "active" : ""}"
                     data-action="switchSection" data-section="${section.id}" type="button">
-                <span class="bnav-icon">${h(section.icon)}</span>
+                <span class="bnav-icon">${SECTION_ICONS[section.id] || h(section.icon)}</span>
                 <span class="bnav-label">${h(L(section.shortTitle || section.title))}</span>
             </button>
         `).join("");
-        // Scroll active item into view
-        const activeBtn = el.querySelector(".bottom-nav-item.active");
-        if (activeBtn) activeBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+        // Item 7: rAF ensures layout is complete before scrolling
+        requestAnimationFrame(() => {
+            const activeBtn = el.querySelector(".bottom-nav-item.active");
+            if (activeBtn) activeBtn.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+        });
     }
 
     function renderShell() {
         const project = State.project;
-        $("#summaryPill").textContent = `${project.campName} | ${dateRange(project)} | ${project.location || "No location set"} | ${project.people.length} people | ${project.tents.length} tents | ${activeMenuItems(project)} meals | ${groupKit().length} group kit | ${participantKit().length} participant kit`;
+        // Item 6: replace the cram-everything-in pill with a compact set of
+        // labelled chips that's actually scannable at a glance on a widescreen
+        const warnings = [...buildTentWarnings(project), ...buildMenuWarnings(project)];
+        $("#summaryPill").innerHTML = [
+            `<span class="spill-name">${h(project.campName)}</span>`,
+            `<span class="spill-chip">${h(dateRange(project))}</span>`,
+            project.location ? `<span class="spill-chip">${h(project.location)}</span>` : "",
+            `<span class="spill-chip">${project.people.length} people</span>`,
+            `<span class="spill-chip">${project.tents.length} tents</span>`,
+            `<span class="spill-chip">${activeMenuItems(project)} meals</span>`,
+            warnings.length ? `<span class="spill-chip spill-warn">⚠ ${warnings.length} warning${warnings.length > 1 ? "s" : ""}</span>` : ""
+        ].filter(Boolean).join("");
         $("#dirtyBadge").textContent = State.dirty ? "Unsaved changes" : "Ready";
         const badge = $("#collabBadge");
         badge.classList.toggle("hidden", !State.collab.active);
-        badge.textContent = State.collab.active ? `Collaborating: ${State.collab.code}` : "";
+        if (State.collab.active) {
+            // Items 6/8: show pending-sync state so a silently-overridden edit is
+            // never silent — the user can see whether their last change has
+            // actually reached the server yet
+            if (State.collab.pendingPush) {
+                badge.textContent = `⏳ Collaborating: ${State.collab.code} — syncing…`;
+                badge.classList.add("collab-pending");
+            } else {
+                const syncedAgo = State.collab.lastSyncedAt ? timeAgoShort(Date.now() - State.collab.lastSyncedAt) : "";
+                badge.textContent = `✓ Collaborating: ${State.collab.code}${syncedAgo ? " — synced " + syncedAgo : ""}`;
+                badge.classList.remove("collab-pending");
+            }
+        } else {
+            badge.textContent = "";
+        }
         renderTopbarStrip();
     }
 
@@ -1439,13 +1677,21 @@
         const menuHtml = menuItems.map(m =>
             `<button data-menu="${attr(m.menu)}" type="button">${h(m.label)}</button>`
         ).join("");
+        // Item 4: visible Undo/Redo buttons — previously these only existed
+        // buried inside the Edit menu with no keyboard shortcut, despite being
+        // one of the most-reached-for recovery actions after a mistake
+        const undoDisabled = !State.undo.length ? " disabled" : "";
+        const redoDisabled = !State.redo.length ? " disabled" : "";
+        const undoRedoHtml = `
+            <button class="icon-button-flat" data-action="undo" type="button" title="Undo (Ctrl+Z)" aria-label="Undo"${undoDisabled}>↶</button>
+            <button class="icon-button-flat" data-action="redo" type="button" title="Redo (Ctrl+Y)" aria-label="Redo"${redoDisabled}>↷</button>`;
         const divider = commands.length ? '<div class="strip-divider" aria-hidden="true"></div>' : "";
         const cmdHtml = commands.map(c => {
             const style = c.style ? ` ${c.style}` : "";
             const data = Object.entries(c.data || {}).map(([k, v]) => ` data-${k}="${attr(v)}"`).join("");
             return `<button class="cmd-btn${style}" data-action="${attr(c.action)}"${data} type="button">${h(c.label)}</button>`;
         }).join("");
-        $("#topbarStrip").innerHTML = menuHtml + divider + cmdHtml;
+        $("#topbarStrip").innerHTML = menuHtml + undoRedoHtml + divider + cmdHtml;
     }
 
     function renderCommandStrip() {
@@ -1561,6 +1807,7 @@
                 break;
             case "shopping-list":
                 main.innerHTML = renderShopping();
+                afterRenderShopping();
                 break;
             case "exports":
                 main.innerHTML = renderExports();
@@ -1671,17 +1918,17 @@
     function peopleTable(people) {
         return `
             <div class="table-wrap">
-                <table class="compact-table">
-                    <thead><tr><th>Name</th><th>Type</th><th>Teams</th><th>Tent</th><th>Dietary</th><th>Medical</th><th></th></tr></thead>
+                <table class="compact-table people-table">
+                    <thead><tr><th>Name</th><th>Type</th><th>Teams</th><th>Tent</th><th class="col-dietary">Dietary</th><th class="col-medical">Medical</th><th></th></tr></thead>
                     <tbody>
                     ${people.map(person => `
                         <tr>
-                            <td><strong>${h(person.name)}</strong><br><span class="muted">${h(person.gender)}${person.isDayVisitor ? " | Day visitor" : ""}</span></td>
-                            <td>${h(personTypeDisplay(person))}<br><span class="muted">${h(person.camperType)}</span></td>
-                            <td>${h(teamsForPerson(person.id).map(team => team.name).join(", "))}</td>
-                            <td>${h(tentName(person.tentId) || "Unallocated")}</td>
-                            <td>${h(person.dietaryNotes)}</td>
-                            <td>${h(person.medicalNotes)}</td>
+                            <td data-label="Name"><strong>${h(person.name)}</strong><br><span class="muted">${h(person.gender)}${person.isDayVisitor ? " | Day visitor" : ""}</span></td>
+                            <td data-label="Type">${h(personTypeDisplay(person))}<br><span class="muted">${h(person.camperType)}</span></td>
+                            <td data-label="Teams">${h(teamsForPerson(person.id).map(team => team.name).join(", "))}</td>
+                            <td data-label="Tent">${h(tentName(person.tentId) || "Unallocated")}</td>
+                            <td class="col-dietary" data-label="Dietary">${h(person.dietaryNotes || "—")}</td>
+                            <td class="col-medical" data-label="Medical">${h(person.medicalNotes || "—")}</td>
                             <td class="row-actions">
                                 <button class="small-button secondary" data-action="editPerson" data-id="${attr(person.id)}" type="button">Edit</button>
                                 <button class="small-button secondary" data-action="assignPerson" data-id="${attr(person.id)}" type="button">Assign</button>
@@ -1739,18 +1986,18 @@
                 <section class="panel">
                     <div class="panel-header"><strong>Unallocated Campers</strong><button class="small-button secondary" data-action="clearTentAllocations" type="button">Clear allocations</button></div>
                     <div class="panel-body">
-                        ${unallocated.length ? `<div class="person-card-list">${unallocated.map(person => renderUnallocatedPerson(person, friendLabels)).join("")}</div>` : `<div class="empty">All people are allocated.</div>`}
+                        ${unallocated.length ? `<div class="person-card-list">${unallocated.map(person => renderUnallocatedPerson(person, friendLabels)).join("")}</div>` : `<div class="empty">✓ Everyone has a tent — all people are allocated.</div>`}
                     </div>
                 </section>
                 <section class="panel">
                     <div class="panel-header"><strong>Warnings</strong><button class="small-button secondary" data-action="manageLinks" type="button">Friend & foe links</button></div>
-                    <div class="panel-body">${warnings.length ? `<div class="warning-list">${warnings.map(warning => `<div class="warning">${h(warning)}</div>`).join("")}</div>` : `<div class="empty">No tent warnings.</div>`}</div>
+                    <div class="panel-body">${warnings.length ? `<div class="warning-list">${warnings.map(warning => `<div class="warning">${h(warning)}</div>`).join("")}</div>` : `<div class="empty">✓ No tent warnings — all tents look good.</div>`}</div>
                 </section>
             </div>
             <div class="toolbar" style="margin-top:12px">
                 <button data-action="addTent" type="button">Add Tent</button>
-                <button class="amber" data-action="addSiteItem" type="button">Add Site Item</button>
-                <button class="slate" data-action="arrangeTents" type="button">Arrange</button>
+                <button class="secondary" data-action="addSiteItem" type="button">Add Site Item</button>
+                <button class="secondary" data-action="arrangeTents" type="button">Arrange</button>
                 <button class="secondary" data-action="exportTentLayoutPdf" type="button">Layout PDF</button>
                 <button class="secondary" data-action="exportTentTablePdf" type="button">Table PDF</button>
                 <button class="secondary" data-action="exportTentTagsPdf" type="button">Tags PDF</button>
@@ -2112,47 +2359,136 @@
     function afterRenderTentCanvas() {
         const canvas = $("#tentCanvas");
         if (!canvas) return;
+
+        // Item 12: show scroll hint on phone
+        if (matchMedia("(max-width: 600px)").matches) {
+            const existingHint = canvas.querySelector(".canvas-scroll-hint");
+            if (!existingHint) {
+                const hint = document.createElement("div");
+                hint.className = "canvas-scroll-hint";
+                hint.innerHTML = "← scroll →";
+                hint.style.cssText = "position:sticky;left:calc(100% - 80px);top:8px;display:inline-block;z-index:4;margin:0;pointer-events:none";
+                canvas.prepend(hint);
+                setTimeout(() => hint.remove(), 2500);
+            }
+        }
+
+        // Item 11: on phone, auto-arrange cards if all at default (0,0) position
+        const isPhone = matchMedia("(max-width: 600px)").matches;
+        if (isPhone) {
+            const cards = $all("[data-canvas-kind='tent']", canvas);
+            const allAtOrigin = [...cards].every(c => (parseInt(c.style.left,10)||0) < 10 && (parseInt(c.style.top,10)||0) < 10);
+            if (allAtOrigin && cards.length > 1) {
+                // Auto-arrange in a grid
+                cards.forEach((card, i) => {
+                    const col = i % 2;
+                    const row = Math.floor(i / 2);
+                    card.style.left = `${col * 180 + 8}px`;
+                    card.style.top  = `${row * 160 + 8}px`;
+                });
+            }
+        }
+
+        // Items 10/13: unified pointer+touch drag (works on iOS Safari)
         $all("[data-canvas-kind]", canvas).forEach(card => {
-            card.addEventListener("pointerdown", event => {
+            // Helper: get coords from either pointer or touch event
+            function getCoords(event) {
+                const touch = event.touches?.[0] || event.changedTouches?.[0];
+                return touch
+                    ? { clientX: touch.clientX, clientY: touch.clientY }
+                    : { clientX: event.clientX, clientY: event.clientY };
+            }
+
+            function startDrag(event) {
                 if (event.target.closest("button")) return;
+                const { clientX, clientY } = getCoords(event);
                 const rect = card.getBoundingClientRect();
                 const canvasRect = canvas.getBoundingClientRect();
                 State.dragging = {
                     kind: card.dataset.canvasKind,
                     id: card.dataset.id,
-                    offsetX: event.clientX - rect.left,
-                    offsetY: event.clientY - rect.top,
+                    offsetX: clientX - rect.left,
+                    offsetY: clientY - rect.top,
                     canvasLeft: canvasRect.left + canvas.scrollLeft,
-                    canvasTop: canvasRect.top + canvas.scrollTop
+                    canvasTop:  canvasRect.top  + canvas.scrollTop
                 };
-                card.setPointerCapture(event.pointerId);
-            });
-            card.addEventListener("pointermove", event => {
+                // Use pointer capture when available (desktop/Android)
+                if (event.pointerId !== undefined) {
+                    try { card.setPointerCapture(event.pointerId); } catch(_) {}
+                }
+                event.preventDefault();
+            }
+
+            function moveDrag(event) {
                 if (!State.dragging || State.dragging.id !== card.dataset.id) return;
-                const x = Math.max(0, event.clientX - State.dragging.canvasLeft - State.dragging.offsetX);
-                const y = Math.max(0, event.clientY - State.dragging.canvasTop - State.dragging.offsetY);
+                const { clientX, clientY } = getCoords(event);
+                const x = Math.max(0, clientX - State.dragging.canvasLeft - State.dragging.offsetX);
+                const y = Math.max(0, clientY - State.dragging.canvasTop  - State.dragging.offsetY);
                 card.style.left = `${Math.round(x / 16) * 16}px`;
-                card.style.top = `${Math.round(y / 16) * 16}px`;
-            });
-            card.addEventListener("pointerup", event => {
+                card.style.top  = `${Math.round(y / 16) * 16}px`;
+                event.preventDefault();
+            }
+
+            function endDrag(event) {
                 if (!State.dragging || State.dragging.id !== card.dataset.id) return;
                 const x = parseInt(card.style.left, 10) || 0;
-                const y = parseInt(card.style.top, 10) || 0;
+                const y = parseInt(card.style.top,  10) || 0;
                 const drag = State.dragging;
                 State.dragging = null;
-                card.releasePointerCapture(event.pointerId);
+                if (event.pointerId !== undefined) {
+                    try { card.releasePointerCapture(event.pointerId); } catch(_) {}
+                }
                 mutate("Moved layout item.", () => {
                     const collection = drag.kind === "tent"
                         ? State.project.tents
                         : drag.kind === "person"
                             ? State.project.people
                             : State.project.siteItems;
-                    const item = collection.find(entry => entry.id === drag.id);
-                    if (item) {
-                        item.x = x;
-                        item.y = y;
-                    }
+                    const item = collection.find(e => e.id === drag.id);
+                    if (item) { item.x = x; item.y = y; }
                 });
+            }
+
+            // Pointer events (desktop + Android Chrome)
+            card.addEventListener("pointerdown", startDrag);
+            card.addEventListener("pointermove", moveDrag);
+            card.addEventListener("pointerup",   endDrag);
+            card.addEventListener("pointercancel", endDrag);
+
+            // Touch events fallback (iOS Safari)
+            card.addEventListener("touchstart", startDrag, { passive: false });
+            card.addEventListener("touchmove",  moveDrag,  { passive: false });
+            card.addEventListener("touchend",   endDrag,   { passive: false });
+        });
+    }
+
+    // Item 24: swipe-to-delete for shopping items on touch devices
+    function afterRenderShopping() {
+        $all(".shopping-item").forEach(row => {
+            let startX = 0, currentX = 0, dragging = false;
+            row.addEventListener("touchstart", e => {
+                startX = e.touches[0].clientX;
+                dragging = true;
+                row.style.transition = "none";
+            }, { passive: true });
+            row.addEventListener("touchmove", e => {
+                if (!dragging) return;
+                currentX = e.touches[0].clientX - startX;
+                if (currentX < 0) {
+                    row.style.transform = `translateX(${Math.max(currentX, -88)}px)`;
+                }
+            }, { passive: true });
+            row.addEventListener("touchend", () => {
+                dragging = false;
+                row.style.transition = "transform 0.18s ease";
+                if (currentX < -56) {
+                    // Trigger the remove button inside this row
+                    row.style.transform = "translateX(-100%)";
+                    setTimeout(() => row.querySelector(".shopping-remove")?.click(), 160);
+                } else {
+                    row.style.transform = "translateX(0)";
+                }
+                currentX = 0;
             });
         });
     }
@@ -2164,15 +2500,21 @@
         const assignees = buildChoreAssignees().filter(item => includesText(assignFilter, item.name, item.detail));
         return `
             ${sectionHeader("Chores", "Rota items, sessions, teams, tents and people share the same project state.")}
-            <div class="grid three">
-                <section class="panel">
+            <!-- Item 13: standard tabs pattern, consistent with Menu section -->
+            <div class="chores-tabs-bar tabs" style="display:none">
+                <button class="${State.choresTab === "assign" ? "active" : ""}" data-action="switchChoresTab" data-tab="assign" type="button">Assign</button>
+                <button class="${State.choresTab === "items" ? "active" : ""}" data-action="switchChoresTab" data-tab="items" type="button">Rota items</button>
+                <button class="${State.choresTab === "rota" ? "active" : ""}" data-action="switchChoresTab" data-tab="rota" type="button">Allocations</button>
+            </div>
+            <div class="grid three chores-top-grid">
+                <section class="panel ${State.choresTab === "assign" ? "chores-tab-active" : ""}">
                     <div class="panel-header"><strong>Assign</strong></div>
                     <div class="panel-body">
                         <input placeholder="Filter teams, tents and people" value="${attr(assignFilter)}" data-filter-live="choreAssign">
-                        <div class="pill-list" style="margin-top:10px">${assignees.map(item => `<span class="pill">${h(item.name)} <small>${h(item.detail)}</small></span>`).join("") || `<div class="empty">No teams, tents or people yet.</div>`}</div>
+                        <div class="pill-list" style="margin-top:10px">${assignees.map(item => `<span class="pill">${h(item.name)} <small>${h(item.detail)}</small></span>`).join("") || `<div class="empty">Add people and tents first, then chores can be assigned to them here.</div>`}</div>
                     </div>
                 </section>
-                <section class="panel">
+                <section class="panel ${State.choresTab === "items" ? "chores-tab-active" : ""}">
                     <div class="panel-header"><strong>Rota items</strong><button class="small-button secondary" data-action="bulkAddChoreItems" type="button">Bulk add</button></div>
                     <div class="panel-body">
                         <div class="toolbar">
@@ -2183,13 +2525,13 @@
                         ${items.length ? `<div class="table-wrap"><table class="compact-table"><thead><tr><th>Name</th><th>Category</th><th></th></tr></thead><tbody>${items.map(item => `<tr><td><strong>${h(item.name)}</strong><br>${h(item.description)}</td><td>${h(item.category)}</td><td class="row-actions"><button class="small-button secondary" data-action="editChoreItem" data-id="${attr(item.id)}" type="button">Edit</button><button class="small-button danger" data-action="removeChoreItem" data-id="${attr(item.id)}" type="button">Remove</button></td></tr>`).join("")}</tbody></table></div>` : `<div class="empty">No rota items yet. Add a rota item or pick standard items.</div>`}
                     </div>
                 </section>
-                <section class="panel">
+                <section class="panel ${State.choresTab === "rota" ? "chores-tab-active" : ""}">
                     <div class="panel-header"><strong>Manual allocation</strong></div>
                     <div class="panel-body">
                         <div class="toolbar">
                             <button data-action="addAllocation" type="button">Add Allocation</button>
                             <button class="secondary" data-action="modifyChoreSlots" type="button">Modify slots</button>
-                            <button class="slate" data-action="generateRota" type="button">Generate simple rota</button>
+                            <button class="teal" data-action="generateRota" type="button">Generate simple rota</button>
                             <button class="danger" data-action="clearRota" type="button">Clear rota</button>
                         </div>
                         <div class="pill-list">${State.project.choreSessions.map(session => `<span class="pill">${h(session)}</span>`).join("")}</div>
@@ -2236,7 +2578,7 @@
                             <button class="small-button danger" data-action="removeAllocation" data-id="${attr(allocation.id)}" type="button">Remove</button>
                         </div>
                     </div>
-                `).join("") : `<div class="empty">No allocations.</div>`}
+                `).join("") : `<div class="empty">No chores allocated for this day yet — use the Assign panel on the left to add some.</div>`}
             </div>`;
     }
 
@@ -2351,13 +2693,13 @@
             </div>
             ${rows.length ? `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Slot</th><th>Food</th><th>Pudding</th><th>Dietary notes</th><th>Notes</th><th></th></tr></thead><tbody>${rows.map(item => `
                 <tr>
-                    <td>${h(displayDate(item.date))}</td>
-                    <td>${h(item.slot)}</td>
-                    <td><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="meal" value="${attr(item.meal)}"></td>
-                    <td><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="pudding" value="${attr(item.pudding)}"></td>
-                    <td><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="dietaryNotes" value="${attr(item.dietaryNotes)}"></td>
-                    <td><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
-                    <td><button class="small-button danger" data-action="removeMeal" data-id="${attr(item.id)}" type="button">Remove</button></td>
+                    <td data-label="Date">${h(displayDate(item.date))}</td>
+                    <td data-label="Slot">${h(item.slot)}</td>
+                    <td data-label="Food"><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="meal" value="${attr(item.meal)}"></td>
+                    <td data-label="Pudding"><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="pudding" value="${attr(item.pudding)}"></td>
+                    <td data-label="Dietary"><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="dietaryNotes" value="${attr(item.dietaryNotes)}"></td>
+                    <td data-label="Notes"><input data-update-kind="meal" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
+                    <td class="row-actions"><button class="small-button danger" data-action="removeMeal" data-id="${attr(item.id)}" type="button">Remove</button></td>
                 </tr>`).join("")}</tbody></table></div>` : `<div class="empty">No meals planned yet. Use Add meal or Add item on the planner.</div>`}
         `;
     }
@@ -2374,7 +2716,7 @@
                         <h3>${h(displayDate(date, true))}</h3>
                         ${activeMealSlots(State.project, date).map(slot => {
                             const items = State.project.menuItems.filter(item => item.date === date && item.slot === slot && hasMenuContent(item));
-                            return `<div class="slot-card"><div class="slot-title">${h(slot)}</div>${items.length ? items.map(item => `<div class="item-card"><strong>${h(item.meal || "No food recorded")}</strong>${item.pudding ? `<span>Pudding: ${h(item.pudding)}</span>` : ""}</div>`).join("") : `<div class="empty">Not planned</div>`}</div>`;
+                            return `<div class="slot-card"><div class="slot-title">${h(slot)}</div>${items.length ? items.map(item => `<div class="item-card"><strong>${h(item.meal || "No food recorded")}</strong>${item.pudding ? `<span>Pudding: ${h(item.pudding)}</span>` : ""}</div>`).join("") : `<div class="empty">Not planned yet</div>`}</div>`;
                         }).join("")}
                     </section>
                 `).join("")}
@@ -2388,7 +2730,7 @@
             <div class="grid two">
                 <section class="panel">
                     <div class="panel-header"><strong>Menu checks</strong></div>
-                    <div class="panel-body">${warnings.length ? `<div class="warning-list">${warnings.map(warning => `<div class="warning">${h(warning)}</div>`).join("")}</div>` : `<div class="empty">No menu checks.</div>`}</div>
+                    <div class="panel-body">${warnings.length ? `<div class="warning-list">${warnings.map(warning => `<div class="warning">${h(warning)}</div>`).join("")}</div>` : `<div class="empty">✓ No menu warnings — all meals look good.</div>`}</div>
                 </section>
                 <section class="panel">
                     <div class="panel-header"><strong>People with dietary notes</strong><button class="small-button secondary" data-action="manageDietaryMedical" type="button">Manage</button></div>
@@ -2402,7 +2744,7 @@
             ${sectionHeader("The Plan", "Chronological daily plan with all-camp and concurrent activities.")}
             <div class="toolbar">
                 <button data-action="addPlanItem" type="button">Add item</button>
-                <button class="teal" data-action="addConcurrentPlanItem" type="button">Add concurrent activity</button>
+                <button class="secondary" data-action="addConcurrentPlanItem" type="button">Add concurrent activity</button>
                 <button class="secondary" data-action="copyPlanDay" type="button">Copy plan day</button>
                 <button class="slate" data-action="exportPlanPdf" type="button">The Plan PDF</button>
             </div>
@@ -2422,17 +2764,17 @@
                 <div class="toolbar" style="padding:10px 10px 0"><button class="small-button secondary" data-action="addPlanItem" data-date="${attr(date)}" type="button">Add</button><button class="small-button secondary" data-action="copyPlanDayFrom" data-date="${attr(date)}" type="button">Copy</button></div>
                 <div class="slot-card">
                 ${items.length ? items.map(item => `
-                    <div class="item-card">
-                        <strong>${h(planTime(item.startMinute))}-${h(planTime(item.endMinute))} | ${h(item.title)}</strong>
-                        <span>${h(planAudienceText(item))}${item.isConcurrent ? " | Concurrent" : ""}</span>
-                        ${item.notes ? `<small>${h(item.notes)}</small>` : ""}
-                        <div class="row-actions">
+                    <div class="item-card plan-item-card">
+                        <div class="plan-item-time">${h(planTime(item.startMinute))} – ${h(planTime(item.endMinute))}</div>
+                        <div class="plan-item-title">${h(item.title)}</div>
+                        <div class="plan-item-meta">${h(planAudienceText(item))}${item.isConcurrent ? " · Concurrent" : ""}${item.notes ? " · " + h(item.notes) : ""}</div>
+                        <div class="plan-item-actions">
                             <button class="small-button secondary" data-action="editPlanItem" data-id="${attr(item.id)}" type="button">Edit</button>
                             <button class="small-button secondary" data-action="editPlanTime" data-id="${attr(item.id)}" type="button">Edit time</button>
                             ${item.boundaryKind ? "" : `<button class="small-button danger" data-action="removePlanItem" data-id="${attr(item.id)}" type="button">Remove</button>`}
                         </div>
                     </div>
-                `).join("") : `<div class="empty">No plan items.</div>`}
+                `).join("") : `<div class="empty">Nothing planned for this day yet — use Add plan item above to add activities, travel or rest.</div>`}
                 </div>
             </section>`;
     }
@@ -2463,10 +2805,10 @@
                 <button data-action="${participant ? "addParticipantKitItem" : "addGroupKitItem"}" type="button">Add item</button>
                 <button class="teal" data-action="${participant ? "addStandardParticipantKit" : "addGroupFromInventory"}" type="button">${participant ? "Standard items" : "Add from inventory"}</button>
                 <button class="secondary" data-action="${participant ? "manageParticipantInventory" : "manageGroupInventory"}" type="button">${participant ? "Edit standards" : "Edit inventory"}</button>
-                ${participant ? "" : `<button class="amber" data-action="kitTemplates" type="button">Templates</button><button class="slate" data-action="moreKitActions" type="button">More kit actions</button>`}
+                ${participant ? "" : `<button class="amber" data-action="kitTemplates" type="button">Templates</button><button class="secondary" data-action="moreKitActions" type="button">More kit actions</button>`}
                 <button class="slate" data-action="${participant ? "exportParticipantKitPdf" : "exportGroupKitPdf"}" type="button">PDF</button>
             </div>
-            ${filtered.length ? kitTable(filtered, participant) : `<div class="empty">${participant ? "No participant kit added yet. Use Add item or Standard items." : "No group kit added yet. Use Add item or Add from inventory."}</div>`}
+            ${filtered.length ? kitTable(filtered, participant) : `<div class="empty">${participant ? "No participant kit recorded yet. Use Add item to start, or Standard items for a common pre-built list." : "No group kit recorded yet. Use Add item to start, or Load template for a pre-built list."}</div>`}
         `;
     }
 
@@ -2478,10 +2820,10 @@
                     <tbody>
                     ${items.map(item => `
                         <tr>
-                            <td><strong>${h(item.name)}</strong>${participant ? "" : `<br><small>${h(item.category || item.owner)}</small>`}</td>
-                            <td>${qtyControl(item.id, participant ? "participantKit" : "groupKit", item.quantity)}</td>
-                            ${participant ? "" : `<td><select data-update-kind="kit" data-id="${attr(item.id)}" data-field="status">${KIT_STATUSES.map(status => `<option ${item.status === status ? "selected" : ""}>${h(status)}</option>`).join("")}</select></td>`}
-                            <td><input data-update-kind="kit" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
+                            <td class="col-name"><strong>${h(item.name)}</strong>${participant ? "" : `<br><small>${h(item.category || item.owner)}</small>`}</td>
+                            <td class="col-qty">${qtyControl(item.id, participant ? "participantKit" : "groupKit", item.quantity)}</td>
+                            ${participant ? "" : `<td class="col-status"><select data-update-kind="kit" data-id="${attr(item.id)}" data-field="status">${KIT_STATUSES.map(status => `<option ${item.status === status ? "selected" : ""}>${h(status)}</option>`).join("")}</select></td>`}
+                            <td class="col-notes"><input data-update-kind="kit" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
                             <td class="row-actions">
                                 <button class="small-button secondary" data-action="${participant ? "editParticipantKitItem" : "editGroupKitItem"}" data-id="${attr(item.id)}" type="button">Edit</button>
                                 ${participant ? "" : `<button class="small-button secondary" data-action="duplicateGroupKitItem" data-id="${attr(item.id)}" type="button">Duplicate</button>`}
@@ -2572,7 +2914,7 @@
                                 aria-label="Remove ${h(item.name)}"
                                 type="button">✕</button>
                         </div>
-                    `).join("") : `<div class="empty">No items yet — tap + Add to start.</div>`}
+                    `).join("") : `<div class="empty">No items in this list yet — use + Add item below to start.</div>`}
                 </div>
             </section>`;
     }
@@ -2588,24 +2930,33 @@
             </div>`).join("");
         return `
             ${sectionHeader("Exports", "Create PDFs, CSV data, RTF files, and section files without replacing unrelated camp data.")}
-            <div class="grid two">
-                <section class="panel">
-                    <div class="panel-header"><strong>Complete camp pack</strong></div>
-                    <div class="panel-body">
+            <div class="card" style="margin-bottom:12px">
+                <label style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <span style="font-weight:800;color:var(--green-900)">PDF page size</span>
+                    <select data-project-field="paperSize" style="max-width:200px">
+                        <option value="a4" ${State.project.paperSize === "a4" ? "selected" : ""}>A4</option>
+                        <option value="letter" ${State.project.paperSize === "letter" ? "selected" : ""}>US Letter</option>
+                    </select>
+                </label>
+            </div>
+            <div class="grid two export-grid">
+                <details class="panel export-panel-details" open>
+                    <summary>Complete camp pack</summary>
+                    <div class="export-panel-body panel-body">
                         <p>One PDF for the whole camp, including overview, personnel, tent allocation, plan, menu, kit, shopping and chores.</p>
                         <button data-action="exportCampPackPdf" type="button">Export camp pack PDF</button>
                     </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-header"><strong>Data export</strong></div>
-                    <div class="panel-body">
+                </details>
+                <details class="panel export-panel-details" open>
+                    <summary>Data export</summary>
+                    <div class="export-panel-body panel-body">
                         <p>Creates a ZIP containing people-and-tents.csv, menu.csv, kit-list.csv, and chores.csv.</p>
                         <button class="teal" data-action="exportCsvZip" type="button">Export CSV ZIP</button>
                     </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-header"><strong>Planning PDFs</strong></div>
-                    <div class="panel-body row-actions">
+                </details>
+                <details class="panel export-panel-details">
+                    <summary>Planning PDFs</summary>
+                    <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportMenuPdf" type="button">Menu PDF</button>
                         <button data-action="exportKitchenMenuPdf" type="button">Kitchen menu PDF</button>
                         <button data-action="exportMenuRtf" type="button">Menu RTF</button>
@@ -2614,28 +2965,28 @@
                         <button data-action="exportShoppingPdf" type="button">Shopping lists PDF</button>
                         <button data-action="exportShoppingRtf" type="button">Shopping lists RTF</button>
                     </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-header"><strong>Kit list PDFs</strong></div>
-                    <div class="panel-body row-actions">
+                </details>
+                <details class="panel export-panel-details">
+                    <summary>Kit list PDFs</summary>
+                    <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportKitPdf" type="button">All kit PDF</button>
                         <button data-action="exportGroupKitPdf" type="button">Group kit PDF</button>
                         <button data-action="exportParticipantKitPdf" type="button">Participant kit PDF</button>
                     </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-header"><strong>Tent allocation</strong></div>
-                    <div class="panel-body row-actions">
+                </details>
+                <details class="panel export-panel-details">
+                    <summary>Tent allocation</summary>
+                    <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportTentTablePdf" type="button">Tent table PDF</button>
                         <button data-action="exportTentTagsPdf" type="button">Tent tags PDF</button>
                         <button data-action="exportTentLayoutPdf" type="button">Tent layout PDF</button>
                         <button data-action="makeTentTable" type="button">Preview table</button>
                     </div>
-                </section>
-                <section class="panel">
-                    <div class="panel-header"><strong>Section data files</strong></div>
-                    <div class="panel-body grid two">${sectionRows}</div>
-                </section>
+                </details>
+                <details class="panel export-panel-details">
+                    <summary>Section data files</summary>
+                    <div class="export-panel-body panel-body grid two">${sectionRows}</div>
+                </details>
             </div>
         `;
     }
@@ -2644,6 +2995,7 @@
         const map = {
             switchSection: () => switchSection(data.section),
             switchMenuTab: () => { State.menuTab = data.tab; renderMain(); },
+            switchChoresTab: () => { State.choresTab = data.tab; renderMain(); },
             newProject,
             openProject,
             saveProject,
@@ -3305,8 +3657,8 @@
         const body = document.createElement("div");
         body.className = "grid two";
         body.innerHTML = `
-            <section class="card"><h3>Friend links</h3>${linkRows(State.project.friendLinks).map(row => `<div class="pill">${h(row)}</div>`).join("") || `<div class="empty">No friend links.</div>`}<div class="toolbar"><button data-local-action="addFriendLink" type="button">Add link</button><button class="danger" data-local-action="removeFriendLink" type="button">Remove link</button></div></section>
-            <section class="card"><h3>Foe links</h3>${linkRows(State.project.foeLinks).map(row => `<div class="pill">${h(row)}</div>`).join("") || `<div class="empty">No foe links.</div>`}<div class="toolbar"><button data-local-action="addFoeLink" type="button">Add link</button><button class="danger" data-local-action="removeFoeLink" type="button">Remove link</button></div></section>
+            <section class="card"><h3>Friend links</h3>${linkRows(State.project.friendLinks).map(row => `<div class="pill">${h(row)}</div>`).join("") || `<div class="empty">No friend requests yet — add links to keep these people together in a tent.</div>`}<div class="toolbar"><button data-local-action="addFriendLink" type="button">Add link</button><button class="danger" data-local-action="removeFriendLink" type="button">Remove link</button></div></section>
+            <section class="card"><h3>Foe links</h3>${linkRows(State.project.foeLinks).map(row => `<div class="pill">${h(row)}</div>`).join("") || `<div class="empty">No separation requests yet — add links to keep people apart.</div>`}<div class="toolbar"><button data-local-action="addFoeLink" type="button">Add link</button><button class="danger" data-local-action="removeFoeLink" type="button">Remove link</button></div></section>
         `;
         showModal("Friend & Foe Links", body, [{ label: "Close", value: "close", className: "secondary" }], { wide: true });
         body.querySelector("[data-local-action='addFriendLink']").addEventListener("click", () => addPersonLink(State.project.friendLinks, "Friend link"));
@@ -4029,9 +4381,22 @@
     }
 
     function removeShoppingItem(listId, itemId) {
+        const listItem = State.project.shoppingLists.find(item => item.id === listId);
+        const item = listItem?.items.find(i => i.id === itemId);
+        if (!item) return;
+        const itemIndex = listItem.items.indexOf(item);
         mutate("Removed shopping item.", () => {
-            const listItem = State.project.shoppingLists.find(item => item.id === listId);
-            if (listItem) listItem.items = listItem.items.filter(item => item.id !== itemId);
+            listItem.items = listItem.items.filter(i => i.id !== itemId);
+        }, { skipToast: true });
+        // Item 1: shopping items can be deleted via a fast swipe gesture, so a
+        // blocking "are you sure?" dialog would defeat the point — instead, give
+        // a genuine few-second window to undo the removal
+        toast(`Removed "${item.name || "item"}".`, {
+            onUndo: () => {
+                mutate("Restored shopping item.", () => {
+                    listItem.items.splice(Math.min(itemIndex, listItem.items.length), 0, item);
+                });
+            }
         });
     }
 
@@ -4045,11 +4410,13 @@
 
     function showModal(title, body, actions = [], options = {}) {
         const host = $("#modalHost");
+        // Item 33: remember what had focus so we can restore it on close
+        State._modalReturnFocus = document.activeElement;
         host.classList.remove("hidden");
         const bodyNode = typeof body === "string" ? document.createElement("div") : body;
         if (typeof body === "string") bodyNode.innerHTML = body;
         host.innerHTML = `
-            <div class="modal ${options.wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-label="${attr(title)}">
+            <div class="modal ${options.wide ? "wide" : ""}" role="dialog" aria-modal="true" aria-label="${attr(title)}" tabindex="-1">
                 <div class="modal-header"><h2>${h(title)}</h2></div>
                 <div class="modal-body"></div>
                 <div class="modal-actions"></div>
@@ -4057,6 +4424,36 @@
         $(".modal-body", host).appendChild(bodyNode);
         const actionRow = $(".modal-actions", host);
         const buttons = actions.length ? actions : [{ label: "OK", value: "ok" }];
+
+        const modalEl = $(".modal", host);
+
+        // Item 33: focus trap — keep Tab cycling inside the modal
+        function focusableEls() {
+            return [...modalEl.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )];
+        }
+        function trapKeydown(event) {
+            if (event.key === "Escape") {
+                event.preventDefault();
+                closeModal();
+                return;
+            }
+            if (event.key !== "Tab") return;
+            const items = focusableEls();
+            if (!items.length) return;
+            const first = items[0], last = items[items.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+        host.addEventListener("keydown", trapKeydown);
+        host._trapKeydown = trapKeydown;
+
         return new Promise(resolve => {
             buttons.forEach(action => {
                 const button = document.createElement("button");
@@ -4065,18 +4462,39 @@
                 if (action.className) button.className = action.className;
                 button.addEventListener("click", () => {
                     const value = action.value ?? action.label;
+                    // Item 3: let the caller (e.g. promptFields) supply a validation
+                    // hook that runs before the modal closes — without this, a
+                    // "required" field could be submitted blank with no warning,
+                    // since the HTML required attribute alone was never actually
+                    // checked anywhere.
+                    if (options.validate && !options.validate(value, bodyNode)) return;
                     closeModal();
                     resolve(value);
                 });
                 actionRow.appendChild(button);
+            });
+
+            // Item 33: move focus into the modal once it's painted
+            requestAnimationFrame(() => {
+                const items = focusableEls();
+                (items[0] || modalEl).focus();
             });
         });
     }
 
     function closeModal() {
         const host = $("#modalHost");
+        if (host._trapKeydown) {
+            host.removeEventListener("keydown", host._trapKeydown);
+            host._trapKeydown = null;
+        }
         host.classList.add("hidden");
         host.innerHTML = "";
+        // Item 33: restore focus to whatever opened the modal
+        if (State._modalReturnFocus && document.contains(State._modalReturnFocus)) {
+            State._modalReturnFocus.focus();
+        }
+        State._modalReturnFocus = null;
     }
 
     async function alertBox(title, message) {
@@ -4098,10 +4516,36 @@
         const body = document.createElement("form");
         body.className = "form-grid";
         body.innerHTML = fields.map(fieldHtml).join("");
+
+        // Item 3: actually enforce `required` fields instead of leaving the HTML
+        // attribute purely decorative — block the OK action and show which
+        // field(s) are missing rather than silently letting the dialog close
+        function validateRequiredFields(actionValue) {
+            if (actionValue !== "ok") return true; // Cancel always allowed through
+            let firstInvalid = null;
+            fields.forEach(field => {
+                if (!field.required) return;
+                const input = body.querySelector(`[name="${cssEscape(field.name)}"]`);
+                if (!input) return;
+                const empty = field.type === "multi"
+                    ? !$all(`[name="${cssEscape(field.name)}"]:checked`, body).length
+                    : field.type === "checkbox"
+                        ? false // a required checkbox doesn't have a meaningful "empty" state here
+                        : !String(input.value || "").trim();
+                input.closest("label")?.classList.toggle("field-invalid", empty);
+                if (empty && !firstInvalid) firstInvalid = input;
+            });
+            if (firstInvalid) {
+                firstInvalid.focus();
+                return false;
+            }
+            return true;
+        }
+
         const value = await showModal(title, body, [
             { label: options.okText || "OK", value: "ok" },
             { label: "Cancel", value: "cancel", className: "secondary" }
-        ], { wide: options.wide });
+        ], { wide: options.wide, validate: validateRequiredFields });
         if (value !== "ok") return null;
         const result = {};
         fields.forEach(field => {
@@ -4154,12 +4598,32 @@
         return chooseOne(title, label, dates.map(date => [date, displayDate(date, true)]));
     }
 
-    function toast(message) {
+    function toast(message, options = {}) {
         const node = document.createElement("div");
         node.className = "toast";
-        node.textContent = message;
+        if (options.onUndo) {
+            // Item 1: a quick "Undo" affordance for fast/swipe-triggered deletes —
+            // protects against accidental removal without interrupting the gesture
+            // with a blocking confirm dialog
+            node.classList.add("toast-with-action");
+            const text = document.createElement("span");
+            text.textContent = message;
+            const undoBtn = document.createElement("button");
+            undoBtn.type = "button";
+            undoBtn.className = "toast-undo";
+            undoBtn.textContent = "Undo";
+            undoBtn.addEventListener("click", () => {
+                clearTimeout(removeTimer);
+                node.remove();
+                options.onUndo();
+            });
+            node.appendChild(text);
+            node.appendChild(undoBtn);
+        } else {
+            node.textContent = message;
+        }
         $("#toastHost").appendChild(node);
-        setTimeout(() => node.remove(), 3200);
+        const removeTimer = setTimeout(() => node.remove(), options.onUndo ? 5000 : 3200);
         if (window.Android?.toast) {
             window.Android.toast(message);
         }
@@ -4210,8 +4674,15 @@
         const link = document.createElement("a");
         link.href = url;
         link.download = fileName;
+        link.rel = "noopener";
+        // Item 26: Safari (especially iOS) requires the anchor to be attached to the
+        // document for the download attribute to be honoured reliably; without this
+        // some versions open the file inline instead of downloading it.
+        link.style.display = "none";
+        document.body.appendChild(link);
         link.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
         setStatus(`Saved ${fileName}.`);
     }
 
@@ -4220,10 +4691,19 @@
             window.Android.printHtml(title, textToBase64(html));
             return;
         }
+        // Item 27: window.open must happen synchronously with the user gesture or
+        // popup blockers (especially iOS Safari) silently swallow it. Guard against
+        // a blocked popup with a clear message instead of a confusing silent failure.
         const win = window.open("", "_blank");
+        if (!win) {
+            toast("Couldn't open the print window — check your browser's popup blocker for this site.");
+            return;
+        }
         win.document.write(html);
         win.document.close();
-        win.print();
+        // Give the new document a moment to lay out images/fonts before printing
+        win.focus();
+        setTimeout(() => { try { win.print(); } catch (_) {} }, 80);
     }
 
     function safeFileName(value) {
@@ -4489,14 +4969,16 @@
 
     async function exportCampPackPdf() {
         const lines = [];
-        addExportOverview(lines);
-        addExportPeople(lines);
-        addExportTents(lines);
-        addExportPlan(lines);
-        addExportMenu(lines, false);
-        addExportShopping(lines);
-        addExportKit(lines, null);
-        addExportChores(lines);
+        const sections = [addExportOverview, addExportPeople, addExportTents, addExportPlan,
+                           (l) => addExportMenu(l, false), addExportShopping,
+                           (l) => addExportKit(l, null), addExportChores];
+        // Item 13/17: each top-level section starts on its own fresh page so the
+        // auto-generated table of contents page numbers line up with where a
+        // reader actually lands when they flip to that page
+        sections.forEach((fn, index) => {
+            if (index > 0) lines.push({ text: "", pageBreak: true });
+            fn(lines);
+        });
         await savePdf("camp-pack.pdf", "Camp pack", lines);
     }
 
@@ -4531,10 +5013,38 @@
         await savePdf("participant-kit.pdf", "Participant kit", lines);
     }
 
+    // Item 18: standalone Chore Rota gets a real per-day table (session × chore ×
+    // assignee) rather than indented text — this is the version meant to be pinned
+    // up for quick reference, so scanability matters far more than in the bundled
+    // Camp Pack copy, which stays in the simpler flat format for that document's
+    // overall flow.
     async function exportChoresPdf() {
-        const lines = [];
-        addExportChores(lines);
-        await savePdf("chores.pdf", "Chore rota", lines);
+        const pdf = new ScoutPdf("Chore rota", State.project);
+        enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
+            if (index > 0) pdf._addNewPage();
+            pdf.addSectionBanner(displayDate(date, true));
+            const rows = [];
+            State.project.choreSessions.forEach(session => {
+                const allocations = State.project.choreAllocations.filter(a => a.date === date && a.session === session);
+                allocations.forEach(a => {
+                    rows.push([session, choreName(a.choreItemId), choreAllocationAssigneeNames(a), a.notes || "—"]);
+                });
+            });
+            if (!rows.length) {
+                pdf.addText("No chore allocations for this day.");
+            } else {
+                pdf.addTable(
+                    [
+                        { label: "Session", width: 0.16 },
+                        { label: "Chore",   width: 0.26 },
+                        { label: "Assigned",width: 0.32 },
+                        { label: "Notes" }
+                    ],
+                    rows
+                );
+            }
+        });
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("chores.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     async function exportPlanPdf() {
@@ -4549,36 +5059,100 @@
         await savePdf("shopping-lists.pdf", "Shopping lists", lines);
     }
 
+    // Item 18: a genuine ruled table — capacity, occupancy and names are now
+    // columns you can scan down rather than parsing out of a run-on sentence
     async function exportTentTablePdf() {
-        const lines = [{ text: "Tent allocation table", size: 15, bold: true }];
-        buildTentWarnings(State.project).forEach(warning => lines.push({ text: warning, color: "red" }));
-        State.project.tents.forEach(tent => {
-            const people = orderedPeople().filter(person => person.tentId === tent.id).map(person => person.name).join(", ") || "None";
-            lines.push({ text: `${tent.name} - ${tent.type} | Capacity ${tent.capacity} | ${people}` });
+        const pdf = new ScoutPdf("Tent allocation table", State.project);
+        pdf.addSectionBanner("Tent allocation table");
+
+        const warnings = buildTentWarnings(State.project);
+        if (warnings.length) {
+            pdf.addWarningBox(warnings.join("  |  "));
+        }
+
+        const rows = State.project.tents.map(tent => {
+            const occupants = orderedPeople().filter(p => p.tentId === tent.id);
+            const names = occupants.map(p => p.name).join(", ") || "—";
+            const overCapacity = tent.capacity && occupants.length > tent.capacity;
+            return [
+                tent.name,
+                tent.type || "—",
+                { text: `${occupants.length}/${tent.capacity || "—"}`, color: overCapacity ? "red" : null },
+                { text: names, color: overCapacity ? "red" : null }
+            ];
         });
-        const unallocated = orderedPeople().filter(person => !person.tentId).map(person => person.name).join(", ");
-        if (unallocated) lines.push({ text: `Unallocated: ${unallocated}`, color: "red" });
-        await savePdf("tent-table.pdf", "Tent allocation table", lines);
+
+        pdf.addTable(
+            [
+                { label: "Tent",     width: 0.18 },
+                { label: "Type",     width: 0.16 },
+                { label: "Occ/Cap",  width: 0.12 },
+                { label: "Occupants" }
+            ],
+            rows
+        );
+
+        const unallocated = orderedPeople().filter(p => !p.tentId);
+        if (unallocated.length) {
+            pdf.addSubHeading("Unallocated people", "red");
+            pdf.addText(unallocated.map(p => p.name).join(", "), { color: "red" });
+        }
+
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-table.pdf")}`, "application/pdf", pdf.bytes());
     }
 
+    // Item 9: one full-page, cuttable tag per tent — large bold name, capacity,
+    // and a clear occupant list, with a dashed cut-line border. This is meant to
+    // be printed, cut out, and physically attached to the tent — not read as a
+    // reference document, so it gets its own distinct layout entirely.
     async function exportTentTagsPdf() {
-        const lines = [];
-        State.project.tents.forEach(tent => {
-            lines.push({ text: tent.name, size: 18, bold: true });
-            orderedPeople().filter(person => person.tentId === tent.id).forEach((person, index) => lines.push({ text: `${index + 1}. ${person.name}` }));
-            lines.push({ text: " " });
-        });
-        await savePdf("tent-tags.pdf", "Tent tags", lines);
+        const pdf = new ScoutPdf("Tent tags", State.project);
+        if (!State.project.tents.length) {
+            pdf.addSectionBanner("Tent tags");
+            pdf.addText("No tents have been added yet.");
+        } else {
+            State.project.tents.forEach((tent, index) => {
+                const occupants = orderedPeople().filter(p => p.tentId === tent.id);
+                if (index > 0) pdf._addNewPage();
+                pdf.addTentTag(tent, occupants);
+            });
+        }
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-tags.pdf")}`, "application/pdf", pdf.bytes());
     }
 
+    // Item 10: a literal to-scale site map mirroring the in-app canvas — tents and
+    // site items drawn as positioned rectangles with a legend, not raw coordinates
+    // as text, so the printout actually functions as a map you can navigate by.
     async function exportTentLayoutPdf() {
-        const lines = [{ text: "Tent allocation layout", size: 15, bold: true }];
-        State.project.siteItems.forEach(item => lines.push({ text: `Site item: ${item.name} (${item.type}) at ${Math.round(item.x)},${Math.round(item.y)}` }));
+        const pdf = new ScoutPdf("Tent layout", State.project);
+        pdf.addSectionBanner("Site map");
+
+        const allItems = [
+            ...State.project.tents.map(t => ({
+                x: t.x || 0, y: t.y || 0, w: 170, h: 96,
+                label: t.name, kind: "tent"
+            })),
+            ...State.project.siteItems.map(s => ({
+                x: s.x || 0, y: s.y || 0, w: 92, h: 62,
+                label: s.name, kind: "site"
+            }))
+        ];
+
+        if (!allItems.length) {
+            pdf.addText("No tents or site items have been placed on the layout yet.");
+        } else {
+            const canvasWidth  = Math.max(900, ...allItems.map(i => i.x + i.w + 40));
+            const canvasHeight = Math.max(600, ...allItems.map(i => i.y + i.h + 40));
+            pdf.addSiteMap(allItems, canvasWidth, canvasHeight);
+        }
+
+        pdf.addSubHeading("Tent occupants");
         State.project.tents.forEach(tent => {
-            const people = orderedPeople().filter(person => person.tentId === tent.id).map(person => person.name).join(", ") || "None";
-            lines.push({ text: `${tent.name} at ${Math.round(tent.x)},${Math.round(tent.y)} - ${people}` });
+            const people = orderedPeople().filter(p => p.tentId === tent.id).map(p => p.name).join(", ") || "None";
+            pdf.addText(`${tent.name}: ${people}`);
         });
-        await savePdf("tent-layout.pdf", "Tent layout", lines);
+
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-layout.pdf")}`, "application/pdf", pdf.bytes());
     }
 
     function addExportOverview(lines) {
@@ -4587,6 +5161,12 @@
         lines.push({ text: `Dates: ${dateRange(State.project)}` });
         lines.push({ text: `Location: ${State.project.location || "Not set"}` });
         lines.push({ text: `People: ${participantCount()}  ·  Tents: ${State.project.tents.length}  ·  Meals: ${activeMenuItems()}  ·  Group kit: ${groupKit().length}  ·  Participant kit: ${participantKit().length}` });
+        // Item 14: link a printed copy back to the live, editable version — most
+        // useful when handing a paper pack to another adult helping on-site
+        if (State.collab.active) {
+            lines.push({ text: `Live collaboration code: ${State.collab.code}  (open Camp Planner → Join collaboration to see live updates)`, bold: true });
+        }
+        lines.push({ text: `Exported: ${new Date().toLocaleString("en-GB")}` });
         if (State.project.notes) {
             lines.push({ text: "Notes", heading: true });
             lines.push({ text: State.project.notes });
@@ -4657,10 +5237,15 @@
         lines.push({ text: kitchen ? "Kitchen Menu" : "Camp Menu", size: 15 });
         const dietary = State.project.people.filter(p => p.dietaryNotes);
         if (dietary.length) {
-            lines.push({ text: "Dietary requirements", heading: true, color: kitchen ? "red" : null });
-            dietary.forEach(p => lines.push({ text: `${p.name}: ${p.dietaryNotes}`, color: kitchen ? "red" : null }));
+            // Item 16: a kitchen printout is exactly where missing an allergy note
+            // has real consequences — give it a bordered, tinted box, not just red text
+            const summary = "Dietary requirements: " + dietary.map(p => `${p.name} — ${p.dietaryNotes}`).join("  |  ");
+            lines.push({ text: summary, warningBox: true });
         }
-        enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
+        // Item 17: each day starts on a fresh page so a printed sheet for "today"
+        // never has yesterday's leftovers or tomorrow's start sharing the page
+        enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
+            if (index > 0) lines.push({ text: "", pageBreak: true });
             lines.push({ text: displayDate(date, true), heading: true });
             const note = State.project.menuDayNotes.find(n => n.date === date);
             if (note?.notes) lines.push({ text: `Day note: ${note.notes}` });
@@ -4671,7 +5256,7 @@
                 } else {
                     items.forEach(item => {
                         lines.push({ text: `  ${slot}: ${item.meal || "No food recorded"}${item.pudding ? "  ·  Pudding: " + item.pudding : ""}` });
-                        if (item.dietaryNotes) lines.push({ text: `    Dietary: ${item.dietaryNotes}` });
+                        if (item.dietaryNotes) lines.push({ text: `    ⚠ Dietary: ${item.dietaryNotes}`, color: "red" });
                         if (item.notes) lines.push({ text: `    Notes: ${item.notes}` });
                     });
                 }
@@ -4681,14 +5266,15 @@
 
     function addExportPlan(lines) {
         lines.push({ text: "The Plan", size: 15 });
-        enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
+        enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
+            if (index > 0) lines.push({ text: "", pageBreak: true });
             lines.push({ text: displayDate(date, true), heading: true });
             const items = State.project.planItems.filter(i => i.date === date).sort((a, b) => a.startMinute - b.startMinute || a.endMinute - b.endMinute);
             if (!items.length) {
                 lines.push({ text: "  No items planned for this day." });
             } else {
                 items.forEach(item => {
-                    lines.push({ text: `  ${planTime(item.startMinute)} – ${planTime(item.endMinute)}  ${item.title}` });
+                    lines.push({ text: `  ${planTime(item.startMinute)} – ${planTime(item.endMinute)}  ${item.title}`, bold: true });
                     lines.push({ text: `    ${planAudienceText(item)}${item.notes ? "  ·  " + item.notes : ""}` });
                 });
             }
@@ -4711,7 +5297,9 @@
                 const status = participant ? "" : `  [${item.status}]`;
                 const qty = item.quantity !== undefined ? `  Qty: ${formatQty(item.quantity)}` : "";
                 const notes = item.notes ? `  – ${item.notes}` : "";
-                lines.push({ text: `  ☐  ${item.name}${qty}${status}${notes}` });
+                // Item 15: a real drawn checkbox, not a Unicode glyph that can render
+                // as a missing-glyph box depending on the printer's font substitution
+                lines.push({ text: `${item.name}${qty}${status}${notes}`, checklist: true });
             });
         });
     }
@@ -4744,49 +5332,88 @@
             if (!shopItems.length) {
                 lines.push({ text: "  No items in this list." });
             } else {
-                shopItems.forEach(item => lines.push({ text: `  ☐  ${item.name}  ×${formatQty(item.quantity)}` }));
+                // Item 15: drawn checkbox, real tick target for a printed shop run
+                shopItems.forEach(item => lines.push({ text: `${item.name}  ×${formatQty(item.quantity)}`, checklist: true }));
             }
         });
+    }
+
+    // Item 19: stamp export filenames with the export date so re-exporting during
+    // planning produces a new file instead of silently overwriting the last one,
+    // leaving no way to tell which printed/shared copy is current
+    function exportDateStamp() {
+        const d = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+    }
+
+    function datedFileName(fileName) {
+        const dot = fileName.lastIndexOf(".");
+        const base = dot === -1 ? fileName : fileName.slice(0, dot);
+        const ext  = dot === -1 ? "" : fileName.slice(dot);
+        return `${base}-${exportDateStamp()}${ext}`;
     }
 
     async function savePdf(fileName, title, lines) {
         const pdf = new ScoutPdf(title, State.project);
         lines.forEach(line => {
-            if (line.section) {
+            if (line.pageBreak) {
+                pdf._addNewPage();
+            } else if (line.section) {
                 pdf.addSectionBanner(line.text);
             } else if (line.size >= 15) {
                 pdf.addSectionBanner(line.text);
+            } else if (line.warningBox) {
+                // Item 16: dietary/medical/allergy notes get a highlighted box
+                pdf.addWarningBox(line.text);
+            } else if (line.checklist) {
+                // Item 15: real drawn checkbox instead of a Unicode glyph
+                pdf.addChecklistItem(line.text, line);
             } else if (line.size >= 12 || line.heading) {
                 pdf.addSubHeading(line.text, line.color);
             } else {
                 pdf.addText(line.text, line);
             }
         });
-        await saveBytesFile(`${safeFileName(State.project.campName)}-${fileName}`, "application/pdf", pdf.bytes());
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName(fileName)}`, "application/pdf", pdf.bytes());
     }
 
     // Full-featured themed PDF builder
+    // Item 20: page sizes in points (1/72 inch) — A4 is the long-standing default,
+    // Letter is selectable for US-based groups via project.paperSize
+    const PDF_PAGE_SIZES = {
+        a4:     { w: 595, h: 842 },
+        letter: { w: 612, h: 792 }
+    };
+
     class ScoutPdf {
         constructor(title, project) {
-            this.W = 595;
-            this.H = 842;
+            const size = PDF_PAGE_SIZES[project.paperSize] || PDF_PAGE_SIZES.a4;
+            this.W = size.w;
+            this.H = size.h;
             this.ML = 42;   // margin left
             this.MR = 42;   // margin right
             this.MT = 42;   // margin top
             this.MB = 48;   // margin bottom (footer space)
-            this.pageObjs = [];     // array of page content string arrays
-            this.rects   = [];      // separate array for filled rects per page
+            this.title = title;
+            this.project = project;
+            this.pageObjs = [];     // text draw calls per page
+            this.rects    = [];     // filled rect draw calls per page
+            this.lines    = [];     // stroked line draw calls per page (Item 11: real table grids)
             this.currentPage = -1;
             this.y = this.MT;
+            this.tocEntries = [];   // Item 13: {text, page} for an auto-generated table of contents
             this._addNewPage();
-            // Cover / title header band
-            this._rect(0, 0, this.W, 54, "green-dark");
-            this._text(project.campName, this.ML, 22, 18, true, "white");
-            const subtitle = `${title}  ·  ${dateRange(project)}${project.location ? "  ·  " + project.location : ""}`;
-            this._text(subtitle, this.ML, 38, 9, false, "white");
-            // thin accent line
-            this._rect(0, 54, this.W, 3, "green-light");
-            this.y = 68;
+            this._drawCoverBand();
+        }
+
+        _drawCoverBand() {
+            // Cover / title header band on every page
+            this._rect(0, 0, this.W, 54, "green-dark", 0);
+            this._text(this.project.campName, this.ML, 22, 18, true, "white", 0);
+            const subtitle = `${this.title}  ·  ${dateRange(this.project)}${this.project.location ? "  ·  " + this.project.location : ""}`;
+            this._text(subtitle, this.ML, 38, 9, false, "white", 0);
+            this._rect(0, 54, this.W, 3, "green-light", 0);
         }
 
         textWidth() { return this.W - this.ML - this.MR; }
@@ -4795,33 +5422,62 @@
             this.currentPage++;
             this.pageObjs.push([]);
             this.rects.push([]);
+            this.lines.push([]);
             this.y = this.MT;
-            // Footer stripe on every page
+            if (this.currentPage > 0) this._drawCoverBandSmall();
+            // Footer stripe — page number added at bytes() time once total is known
             this._rect(0, this.H - 30, this.W, 30, "green-dark");
-            this._text(`Scout Camp Planner`, this.ML, this.H - 14, 8, false, "white");
+            this._text("Scout Camp Planner", this.ML, this.H - 14, 8, false, "white");
+            this.y = this.currentPage === 0 ? 68 : this.MT;
+        }
+
+        _drawCoverBandSmall() {
+            // Slimmer repeated header band on continuation pages so context (which
+            // document this is) survives flipping to any page in isolation —
+            // Item 12/17 support: headings always carry forward across page breaks.
+            this._rect(0, 0, this.W, 26, "green-dark");
+            this._text(`${this.project.campName} — ${this.title}`, this.ML, 17, 9, true, "white");
+            this.y = 38;
         }
 
         _page() { return this.pageObjs[this.currentPage]; }
         _pageRects() { return this.rects[this.currentPage]; }
+        _pageLines() { return this.lines[this.currentPage]; }
 
         _needSpace(h) {
             if (this.y + h > this.H - this.MB) {
                 this._addNewPage();
-                this.y = this.MT;
             }
         }
 
-        _rect(x, y, w, h, colorKey) {
-            this._pageRects().push({ x, y, w, h, colorKey });
+        // Item 12: reserve a block of vertical space as a unit — if it won't fit on
+        // the current page, start a fresh page first so the block never splits
+        // (e.g. a tent's name + occupant list, or one day's chore rota table)
+        reserveBlock(height) {
+            if (this.y + height > this.H - this.MB) {
+                this._addNewPage();
+            }
         }
 
-        _text(text, x, y, size, bold, colorKey) {
-            this._page().push({ x, y, text: pdfEscape(String(text ?? "")), size, bold: Boolean(bold), colorKey: colorKey || "black" });
+        _rect(x, y, w, h, colorKey, page) {
+            const arr = page === undefined ? this._pageRects() : this.rects[page];
+            arr.push({ x, y, w, h, colorKey });
+        }
+
+        // Item 11: stroked line primitive — enables real ruled table grids
+        _line(x1, y1, x2, y2, colorKey, widthPt) {
+            this._pageLines().push({ x1, y1, x2, y2, colorKey: colorKey || "line-grey", widthPt: widthPt || 0.75 });
+        }
+
+        _text(text, x, y, size, bold, colorKey, page) {
+            const arr = page === undefined ? this._page() : this.pageObjs[page];
+            arr.push({ x, y, text: pdfEscape(String(text ?? "")), size, bold: Boolean(bold), colorKey: colorKey || "black" });
         }
 
         addSectionBanner(text) {
             this._needSpace(26);
             if (this.y > this.MT + 8) this.y += 4;
+            this.tocEntries.push({ text, page: this.currentPage });
             this._rect(this.ML - 8, this.y - 14, this.W - this.ML - this.MR + 16, 22, "green-mid");
             this._text(text, this.ML, this.y, 11, true, "white");
             this.y += 14;
@@ -4851,61 +5507,283 @@
 
         addBlankLine() { this.y += 6; }
 
+        /**
+         * Item 15: draw an actual vector checkbox square instead of relying on a
+         * Unicode glyph (☐) that some PDF-viewer/printer font substitutions render
+         * as a missing-glyph box or nothing at all — critical for a document whose
+         * whole point is being physically ticked off with a pen.
+         */
+        addChecklistItem(text, options = {}) {
+            const size = options.size || 9;
+            this._needSpace(size + 7);
+            const boxSize = 8;
+            const boxX = this.ML, boxY = this.y - boxSize + 1;
+            this._line(boxX, boxY, boxX + boxSize, boxY, "line-dark", 1);
+            this._line(boxX, boxY + boxSize, boxX + boxSize, boxY + boxSize, "line-dark", 1);
+            this._line(boxX, boxY, boxX, boxY + boxSize, "line-dark", 1);
+            this._line(boxX + boxSize, boxY, boxX + boxSize, boxY + boxSize, "line-dark", 1);
+            const col = options.color === "red" ? "red" : "black";
+            this._text(text, this.ML + boxSize + 6, this.y, size, Boolean(options.bold), col);
+            this.y += size + 7;
+        }
+
+        /**
+         * Item 16: a highlighted warning box (border + tint) for dietary/medical/
+         * allergy notes — plain red text is too easy to miss on a busy kitchen
+         * printout where missing it has real safety consequences.
+         */
+        addWarningBox(text) {
+            const size = 9;
+            const chars = Math.max(20, Math.floor((this.textWidth() - 16) / (size * 0.5)));
+            const wrapped = wrapText(String(text ?? ""), chars);
+            const boxHeight = wrapped.length * (size + 4) + 10;
+            this.reserveBlock(boxHeight + 4);
+            this._rect(this.ML, this.y - 2, this.textWidth(), boxHeight, "warning-fill");
+            this._line(this.ML, this.y - 2, this.ML, this.y - 2 + boxHeight, "red", 2);
+            let ty = this.y + 9;
+            wrapped.forEach(line => {
+                this._text(line, this.ML + 10, ty, size, true, "red");
+                ty += size + 4;
+            });
+            this.y += boxHeight + 6;
+        }
+
+        /**
+         * Item 11/18: draw a real ruled table with a header row, column borders,
+         * and zebra striping — used for Tent Table, Kit Lists, Chore Rota etc.
+         * columns: [{ label, width (fraction of textWidth, optional — defaults to even) }]
+         * rows: array of arrays of cell strings (or {text, color} objects)
+         */
+        addTable(columns, rows, options = {}) {
+            const totalWidth = this.textWidth();
+            const fixed = columns.filter(c => c.width).reduce((sum, c) => sum + c.width, 0);
+            const flexCols = columns.filter(c => !c.width).length;
+            const flexWidth = flexCols ? (1 - fixed) / flexCols : 0;
+            const widths = columns.map(c => (c.width || flexWidth) * totalWidth);
+            const rowHeight = options.rowHeight || 16;
+            const headerHeight = 18;
+
+            const drawHeader = () => {
+                this._rect(this.ML, this.y, totalWidth, headerHeight, "green-mid");
+                let x = this.ML;
+                columns.forEach((col, i) => {
+                    this._text(col.label, x + 5, this.y + 12, 8, true, "white");
+                    x += widths[i];
+                });
+                this.y += headerHeight;
+            };
+
+            this._needSpace(headerHeight + rowHeight);
+            drawHeader();
+
+            rows.forEach((row, rowIndex) => {
+                if (this.y + rowHeight > this.H - this.MB) {
+                    this._addNewPage();
+                    drawHeader();
+                }
+                if (rowIndex % 2 === 1) {
+                    this._rect(this.ML, this.y, totalWidth, rowHeight, "row-stripe");
+                }
+                let x = this.ML;
+                row.forEach((cell, i) => {
+                    const text = typeof cell === "object" ? cell.text : cell;
+                    const color = typeof cell === "object" && cell.color === "red" ? "red" : "black";
+                    const chars = Math.max(6, Math.floor((widths[i] - 8) / 4.0));
+                    const wrapped = wrapText(String(text ?? "—"), chars);
+                    this._text(wrapped[0] || "—", x + 5, this.y + 11, 8, false, color);
+                    x += widths[i];
+                });
+                this._line(this.ML, this.y + rowHeight, this.ML + totalWidth, this.y + rowHeight, "line-grey", 0.5);
+                this.y += rowHeight;
+            });
+
+            // Outer border + column separators
+            const tableTop = this.y - rows.length * rowHeight - headerHeight;
+            this._line(this.ML, tableTop, this.ML, this.y, "line-grey", 0.75);
+            this._line(this.ML + totalWidth, tableTop, this.ML + totalWidth, this.y, "line-grey", 0.75);
+            let xLine = this.ML;
+            columns.forEach((col, i) => {
+                if (i > 0) this._line(xLine, tableTop, xLine, this.y, "line-grey", 0.5);
+                xLine += widths[i];
+            });
+            this.y += 8;
+        }
+
+        /**
+         * Item 10: draw a literal to-scale spatial site map — tents and site items
+         * positioned exactly as they appear on the in-app canvas, with a legend.
+         * items: [{ x, y, w, h, label, kind: 'tent'|'site', occupantCount }]
+         */
+        addSiteMap(items, canvasWidth, canvasHeight) {
+            const mapWidth  = this.textWidth();
+            const mapHeight = Math.min(420, mapWidth * (canvasHeight / canvasWidth || 0.7));
+            const scale = mapWidth / (canvasWidth || 1);
+
+            this.reserveBlock(mapHeight + 30);
+            // Grass-green map background + border
+            this._rect(this.ML, this.y, mapWidth, mapHeight, "grass");
+            this._line(this.ML, this.y, this.ML + mapWidth, this.y, "line-grey", 1);
+            this._line(this.ML, this.y + mapHeight, this.ML + mapWidth, this.y + mapHeight, "line-grey", 1);
+            this._line(this.ML, this.y, this.ML, this.y + mapHeight, "line-grey", 1);
+            this._line(this.ML + mapWidth, this.y, this.ML + mapWidth, this.y + mapHeight, "line-grey", 1);
+
+            const mapTop = this.y;
+            items.forEach(item => {
+                const x = this.ML + item.x * scale;
+                const y = mapTop + item.y * scale;
+                const w = Math.max(28, item.w * scale);
+                const h = Math.max(18, item.h * scale);
+                if (y + h > mapTop + mapHeight) return; // off the bottom of the drawable area
+                this._rect(x, y, w, h, item.kind === "site" ? "amber-fill" : "white-fill");
+                this._line(x, y, x + w, y, "line-dark", 0.75);
+                this._line(x, y + h, x + w, y + h, "line-dark", 0.75);
+                this._line(x, y, x, y + h, "line-dark", 0.75);
+                this._line(x + w, y, x + w, y + h, "line-dark", 0.75);
+                const labelSize = 7;
+                this._text(truncateForWidth(item.label, w - 4, labelSize), x + 3, y + h / 2 + 2, labelSize, true, "black");
+            });
+            this.y = mapTop + mapHeight + 10;
+
+            // Legend
+            this._rect(this.ML, this.y, 12, 10, "white-fill");
+            this._text("Tent", this.ML + 16, this.y + 8, 8, false, "black");
+            this._rect(this.ML + 60, this.y, 12, 10, "amber-fill");
+            this._text("Site item", this.ML + 76, this.y + 8, 8, false, "black");
+            this.y += 22;
+        }
+
+        /**
+         * Item 9: render one cuttable tent tag per tent (or per page, large format),
+         * including a dashed cut-line border, the tent name large and bold, capacity,
+         * and a clear occupant list — meant to be printed, cut out, and physically
+         * attached to a tent rather than read as a reference document.
+         */
+        addTentTag(tent, occupants) {
+            this._addNewPage();
+            const pad = 20;
+            const x0 = this.ML, y0 = 70, x1 = this.W - this.MR, y1 = this.H - 80;
+            // Dashed cut-line border
+            this._dashedRect(x0, y0, x1 - x0, y1 - y0);
+            this._rect(x0 + 4, y0 + 4, x1 - x0 - 8, 50, "green-mid");
+            this._text(tent.name, x0 + pad, y0 + 36, 26, true, "white");
+            this._text(`${tent.type || "Tent"}  ·  Capacity ${tent.capacity}`, x0 + pad, y0 + 70, 11, false, "green-dark");
+            let ty = y0 + 100;
+            this._text("Occupants:", x0 + pad, ty, 12, true, "green-dark");
+            ty += 18;
+            if (!occupants.length) {
+                this._text("(none allocated)", x0 + pad + 10, ty, 11, false, "black");
+            } else {
+                occupants.forEach((person, i) => {
+                    this._text(`${i + 1}.  ${person.name}`, x0 + pad + 10, ty, 13, false, "black");
+                    ty += 20;
+                });
+            }
+        }
+
+        _dashedRect(x, y, w, h) {
+            const dash = 6, gap = 4;
+            const drawDashedLine = (x1, y1, x2, y2) => {
+                const len = Math.hypot(x2 - x1, y2 - y1);
+                const steps = Math.floor(len / (dash + gap));
+                const ux = (x2 - x1) / len, uy = (y2 - y1) / len;
+                for (let i = 0; i < steps; i++) {
+                    const sx = x1 + ux * i * (dash + gap);
+                    const sy = y1 + uy * i * (dash + gap);
+                    this._line(sx, sy, sx + ux * dash, sy + uy * dash, "line-dark", 1.2);
+                }
+            };
+            drawDashedLine(x, y, x + w, y);
+            drawDashedLine(x, y + h, x + w, y + h);
+            drawDashedLine(x, y, x, y + h);
+            drawDashedLine(x + w, y, x + w, y + h);
+        }
+
+        /**
+         * Item 13: insert a table-of-contents page at the very front, listing every
+         * section banner added so far with its page number — built from tocEntries
+         * collected as addSectionBanner was called, then spliced in before bytes().
+         */
+        insertTableOfContents() {
+            if (this.tocEntries.length < 2) return; // not worth a ToC for a 1-section doc
+            const tocPageObjs = [];
+            const tocRects = [];
+            const tocLines = [];
+            let y = 80;
+            tocRects.push({ x: 0, y: 0, w: this.W, h: 54, colorKey: "green-dark" });
+            tocPageObjs.push({ x: this.ML, y: 22, text: pdfEscape(this.project.campName), size: 18, bold: true, colorKey: "white" });
+            tocPageObjs.push({ x: this.ML, y: 38, text: pdfEscape(`${this.title} — Contents`), size: 9, bold: false, colorKey: "white" });
+            tocRects.push({ x: 0, y: 54, w: this.W, h: 3, colorKey: "green-light" });
+            this.tocEntries.forEach(entry => {
+                tocPageObjs.push({ x: this.ML, y, text: pdfEscape(entry.text), size: 11, bold: true, colorKey: "black" });
+                // +2 because the ToC page itself shifts every later page index by one,
+                // and humans read page numbers starting at 1 not 0
+                tocPageObjs.push({ x: this.W - this.MR - 30, y, text: pdfEscape(String(entry.page + 2)), size: 11, bold: true, colorKey: "green-dark" });
+                tocLines.push({ x1: this.ML, y1: y + 4, x2: this.W - this.MR, y2: y + 4, colorKey: "line-grey", widthPt: 0.5 });
+                y += 22;
+            });
+            this.pageObjs.unshift(tocPageObjs);
+            this.rects.unshift(tocRects);
+            this.lines.unshift(tocLines);
+            this.currentPage++;
+        }
+
         bytes() {
+            this.insertTableOfContents();
+
             const numPages = this.pageObjs.length;
-            // Object layout:
-            //  1 = Catalog
-            //  2 = Pages
-            //  3..2+numPages = Page objects (one per page)
-            //  3+numPages..2+numPages*2 = Content streams (one per page)
-            //  3+numPages*2 = /Helvetica
-            //  4+numPages*2 = /Helvetica-Bold
             const fontReg  = 3 + numPages * 2;
             const fontBold = 4 + numPages * 2;
 
-            const pdfColorStr = (key) => {
-                if (key === "green-dark")  return "0.122 0.333 0.180 rg";
-                if (key === "green-mid")   return "0.180 0.450 0.231 rg";
-                if (key === "green-light") return "0.604 0.800 0.392 rg";
-                if (key === "white")       return "1 1 1 rg";
-                if (key === "red")         return "0.72 0.16 0.16 rg";
-                return "0 0 0 rg";   // black
+            const pdfColorStr = (key, stroke) => {
+                const suffix = stroke ? "RG" : "rg";
+                if (key === "green-dark")  return `0.122 0.333 0.180 ${suffix}`;
+                if (key === "green-mid")   return `0.180 0.450 0.231 ${suffix}`;
+                if (key === "green-light") return `0.604 0.800 0.392 ${suffix}`;
+                if (key === "white")       return `1 1 1 ${suffix}`;
+                if (key === "white-fill")  return `0.97 0.99 0.96 ${suffix}`;
+                if (key === "amber-fill")  return `1 1 0.94 ${suffix}`;
+                if (key === "grass")       return `0.612 0.800 0.396 ${suffix}`;
+                if (key === "red")         return `0.72 0.16 0.16 ${suffix}`;
+                if (key === "line-grey")   return `0.7 0.7 0.7 ${suffix}`;
+                if (key === "line-dark")   return `0.18 0.33 0.18 ${suffix}`;
+                if (key === "row-stripe")  return `0.945 0.965 0.935 ${suffix}`;
+                if (key === "warning-fill") return `1 0.95 0.94 ${suffix}`;
+                return `0 0 0 ${suffix}`;
             };
-            const pdfFillStr = (key) => pdfColorStr(key).replace(/ rg$/, " RG").replace(/ rg$/, " RG").replace(/rg/, "rg");
 
             const objects = [];
             const push = (s) => { objects.push(s); return objects.length; };
 
-            push("<< /Type /Catalog /Pages 2 0 R >>");  // obj 1
-            // Pages dict built after all page objects known
-            push("");   // placeholder obj 2
+            push("<< /Type /Catalog /Pages 2 0 R >>");
+            push("");   // Pages dict placeholder
 
-            // Page objects and content streams
             for (let pi = 0; pi < numPages; pi++) {
-                const pageId  = 3 + pi;
-                const contId  = 3 + numPages + pi;
+                const contId = 3 + numPages + pi;
                 push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${this.W} ${this.H}] /Resources << /Font << /F1 ${fontReg} 0 R /F2 ${fontBold} 0 R >> >> /Contents ${contId} 0 R >>`);
             }
-            // Content streams
+
             for (let pi = 0; pi < numPages; pi++) {
-                const rects = this.rects[pi];
-                const texts = this.pageObjs[pi];
+                const rects = this.rects[pi] || [];
+                const lines = this.lines[pi] || [];
+                const texts = this.pageObjs[pi] || [];
                 const parts = [];
-                // Draw rectangles first
                 for (const r of rects) {
                     parts.push(`${pdfColorStr(r.colorKey)} ${fmt(r.x)} ${fmt(this.H - r.y - r.h)} ${fmt(r.w)} ${fmt(r.h)} re f`);
                 }
-                // Draw text
+                for (const l of lines) {
+                    parts.push(`${fmt(l.widthPt)} w ${pdfColorStr(l.colorKey, true)} ${fmt(l.x1)} ${fmt(this.H - l.y1)} m ${fmt(l.x2)} ${fmt(this.H - l.y2)} l S`);
+                }
                 for (const t of texts) {
                     parts.push(`BT /F${t.bold ? 2 : 1} ${fmt(t.size)} Tf ${pdfColorStr(t.colorKey)} ${fmt(t.x)} ${fmt(this.H - t.y)} Td (${t.text}) Tj ET`);
                 }
+                // Item 13: page numbers ("Page N of M") on every page footer
+                parts.push(`BT /F1 7 Tf 1 1 1 rg ${fmt(this.W - this.MR - 60)} ${fmt(16)} Td (Page ${pi + 1} of ${numPages}) Tj ET`);
                 const content = parts.join("\n");
                 push(`<< /Length ${asciiBytes(content).length} >>\nstream\n${content}\nendstream`);
             }
             push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
             push("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
 
-            // Fix placeholder Pages dict
             objects[1] = `<< /Type /Pages /Kids [${Array.from({ length: numPages }, (_, i) => `${3 + i} 0 R`).join(" ")}] /Count ${numPages} >>`;
 
             let out = "%PDF-1.4\n";
@@ -4922,10 +5800,19 @@
             out += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
             return asciiBytes(out);
         }
+
     }
 
     // Keep SimplePdf as alias for backward compat
     const SimplePdf = ScoutPdf;
+
+    // Item 10: truncate a label to fit a given pixel width at a given font size,
+    // appending an ellipsis if it had to cut — used for site-map item labels
+    function truncateForWidth(text, widthPt, size) {
+        const maxChars = Math.max(3, Math.floor(widthPt / (size * 0.55)));
+        const str = String(text ?? "");
+        return str.length > maxChars ? str.slice(0, maxChars - 1) + "…" : str;
+    }
 
     function wrapText(text, maxChars) {
         const lines = [];
@@ -4963,11 +5850,11 @@
     }
 
     async function exportMenuRtf() {
-        await saveTextFile(`${safeFileName(State.project.campName)}-menu.rtf`, "application/rtf", buildMenuRtf());
+        await saveTextFile(`${safeFileName(State.project.campName)}-${datedFileName("menu.rtf")}`, "application/rtf", buildMenuRtf());
     }
 
     async function exportShoppingRtf() {
-        await saveTextFile(`${safeFileName(State.project.campName)}-shopping-lists.rtf`, "application/rtf", buildShoppingRtf());
+        await saveTextFile(`${safeFileName(State.project.campName)}-${datedFileName("shopping-lists.rtf")}`, "application/rtf", buildShoppingRtf());
     }
 
     function buildMenuRtf() {
@@ -4977,10 +5864,35 @@
         return buildRtf(`${State.project.campName} - Camp menu`, lines);
     }
 
+    // Item 21: real RTF table (\\trowd/\\cellx grid) for shopping lists instead of
+    // the flat text-line format — Word/LibreOffice render this as an actual ruled
+    // table with a tickable left column, not a wall of indented text.
     function buildShoppingRtf() {
-        const lines = [];
-        addExportShopping(lines);
-        return buildRtf(`${State.project.campName} - Shopping lists`, lines);
+        const title = `${State.project.campName} - Shopping lists`;
+        const header = `{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Segoe UI;}}{\\colortbl;\\red0\\green0\\blue0;\\red46\\green115\\blue59;\\red184\\green45\\blue45;\\red255\\green255\\blue255;}\\paperw11907\\paperh16840\\margl900\\margr900\\margt760\\margb760\n\\pard\\qc\\b\\fs36\\cf2 ${rtfEscape(title)}\\b0\\par\\par\n`;
+
+        const lists = State.project.shoppingLists || [];
+        if (!lists.length) {
+            return header + `\\pard\\ql\\fs18 No shopping lists have been added.\\par\n}`;
+        }
+
+        const colTick = 700, colItem = 7500, colQty = 1700;
+        const cellx1 = colTick, cellx2 = cellx1 + colItem, cellx3 = cellx2 + colQty;
+
+        const body = lists.map(listItem => {
+            const heading = `\\pard\\ql\\b\\fs26\\cf2 ${rtfEscape(listItem.name)}\\b0\\par\n`;
+            const items = (listItem.items || []).filter(i => i.name);
+            if (!items.length) {
+                return heading + `\\pard\\fs18 No items in this list.\\par\\par\n`;
+            }
+            const headerRow = `\\trowd\\trgaph60\\cellx${cellx1}\\cellx${cellx2}\\cellx${cellx3}\\pard\\intbl\\b\\fs16  \\cell\\b\\fs16 Item\\cell\\b\\fs16 Qty\\cell\\row\n`;
+            const rows = items.map(item =>
+                `\\trowd\\trgaph60\\cellx${cellx1}\\cellx${cellx2}\\cellx${cellx3}\\pard\\intbl\\fs18 \u9633\\cell\\fs18 ${rtfEscape(item.name)}\\cell\\fs18 ${rtfEscape(formatQty(item.quantity))}\\cell\\row\n`
+            ).join("");
+            return heading + headerRow + rows + `\\pard\\par\n`;
+        }).join("");
+
+        return header + body + "}";
     }
 
     function buildRtf(title, lines) {
@@ -4993,8 +5905,36 @@
 
     async function exportCsvZip() {
         const files = exportCsvFiles();
-        const zip = createZip(Object.entries(files).map(([name, text]) => ({ name, bytes: textToBytes(text) })));
-        await saveBytesFile(`${safeFileName(State.project.campName)}-csv-export.zip`, "application/zip", zip);
+        // Item 22: explain what's inside — four generically-named CSVs with no
+        // context force whoever opens the ZIP to guess; a short README fixes that
+        const readme = [
+            `Scout Camp Planner — CSV data export`,
+            `Camp: ${State.project.campName}`,
+            `Exported: ${new Date().toLocaleString("en-GB")}`,
+            ``,
+            `Files in this export:`,
+            ``,
+            `  people-and-tents.csv`,
+            `    One row per person: type, gender, patrol/team, tent allocation,`,
+            `    dietary notes, medical notes, and general notes.`,
+            ``,
+            `  menu.csv`,
+            `    One row per planned meal slot: date, slot (breakfast/lunch/dinner),`,
+            `    the food, pudding, dietary notes, and notes for that meal.`,
+            ``,
+            `  kit-list.csv`,
+            `    One row per kit item: quantity, status, owner, whether it's`,
+            `    consumable, and whether it currently needs action.`,
+            ``,
+            `  chores.csv`,
+            `    One row per chore allocation: date, session, the chore, who's`,
+            `    assigned, and any notes.`,
+            ``,
+            `Open any of these in Excel, Google Sheets, or Numbers.`
+        ].join("\n");
+        const allFiles = { "README.txt": readme, ...files };
+        const zip = createZip(Object.entries(allFiles).map(([name, text]) => ({ name, bytes: textToBytes(text) })));
+        await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("csv-export.zip")}`, "application/zip", zip);
     }
 
     function createZip(files) {
@@ -5057,7 +5997,18 @@
         return `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;margin:24px;color:#1e2a20}h1,h2{color:#2e733b}.day{page-break-inside:avoid;border-top:2px solid #2e733b;margin-top:20px}strong{color:#173f25}</style></head><body><h1>${h(State.project.campName)}</h1><p>${h(dateRange(State.project))}</p>${enumerateDates(State.project.startDate, State.project.endDate).map(date => `<div class="day"><h2>${h(displayDate(date,true))}</h2>${activeMealSlots(State.project,date).map(slot => `<h3>${h(slot)}</h3>${State.project.menuItems.filter(item => item.date===date&&item.slot===slot&&hasMenuContent(item)).map(item => `<p><strong>${h(item.meal || "No food recorded")}</strong>${item.pudding ? " | Pudding: " + h(item.pudding) : ""}</p>`).join("") || "<p>Not planned</p>"}`).join("")}</div>`).join("")}</body></html>`;
     }
 
+    // Item 7: crypto.subtle only exists in secure contexts (HTTPS or localhost).
+    // Without this check, hosting/joining on a plain-HTTP deployment (e.g. a router
+    // self-hosted page at camp) fails with a cryptic "crypto.subtle is undefined"
+    // deep in the call stack instead of a message that explains what to do.
+    function requireSecureContextForCollaboration() {
+        if (!window.isSecureContext || !window.crypto?.subtle) {
+            throw new Error("Collaboration needs a secure connection (HTTPS). This page is being served over a plain, unencrypted connection, so collaboration can't be used here.");
+        }
+    }
+
     async function hostCollaboration() {
+        requireSecureContextForCollaboration();
         if (State.collab.active) throw new Error("Leave the current collaboration first.");
         const password = await promptText("Host collaboration", "Password for this collaboration");
         if (!password) return;
@@ -5067,6 +6018,7 @@
     }
 
     async function joinCollaboration() {
+        requireSecureContextForCollaboration();
         if (State.collab.active) throw new Error("Leave the current collaboration first.");
         const result = await promptFields("Join collaboration", [
             { name: "code", label: "Collaboration code" },
@@ -5087,7 +6039,8 @@
     async function leaveCollaboration() {
         if (State.collab.timer) clearInterval(State.collab.timer);
         if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
-        State.collab = { ...State.collab, active: false, code: "", key: null, revision: 0, timer: null, uploadTimer: null, applyingRemote: false };
+        if (State.collab.badgeTimer) clearInterval(State.collab.badgeTimer);
+        State.collab = { ...State.collab, active: false, code: "", key: null, revision: 0, timer: null, uploadTimer: null, badgeTimer: null, applyingRemote: false, pendingPush: false, etag: null, lastSyncedAt: 0 };
         renderShell();
         setStatus("Left collaboration.");
     }
@@ -5134,15 +6087,22 @@
         State.collab.code = code;
         State.collab.key = key;
         State.collab.revision = revision;
+        State.collab.lastSyncedAt = Date.now();
         State.collab.timer = setInterval(pollCollaboration, 4000);
+        // Item 8: refresh the "synced Xs ago" badge text independent of any data
+        // change, so the displayed time doesn't go stale while nothing else re-renders
+        State.collab.badgeTimer = setInterval(() => { if (State.collab.active) renderShell(); }, 15000);
         renderShell();
         setStatus(`Collaborating: ${code}`);
     }
 
     async function pollCollaboration() {
         if (!State.collab.active) return;
+        // Item 4: don't even attempt a network call while offline — avoids a
+        // pointless failed fetch every 4 seconds and the resulting error toast spam
+        if (typeof navigator !== "undefined" && navigator.onLine === false) return;
         try {
-            const payload = await firebaseGet(State.collab.code);
+            const payload = await firebaseGet(State.collab.code, { allowMissing: true });
             if (!payload || payload.updatedBy === State.collab.clientId) return;
             if (!payload.revision || payload.revision <= State.collab.revision) return;
             const json = await decryptProjectJson(payload.encryptedProject, State.collab.key);
@@ -5166,70 +6126,91 @@
     }
 
     /**
-     * Merge a remote project snapshot into the local project.
-     * For most sections we take the remote value wholesale (last-writer-wins).
-     * For shopping lists we do per-item merging to avoid clobbering concurrent edits.
+     * Generic per-item union merge for any flat array of objects with an `id` field.
+     * - Items only present locally (not yet pushed) are kept.
+     * - Items only present remotely (someone else added them) are taken.
+     * - Items present on both sides take the remote version (remote is what was
+     *   just confirmed-written to the server, so it reflects the most recently
+     *   *synced* state — but because we only ever reach this code 2.5s+ after our
+     *   own last push, "remote" here never means "stale data older than ours" in
+     *   the normal case).
+     * - Item 6: any item identical to what we had before this poll is left alone
+     *   (no-op) so React-style identity checks elsewhere aren't disturbed.
+     * Order: remote order preserved, then any local-only items appended.
      */
-    function mergeCollabProject(local, remote) {
-        // Take remote as the base
-        const merged = { ...remote };
+    // Item 8: compact "Xs/Xm ago" formatter for the sync-status badge
+    function timeAgoShort(ms) {
+        const s = Math.floor(ms / 1000);
+        if (s < 5) return "just now";
+        if (s < 60) return `${s}s ago`;
+        const m = Math.floor(s / 60);
+        if (m < 60) return `${m}m ago`;
+        const h = Math.floor(m / 60);
+        return `${h}h ago`;
+    }
 
-        // ── Shopping list merge: union of items, remote wins on conflicts ──
-        const localLists  = local.shoppingLists  || [];
-        const remoteLists = remote.shoppingLists || [];
+    function mergeArrayById(localArr, remoteArr) {
+        const local  = localArr  || [];
+        const remote = remoteArr || [];
+        const localMap  = new Map(local.map(i => [i.id, i]));
+        const remoteMap = new Map(remote.map(i => [i.id, i]));
+        const allIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
 
-        // Index local lists by id
-        const localListMap = new Map(localLists.map(l => [l.id, l]));
-        const remoteListMap = new Map(remoteLists.map(l => [l.id, l]));
-
-        // Start from remote lists (preserves remote adds/removes at list level)
-        const mergedLists = remoteLists.map(remoteList => {
-            const localList = localListMap.get(remoteList.id);
-            if (!localList) return remoteList;   // new list from remote
-
-            // Merge items within this list
-            const localItemMap  = new Map((localList.items  || []).map(i => [i.id, i]));
-            const remoteItemMap = new Map((remoteList.items || []).map(i => [i.id, i]));
-
-            // Union of all known item ids
-            const allIds = new Set([...localItemMap.keys(), ...remoteItemMap.keys()]);
-            const mergedItems = [];
-
-            for (const id of allIds) {
-                const li = localItemMap.get(id);
-                const ri = remoteItemMap.get(id);
-                if (!ri) {
-                    // Item exists locally but not remotely: keep it (local add not yet pushed)
-                    mergedItems.push(li);
-                } else if (!li) {
-                    // Item exists remotely but not locally: take it (remote add)
-                    mergedItems.push(ri);
-                } else {
-                    // Both have it: take remote (remote is newer in the collaboration flow)
-                    // but preserve any local name/qty if remote hasn't changed them from defaults
-                    mergedItems.push(ri);
-                }
-            }
-
-            // Preserve remote item order, then append any local-only items at end
-            const remoteOrder = (remoteList.items || []).map(i => i.id);
-            const localOnly   = mergedItems.filter(i => !remoteOrder.includes(i.id));
-            const ordered     = remoteOrder
-                .map(id => mergedItems.find(i => i.id === id))
-                .filter(Boolean)
-                .concat(localOnly);
-
-            return { ...remoteList, items: ordered };
-        });
-
-        // Also include any lists that exist locally but not remotely (local adds not yet pushed)
-        for (const localList of localLists) {
-            if (!remoteListMap.has(localList.id)) {
-                mergedLists.push(localList);
-            }
+        const merged = [];
+        for (const id of allIds) {
+            const li = localMap.get(id);
+            const ri = remoteMap.get(id);
+            if (!ri) merged.push(li);        // local-only add, not yet pushed
+            else if (!li) merged.push(ri);   // remote-only add
+            else merged.push(ri);            // both have it: remote wins
         }
 
+        const remoteOrder = remote.map(i => i.id);
+        const localOnly   = merged.filter(i => !remoteOrder.includes(i.id));
+        return remoteOrder.map(id => merged.find(i => i.id === id)).filter(Boolean).concat(localOnly);
+    }
+
+    /**
+     * Merge a remote project snapshot into the local project.
+     * Item 1: every id-keyed collection now gets the same per-item union merge that
+     * shopping lists previously had exclusively — so editing Personnel, Tents, Kit,
+     * Plan, Menu, or Chores while a collaborator's update lands no longer silently
+     * discards your in-flight edit.
+     * Scalar/whole-project fields (camp name, dates, language, notes, etc.) still
+     * take the remote value, since there's no sensible per-field merge for those
+     * without a full operational-transform system.
+     */
+    function mergeCollabProject(local, remote) {
+        const merged = { ...remote };
+
+        // Flat id-keyed collections: generic union merge
+        const idKeyedCollections = [
+            "people", "tents", "siteItems", "friendLinks", "foeLinks",
+            "menuSlots", "menuDayNotes", "menuLibraryItems", "menuItems",
+            "kitItems", "groupKitInventory", "participantKitInventory",
+            "choreItems", "choreTeams", "choreSessions", "choreAllocations",
+            "planItems"
+        ];
+        for (const key of idKeyedCollections) {
+            merged[key] = mergeArrayById(local[key], remote[key]);
+        }
+
+        // Shopping lists: nested merge (lists, then items within each list)
+        const localLists  = local.shoppingLists  || [];
+        const remoteLists = remote.shoppingLists || [];
+        const localListMap  = new Map(localLists.map(l => [l.id, l]));
+        const remoteListMap = new Map(remoteLists.map(l => [l.id, l]));
+
+        const mergedLists = remoteLists.map(remoteList => {
+            const localList = localListMap.get(remoteList.id);
+            if (!localList) return remoteList;
+            return { ...remoteList, items: mergeArrayById(localList.items, remoteList.items) };
+        });
+        for (const localList of localLists) {
+            if (!remoteListMap.has(localList.id)) mergedLists.push(localList);
+        }
         merged.shoppingLists = mergedLists;
+
         return merged;
     }
 
@@ -5241,8 +6222,15 @@
         State.collab.uploadTimer = setTimeout(pushCollaboration, 1200);
     }
 
-    async function pushCollaboration() {
+    async function pushCollaboration(retryCount = 0) {
         if (!State.collab.active || !State.collab.key) return;
+        // Item 4: don't even try while offline — the retry path below will pick
+        // this back up once the 'online' event fires
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+            State.collab.pendingPush = true;
+            renderShell();
+            return;
+        }
         const now = Date.now();
         const payload = {
             updatedAt: now,
@@ -5250,8 +6238,41 @@
             revision: now,
             encryptedProject: await encryptProjectJson(JSON.stringify(State.project), State.collab.key)
         };
-        await firebasePatch(State.collab.code, payload);
-        State.collab.revision = now;
+        try {
+            // Item 2: a conditional write (If-Match against the ETag we last read)
+            // makes the "revision" check atomic instead of trusting client clocks.
+            // If another device wrote in between our last poll and this push, the
+            // server rejects with 412 and we re-poll/merge before retrying — so a
+            // genuinely newer remote edit can never be silently clobbered by a push
+            // that was based on stale data, regardless of clock skew between devices.
+            const etag = await firebasePatchConditional(State.collab.code, payload, State.collab.etag);
+            State.collab.revision = now;
+            State.collab.etag = etag;
+            State.collab.pendingPush = false;
+            State.collab.lastSyncedAt = now;
+            renderShell();
+        } catch (error) {
+            if (error?.isConflict) {
+                // Someone else wrote first — pull their change in, merge, then retry our push
+                await pollCollaboration();
+                if (retryCount < 4) {
+                    setTimeout(() => pushCollaboration(retryCount + 1), 400);
+                    return;
+                }
+            }
+            // Item 3: a dropped connection at camp shouldn't silently discard the edit.
+            // Retry with backoff (5s, 10s, 20s, capped at 30s) up to 6 attempts, then
+            // leave pendingPush set so the next successful poll/push cycle or manual
+            // retry can pick it up rather than losing the change entirely.
+            State.collab.pendingPush = true;
+            renderShell();
+            if (retryCount < 6) {
+                const delay = Math.min(30000, 5000 * Math.pow(2, retryCount));
+                setTimeout(() => pushCollaboration(retryCount + 1), delay);
+            } else {
+                setStatus("Couldn't sync your changes — they're saved locally and will sync once connection is restored.");
+            }
+        }
     }
 
     async function createCollaborationKey(password) {
@@ -5298,11 +6319,19 @@
         return normalized;
     }
 
-    async function firebaseGet(code) {
-        const response = await fetch(`${FIREBASE_ROOT}/${SESSION_ROOT}/${normalizeCode(code)}.json`);
+    async function firebaseGet(code, { allowMissing = false } = {}) {
+        // Item 2: request an ETag back so writers can later make a conditional
+        // (If-Match) write against exactly the version they read
+        const response = await fetch(`${FIREBASE_ROOT}/${SESSION_ROOT}/${normalizeCode(code)}.json`, {
+            headers: { "X-Firebase-ETag": "true" }
+        });
         if (!response.ok) throw new Error(`Firebase returned ${response.status}.`);
         const payload = await response.json();
-        if (!payload) throw new Error("That collaboration code was not found.");
+        if (!payload && !allowMissing) throw new Error("That collaboration code was not found.");
+        // Item 5: a null payload during routine polling is usually a transient read
+        // racing a concurrent write, not a real error — return null and let the
+        // caller silently skip this poll cycle instead of surfacing a scary toast.
+        if (payload) State.collab.etag = response.headers.get("ETag") || State.collab.etag;
         return payload;
     }
 
@@ -5314,6 +6343,30 @@
     async function firebasePatch(code, payload) {
         const response = await fetch(`${FIREBASE_ROOT}/${SESSION_ROOT}/${normalizeCode(code)}.json`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
         if (!response.ok) throw new Error(`Firebase returned ${response.status}.`);
+    }
+
+    /**
+     * Item 2: conditional PATCH using If-Match against a previously-read ETag.
+     * Firebase RTDB's REST API returns 412 Precondition Failed if the data has
+     * changed since that ETag was issued — this is what makes "is my edit based
+     * on the latest data" an atomic, server-verified check rather than a client
+     * clock comparison that clock skew or a slow network can get wrong.
+     * If we have no ETag yet (first push of a session), falls back to a plain
+     * PATCH and just records whatever ETag comes back for next time.
+     */
+    async function firebasePatchConditional(code, payload, knownEtag) {
+        const headers = { "Content-Type": "application/json", "X-Firebase-ETag": "true" };
+        if (knownEtag) headers["if-match"] = knownEtag;
+        const response = await fetch(`${FIREBASE_ROOT}/${SESSION_ROOT}/${normalizeCode(code)}.json`, {
+            method: "PATCH", headers, body: JSON.stringify(payload)
+        });
+        if (response.status === 412) {
+            const err = new Error("Someone else updated this collaboration just before you.");
+            err.isConflict = true;
+            throw err;
+        }
+        if (!response.ok) throw new Error(`Firebase returned ${response.status}.`);
+        return response.headers.get("ETag") || knownEtag;
     }
 
     function about() {
