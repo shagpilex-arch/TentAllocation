@@ -21,12 +21,14 @@
         genderFemale: "Female",
         genderOther: "Other",
         camperTypeStandard: "Standard",
+        camperTypeSquirrel: "Squirrel",
         camperTypeBeaver: "Beaver",
         camperTypeCub: "Cub",
         camperTypeScout: "Scout",
         camperTypeExplorer: "Explorer",
         accommodationTent: "Tent",
         accommodationBunkRoom: "Bunk room",
+        accommodationCaravanMotorhome: "Caravan/motorhome",
         mealBreakfast: "Breakfast",
         mealDinner: "Dinner",
         mealTea: "Tea",
@@ -50,8 +52,8 @@
     const PERSON_TYPES = [TERMS.personTypeYoungPerson, TERMS.personTypeYoungLeader, TERMS.personTypeAdult];
     const PERSON_TYPE_LABELS = ["Camper", "Young Leader", "Adult"];
     const GENDERS = [TERMS.genderNotSet, TERMS.genderMale, TERMS.genderFemale, TERMS.genderOther];
-    const CAMPER_TYPES = [TERMS.camperTypeStandard, TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer];
-    const ACCOMMODATION_TYPES = [TERMS.accommodationTent, TERMS.accommodationBunkRoom];
+    const CAMPER_TYPES = [TERMS.camperTypeStandard, TERMS.camperTypeSquirrel, TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer];
+    const ACCOMMODATION_TYPES = [TERMS.accommodationTent, TERMS.accommodationBunkRoom, TERMS.accommodationCaravanMotorhome];
     const MEAL_SLOTS = [TERMS.mealBreakfast, TERMS.mealDinner, TERMS.mealTea, TERMS.mealExtra];
     const KIT_STATUSES = [
         TERMS.kitToCheck,
@@ -65,14 +67,14 @@
         TERMS.kitMissing,
         TERMS.kitDamaged
     ];
-    const TENT_TYPES = ["Patrol tent", "Dome tent", "Hike tent", "Leader tent", "Bunk room", "Other tent"];
+    const TENT_TYPES = ["Patrol tent", "Dome tent", "Hike tent", "Leader tent", "Bunk room", "Caravan/motorhome", "Other tent"];
     const SITE_ITEM_TYPES = ["Mess tent", "Storage tent", "Kitchen tent", "Event shelter", "Flag pole", "Fire"];
     const PLAN_BOUNDARIES = [TERMS.planBoundaryArrive, TERMS.planBoundaryWakeUp, TERMS.planBoundaryLightsOut, TERMS.planBoundaryGoHome];
     const BUDGET_PERSON_CAMPER = "Camper";
     const BUDGET_PERSON_YOUNG_LEADER = "Young Leader";
     const BUDGET_PERSON_ADULT = "Adult";
     const BUDGET_PERSON_TYPES = [BUDGET_PERSON_CAMPER, BUDGET_PERSON_YOUNG_LEADER, BUDGET_PERSON_ADULT];
-    const BUDGET_CAMPER_TYPES = [TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer, TERMS.camperTypeStandard];
+    const BUDGET_CAMPER_TYPES = [TERMS.camperTypeSquirrel, TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer, TERMS.camperTypeStandard];
     const BUDGET_CONTRIBUTION_STANDARD = "Standard";
     const BUDGET_CONTRIBUTION_EXCLUDED = "Excluded";
     const BUDGET_CONTRIBUTION_EXACT = "Exact amount";
@@ -275,6 +277,9 @@
             applyingRemote: false,
             lastRemoteAt: 0,
             pendingPush: false,
+            uploadInFlight: false,
+            uploadQueued: false,
+            lastSnapshot: "",
             lastSyncedAt: 0,
             etag: null,
             badgeTimer: null
@@ -693,7 +698,8 @@
             tent.type = TENT_TYPES.includes(tent.type) ? tent.type : mapTentType(tent.type, tent.accommodationType);
             tent.accommodationType = ACCOMMODATION_TYPES.includes(tent.accommodationType)
                 ? tent.accommodationType
-                : tent.type.toLowerCase().includes("bunk") ? TERMS.accommodationBunkRoom : TERMS.accommodationTent;
+                : clean(tent.type).toLowerCase().includes("caravan") || clean(tent.type).toLowerCase().includes("motorhome") ? TERMS.accommodationCaravanMotorhome
+                : clean(tent.type).toLowerCase().includes("bunk") ? TERMS.accommodationBunkRoom : TERMS.accommodationTent;
             tent.capacity = clamp(Math.round(number(tent.capacity, 4)), 1, 24);
             tent.colour = isHexColour(tent.colour) ? tent.colour : "#4CAF50";
             tent.notes = clean(tent.notes);
@@ -961,7 +967,7 @@
     function orderedProjectPeople(project) {
         const group = personItem => {
             if (personItem.personType === TERMS.personTypeYoungPerson) {
-                return ["Beaver", "Cub", "Scout", "Explorer", "Standard"].indexOf(personItem.camperType) + 1 || 5;
+                return ["Squirrel", "Beaver", "Cub", "Scout", "Explorer", "Standard"].indexOf(personItem.camperType) + 1 || 6;
             }
             if (personItem.personType === TERMS.personTypeYoungLeader) return 20;
             return 30;
@@ -1480,6 +1486,7 @@
 
     function mapCamperType(value) {
         const text = clean(value).toLowerCase();
+        if (text.includes("squirrel") || text === "0") return TERMS.camperTypeSquirrel;
         if (text.includes("beaver") || text === "1") return TERMS.camperTypeBeaver;
         if (text.includes("cub") || text === "2") return TERMS.camperTypeCub;
         if (text.includes("scout") || text === "3") return TERMS.camperTypeScout;
@@ -1490,6 +1497,7 @@
     function mapTentType(tentType, accommodationType) {
         const accommodation = clean(accommodationType).toLowerCase();
         const type = clean(tentType).toLowerCase();
+        if (accommodation.includes("caravan") || accommodation.includes("motorhome") || type.includes("caravan") || type.includes("motorhome")) return "Caravan/motorhome";
         if (accommodation.includes("bunk") || type.includes("bunk")) return "Bunk room";
         if (type.includes("dome") || type.includes("blue")) return "Dome tent";
         if (type.includes("hike") || type.includes("orange")) return "Hike tent";
@@ -1724,7 +1732,7 @@
     function orderedPeople() {
         const group = person => {
             if (person.personType === TERMS.personTypeYoungPerson) {
-                return ["Beaver", "Cub", "Scout", "Explorer", "Standard"].indexOf(person.camperType) + 1 || 5;
+                return ["Squirrel", "Beaver", "Cub", "Scout", "Explorer", "Standard"].indexOf(person.camperType) + 1 || 6;
             }
             if (person.personType === TERMS.personTypeYoungLeader) return 20;
             return 30;
@@ -2486,11 +2494,12 @@
         const hasWarnings = warnings.some(warning => warning.toLowerCase().includes(tent.name.toLowerCase()));
         const width = Math.round(TENT_CARD_WIDTH * tent.sizeScale);
         const height = Math.round(TENT_CARD_HEIGHT * tent.sizeScale);
-        const isBunk = tent.accommodationType === TERMS.accommodationBunkRoom || tent.type.toLowerCase().includes("bunk");
+        const isBunk = isBunkTent(tent);
+        const isCaravan = isCaravanMotorhome(tent);
         return `
             <div class="canvas-card tent-card ${isBunk ? "bunk-card" : ""} ${hasWarnings ? "warning-border" : ""}" data-canvas-kind="tent" data-id="${attr(tent.id)}" style="left:${tent.x}px;top:${tent.y}px;width:${width}px;height:${height}px;border-color:${attr(tent.colour)}">
                 <button class="canvas-action-button" data-action="openTentActions" data-id="${attr(tent.id)}" aria-label="Actions for ${attr(tent.name)}" type="button">...</button>
-                <div class="canvas-visual">${renderTentVisual(tent, isBunk)}</div>
+                <div class="canvas-visual">${renderTentVisual(tent, isBunk, isCaravan)}</div>
                 <strong class="canvas-title">${h(tent.name)}</strong>
                 <div class="meta">${members.length} people</div>
             </div>`;
@@ -2574,6 +2583,17 @@
     }
 
     function renderCamperTypeMark(camperType) {
+        if (camperType === TERMS.camperTypeSquirrel) {
+            return `
+                <g transform="translate(14 12) scale(0.78)">
+                    <path d="M20 39 C10 33 7 23 11 15 C14 10 26 10 29 15 C33 23 30 33 20 39 Z" fill="#e67e22" stroke="#533213" stroke-width="1.4" stroke-linejoin="round"></path>
+                    <path d="M8 16 C10 8 30 8 32 16 C26 19 14 19 8 16 Z" fill="#794a1c" stroke="#533213" stroke-width="1.3" stroke-linejoin="round"></path>
+                    <rect x="16.5" y="3" width="7" height="8" rx="2" fill="#794a1c" stroke="#533213" stroke-width="1"></rect>
+                    <line x1="13" y1="17" x2="18" y2="11" stroke="#533213" stroke-width="1" stroke-linecap="round"></line>
+                    <line x1="20" y1="18" x2="20" y2="10" stroke="#533213" stroke-width="1" stroke-linecap="round"></line>
+                    <line x1="27" y1="17" x2="22" y2="11" stroke="#533213" stroke-width="1" stroke-linecap="round"></line>
+                </g>`;
+        }
         if (camperType === TERMS.camperTypeBeaver) {
             return `
                 <g transform="translate(11 10) scale(0.52)">
@@ -2665,6 +2685,7 @@
     function personBadge(person) {
         if (person.personType === TERMS.personTypeAdult) return { label: "Adult", background: "#455a64", foreground: "#ffffff" };
         if (person.personType === TERMS.personTypeYoungLeader) return { label: "YL", background: "#00897b", foreground: "#ffffff" };
+        if (person.camperType === TERMS.camperTypeSquirrel) return { label: "Squirrel", background: "#e64a19", foreground: "#ffffff" };
         if (person.camperType === TERMS.camperTypeBeaver) return { label: "Beaver", background: "#009fda", foreground: "#ffffff" };
         if (person.camperType === TERMS.camperTypeCub) return { label: "Cub", background: "#ffc425", foreground: "#000000" };
         if (person.camperType === TERMS.camperTypeScout) return { label: "Scout", background: "#007934", foreground: "#ffffff" };
@@ -2715,10 +2736,11 @@
         return groups;
     }
 
-    function renderTentVisual(tent, isBunk) {
+    function renderTentVisual(tent, isBunk, isCaravan) {
         const colour = isHexColour(tent.colour) ? tent.colour : "#4CAF50";
         const stroke = darkenColour(colour, 0.45);
         if (isBunk) return renderBunkRoomSvg(colour);
+        if (isCaravan) return renderCaravanMotorhomeSvg(colour, stroke);
         const front = fadeColourToWhite(colour, 0.72);
         return `
             <svg class="tent-graphic" viewBox="0 0 170 96" aria-hidden="true" focusable="false">
@@ -2732,6 +2754,22 @@
                 <polygon points="137,80 130,77 116,80" fill="${attr(colour)}" stroke="${attr(stroke)}" stroke-width="1"></polygon>
                 <line x1="33" y1="80" x2="137" y2="80" stroke="${attr(stroke)}" stroke-width="2" stroke-linecap="round"></line>
                 <line x1="85" y1="8" x2="85" y2="12" stroke="${attr(stroke)}" stroke-width="2" stroke-linecap="round"></line>
+            </svg>`;
+    }
+
+    function renderCaravanMotorhomeSvg(colour, stroke) {
+        return `
+            <svg class="tent-graphic" viewBox="0 0 170 96" aria-hidden="true" focusable="false">
+                <rect x="29" y="78" width="112" height="12" rx="6" fill="#000000" opacity="0.16"></rect>
+                <rect x="33" y="30" width="104" height="46" rx="10" fill="${attr(fadeColourToWhite(colour, 0.68))}" stroke="${attr(stroke)}" stroke-width="2"></rect>
+                <rect x="36" y="57" width="44" height="10" rx="4" fill="${attr(colour)}" opacity="0.92"></rect>
+                <rect x="46" y="39" width="22" height="15" rx="3" fill="#e2f4ff" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <rect x="76" y="39" width="27" height="15" rx="3" fill="#e2f4ff" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <rect x="109" y="43" width="16" height="31" rx="3" fill="#ffffff" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <circle cx="54" cy="76" r="8" fill="#555555" stroke="#000000" stroke-width="1"></circle>
+                <circle cx="54" cy="76" r="3.5" fill="#d0d0d0"></circle>
+                <circle cx="120" cy="76" r="8" fill="#555555" stroke="#000000" stroke-width="1"></circle>
+                <circle cx="120" cy="76" r="3.5" fill="#d0d0d0"></circle>
             </svg>`;
     }
 
@@ -6099,7 +6137,7 @@
         const allItems = [
             ...State.project.tents.map(t => ({
                 x: t.x || 0, y: t.y || 0, w: 170 * number(t.sizeScale, 1), h: 145 * number(t.sizeScale, 1),
-                label: t.name, kind: "tent", colour: t.colour, isBunk: isBunkTent(t),
+                label: t.name, kind: "tent", colour: t.colour, isBunk: isBunkTent(t), isCaravan: isCaravanMotorhome(t),
                 occupants: orderedPeople().filter(p => p.tentId === t.id)
             })),
             ...State.project.siteItems.map(s => ({
@@ -6295,8 +6333,22 @@
         return tent.accommodationType === TERMS.accommodationBunkRoom || clean(tent.type).toLowerCase().includes("bunk");
     }
 
+    function isCaravanMotorhome(tent) {
+        const accommodation = clean(tent.accommodationType).toLowerCase();
+        const type = clean(tent.type).toLowerCase();
+        return accommodation.includes("caravan")
+            || accommodation.includes("motorhome")
+            || type.includes("caravan")
+            || type.includes("motorhome");
+    }
+
     function tentTypeLabel(tent) {
-        return `${tentColourName(tent.colour)} ${isBunkTent(tent) ? "bunk room" : "tent"}`;
+        const accommodation = isBunkTent(tent)
+            ? "bunk room"
+            : isCaravanMotorhome(tent)
+                ? "caravan/motorhome"
+                : "tent";
+        return `${tentColourName(tent.colour)} ${accommodation}`;
     }
 
     function tentColourName(value) {
@@ -7114,6 +7166,7 @@
                 const stroke = darkenColour(fill, 0.45);
                 const shapeHeight = Math.max(24, h * 0.58);
                 if (item.isBunk) this._drawBunkRoomShape(x, y, w, shapeHeight, fill, stroke);
+                else if (item.isCaravan) this._drawCaravanMotorhomeShape(x, y, w, shapeHeight, fill, stroke);
                 else this._drawTentShape(x, y, w, shapeHeight, fill, stroke);
                 this._centeredTextLines(item.label, x + w / 2, y + shapeHeight - 5, w - 8, 7.4, true);
                 this._drawOccupantBoxes(x, y + shapeHeight + 4, w, item.occupants || []);
@@ -7191,6 +7244,22 @@
             this._line(x + width * 0.12, y + roofHeight, x + width * 0.12, y + height, stroke, 0.75);
             this._line(x + width * 0.88, y + roofHeight, x + width * 0.88, y + height, stroke, 0.75);
             this._rect(x + width * 0.20, y + roofHeight + 8, width * 0.60, Math.max(10, height * 0.22), fill);
+        }
+
+        _drawCaravanMotorhomeShape(x, y, width, height, fill, stroke) {
+            const bodyY = y + height * 0.23;
+            const bodyHeight = height * 0.54;
+            this._rect(x + width * 0.12, bodyY, width * 0.76, bodyHeight, fadeColourToWhite(fill, 0.68));
+            this._line(x + width * 0.12, bodyY, x + width * 0.88, bodyY, stroke, 0.75);
+            this._line(x + width * 0.12, bodyY + bodyHeight, x + width * 0.88, bodyY + bodyHeight, stroke, 0.75);
+            this._line(x + width * 0.12, bodyY, x + width * 0.12, bodyY + bodyHeight, stroke, 0.75);
+            this._line(x + width * 0.88, bodyY, x + width * 0.88, bodyY + bodyHeight, stroke, 0.75);
+            this._rect(x + width * 0.16, bodyY + bodyHeight * 0.24, width * 0.20, bodyHeight * 0.30, "white");
+            this._rect(x + width * 0.42, bodyY + bodyHeight * 0.24, width * 0.22, bodyHeight * 0.30, "white");
+            this._rect(x + width * 0.66, bodyY + bodyHeight * 0.30, width * 0.12, bodyHeight * 0.56, "white");
+            this._rect(x + width * 0.12, bodyY + bodyHeight * 0.64, width * 0.40, Math.max(3, bodyHeight * 0.12), fill);
+            this._circle(x + width * 0.30, bodyY + bodyHeight, Math.max(4, width * 0.045), "text", "black", 0.8);
+            this._circle(x + width * 0.70, bodyY + bodyHeight, Math.max(4, width * 0.045), "text", "black", 0.8);
         }
 
         _drawOccupantBoxes(x, y, width, occupants) {
@@ -7635,12 +7704,13 @@
         if (State.collab.timer) clearInterval(State.collab.timer);
         if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
         if (State.collab.badgeTimer) clearInterval(State.collab.badgeTimer);
-        State.collab = { ...State.collab, active: false, code: "", key: null, revision: 0, timer: null, uploadTimer: null, badgeTimer: null, applyingRemote: false, pendingPush: false, etag: null, lastSyncedAt: 0 };
+        State.collab = { ...State.collab, active: false, code: "", key: null, revision: 0, timer: null, uploadTimer: null, badgeTimer: null, applyingRemote: false, pendingPush: false, uploadInFlight: false, uploadQueued: false, lastSnapshot: "", etag: null, lastSyncedAt: 0 };
         renderShell();
         setStatus("Left collaboration.");
     }
 
     async function collaborationHost(projectJson, password) {
+        projectJson = captureCollaborationSnapshot();
         const keyData = await createCollaborationKey(password);
         for (let attempt = 0; attempt < 20; attempt++) {
             const code = generateCode();
@@ -7663,6 +7733,7 @@
             };
             await firebasePut(code, payload);
             startCollaboration(code, keyData.key, 1);
+            State.collab.lastSnapshot = projectJson;
             return code;
         }
         throw new Error("Could not generate a free collaboration code. Please try again.");
@@ -7674,6 +7745,7 @@
         const key = await deriveCollaborationKey(password, payload.salt, payload.kdfIterations);
         const json = await decryptProjectJson(payload.encryptedProject, key);
         startCollaboration(code, key, payload.revision || 0);
+        State.collab.lastSnapshot = JSON.stringify(normalizeProject(JSON.parse(json)));
         return json;
     }
 
@@ -7682,6 +7754,11 @@
         State.collab.code = code;
         State.collab.key = key;
         State.collab.revision = revision;
+        State.collab.pendingPush = false;
+        State.collab.uploadInFlight = false;
+        State.collab.uploadQueued = false;
+        State.collab.lastRemoteAt = 0;
+        State.collab.lastSnapshot = "";
         State.collab.lastSyncedAt = Date.now();
         State.collab.timer = setInterval(pollCollaboration, 4000);
         // Item 8: refresh the "synced Xs ago" badge text independent of any data
@@ -7702,18 +7779,30 @@
             if (!payload.revision || payload.revision <= State.collab.revision) return;
             const json = await decryptProjectJson(payload.encryptedProject, State.collab.key);
             const remote = normalizeProject(JSON.parse(json));
+            const remoteSnapshot = JSON.stringify(remote);
 
             // Merge remote into local rather than overwriting wholesale.
             // Shopping lists: keep items from whichever side was edited more recently per item.
+            let merged;
+            let mergedSnapshot;
             State.collab.applyingRemote = true;
-            State.project = mergeCollabProject(State.project, remote);
-            State.collab.applyingRemote = false;
+            try {
+                merged = normalizeProject(mergeCollabProject(State.project, remote));
+                mergedSnapshot = JSON.stringify(merged);
+                State.project = merged;
+            } finally {
+                State.collab.applyingRemote = false;
+            }
             State.collab.revision = payload.revision;
-            // Suppress any upload triggered by the merge for 2 seconds
+            State.collab.lastSnapshot = mergedSnapshot === remoteSnapshot ? captureCollaborationSnapshot() : remoteSnapshot;
             State.collab.lastRemoteAt = Date.now();
             State.dirty = false;
             saveDraft();
             render();
+            if (mergedSnapshot !== remoteSnapshot) {
+                State.collab.pendingPush = true;
+                scheduleCollaborationUpload({ force: true });
+            }
             setStatus(`Received collaboration update: ${State.collab.code}.`);
         } catch (error) {
             setStatus(`Collaboration sync problem: ${error.message}`);
@@ -7845,16 +7934,28 @@
         return merged;
     }
 
-    function scheduleCollaborationUpload() {
+    function scheduleCollaborationUpload(options = {}) {
         if (!State.collab.active || State.collab.applyingRemote) return;
+        if (State.collab.uploadInFlight) {
+            State.collab.uploadQueued = true;
+            State.collab.pendingPush = true;
+            renderShell();
+            return;
+        }
         // Suppress echo-back: don't upload for 2.5s after receiving a remote update
-        if (State.collab.lastRemoteAt && Date.now() - State.collab.lastRemoteAt < 2500) return;
+        if (!options.force && State.collab.lastRemoteAt && Date.now() - State.collab.lastRemoteAt < 2500) return;
         if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
         State.collab.uploadTimer = setTimeout(pushCollaboration, 1200);
     }
 
     async function pushCollaboration(retryCount = 0) {
         if (!State.collab.active || !State.collab.key) return;
+        if (State.collab.uploadInFlight) {
+            State.collab.uploadQueued = true;
+            State.collab.pendingPush = true;
+            renderShell();
+            return;
+        }
         // Item 4: don't even try while offline — the retry path below will pick
         // this back up once the 'online' event fires
         if (typeof navigator !== "undefined" && navigator.onLine === false) {
@@ -7863,12 +7964,20 @@
             return;
         }
         const now = Date.now();
+        const snapshot = captureCollaborationSnapshot();
+        if (snapshot === State.collab.lastSnapshot && !State.collab.pendingPush) {
+            renderShell();
+            return;
+        }
         const payload = {
             updatedAt: now,
             updatedBy: State.collab.clientId,
             revision: now,
-            encryptedProject: await encryptProjectJson(JSON.stringify(State.project), State.collab.key)
+            encryptedProject: await encryptProjectJson(snapshot, State.collab.key)
         };
+        State.collab.uploadInFlight = true;
+        State.collab.pendingPush = true;
+        renderShell();
         try {
             // Item 2: a conditional write (If-Match against the ETag we last read)
             // makes the "revision" check atomic instead of trusting client clocks.
@@ -7879,6 +7988,10 @@
             const etag = await firebasePatchConditional(State.collab.code, payload, State.collab.etag);
             State.collab.revision = now;
             State.collab.etag = etag;
+            State.collab.lastSnapshot = snapshot;
+            if (captureCollaborationSnapshot() !== snapshot) {
+                State.collab.uploadQueued = true;
+            }
             State.collab.pendingPush = false;
             State.collab.lastSyncedAt = now;
             renderShell();
@@ -7903,7 +8016,21 @@
             } else {
                 setStatus("Couldn't sync your changes — they're saved locally and will sync once connection is restored.");
             }
+        } finally {
+            State.collab.uploadInFlight = false;
+            if (State.collab.uploadQueued && State.collab.active && !State.collab.applyingRemote) {
+                State.collab.uploadQueued = false;
+                scheduleCollaborationUpload({ force: true });
+            }
         }
+    }
+
+    function captureCollaborationSnapshot() {
+        const project = normalizeProject(JSON.parse(JSON.stringify(State.project)));
+        for (const shoppingList of project.shoppingLists || []) {
+            shoppingList.items = (shoppingList.items || []).filter(item => clean(item.name));
+        }
+        return JSON.stringify(project);
     }
 
     async function createCollaborationKey(password) {
@@ -7996,7 +8123,15 @@
             err.isConflict = true;
             throw err;
         }
-        if (!response.ok) throw new Error(`Firebase returned ${response.status}.`);
+        if (!response.ok) {
+            const detail = await response.text().catch(() => "");
+            if ((response.status === 401 || response.status === 403) && /Permission denied/i.test(detail)) {
+                const err = new Error("Someone else updated this collaboration just before you.");
+                err.isConflict = true;
+                throw err;
+            }
+            throw new Error(`Firebase returned ${response.status}.${detail ? " " + detail : ""}`);
+        }
         return response.headers.get("ETag") || knownEtag;
     }
 
