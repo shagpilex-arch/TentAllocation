@@ -7999,7 +7999,7 @@
         State.collab.applyingRemote = true;
         State.project = normalizeProject(JSON.parse(json));
         State.collab.applyingRemote = false;
-        State.dirty = false;
+        State.dirty = true;
         saveDraft();
         render();
         setStatus(`Joined collaboration ${State.collab.code}.`);
@@ -8037,6 +8037,7 @@
                 encryptedProject: await encryptProjectJson(projectJson, keyData.key)
             };
             await firebasePut(code, payload);
+            await firebaseGet(code);
             startCollaboration(code, keyData.key, 1);
             State.collab.lastSnapshot = projectJson;
             return code;
@@ -8102,7 +8103,7 @@
             State.collab.revision = payload.revision;
             State.collab.lastSnapshot = mergedSnapshot === remoteSnapshot ? captureCollaborationSnapshot() : remoteSnapshot;
             State.collab.lastRemoteAt = Date.now();
-            State.dirty = false;
+            State.dirty = true;
             saveDraft();
             render();
             if (mergedSnapshot !== remoteSnapshot) {
@@ -8150,6 +8151,14 @@
 
     function sameCollabItem(left, right) {
         return JSON.stringify(left) === JSON.stringify(right);
+    }
+
+    function mergeScalar(local, remote, acknowledged) {
+        if (typeof acknowledged === "undefined") return remote;
+        if (sameCollabItem(local, acknowledged) || !sameCollabItem(remote, acknowledged) || sameCollabItem(local, remote)) {
+            return remote;
+        }
+        return local;
     }
 
     function mergeArrayById(localArr, remoteArr, acknowledgedArr = []) {
@@ -8224,11 +8233,28 @@
         return merged;
     }
 
+    function mergeBudgetSettings(localSettings = {}, remoteSettings = {}, acknowledgedSettings = {}) {
+        const merged = { ...remoteSettings };
+        for (const key of [
+            "leaderRule", "youngLeaderRule", "dayVisitorRule",
+            "proposedStandardCharge", "foodOnlyAmount",
+            "leaderContributionAmount", "youngLeaderContributionAmount",
+            "dayVisitorDayRate", "dayVisitorCustomContributionAmount",
+            "currencySymbol", "foodCostPerPersonPerDay", "foodDays",
+            "foodPeopleBasis", "notes"
+        ]) {
+            merged[key] = mergeScalar(localSettings?.[key], remoteSettings?.[key], acknowledgedSettings?.[key]);
+        }
+        return merged;
+    }
+
     function mergeBudget(localBudget, remoteBudget, acknowledgedBudget) {
         if (!remoteBudget) return localBudget;
         if (!localBudget) return remoteBudget;
         return {
             ...remoteBudget,
+            settings: mergeBudgetSettings(localBudget.settings, remoteBudget.settings, acknowledgedBudget?.settings),
+            importedSourceSummary: mergeScalar(localBudget.importedSourceSummary, remoteBudget.importedSourceSummary, acknowledgedBudget?.importedSourceSummary),
             people: mergeArrayById(localBudget.people || [], remoteBudget.people || [], acknowledgedBudget?.people || []),
             costItems: mergeArrayById(localBudget.costItems || [], remoteBudget.costItems || [], acknowledgedBudget?.costItems || [])
         };
@@ -8240,12 +8266,21 @@
      * shopping lists previously had exclusively — so editing Personnel, Tents, Kit,
      * Plan, Menu, or Chores while a collaborator's update lands no longer silently
      * discards your in-flight edit.
-     * Scalar/whole-project fields (camp name, dates, language, notes, etc.) still
-     * take the remote value, since there's no sensible per-field merge for those
-     * without a full operational-transform system.
+     * Scalar project settings preserve local unsent edits when the incoming remote
+     * value is still the last acknowledged value. If both sides changed the same
+     * field, the newest remote value wins to keep clients converged.
      */
     function mergeCollabProject(local, remote, acknowledged = null) {
         const merged = { ...remote };
+
+        for (const key of [
+            "campName", "location", "startDate", "endDate",
+            "participantCountOverride", "notes", "languageCode",
+            "menuStartSlot", "menuEndSlot",
+            "menuLibrarySeeded", "groupKitInventorySeeded", "participantKitInventorySeeded"
+        ]) {
+            merged[key] = mergeScalar(local?.[key], remote?.[key], acknowledged?.[key]);
+        }
 
         // Flat id-keyed collections: generic union merge
         const idKeyedCollections = [
@@ -8274,17 +8309,21 @@
         const remoteListMap = new Map(remoteLists.map(l => [l.id, l]));
         const acknowledgedListMap = new Map(acknowledgedLists.map(l => [l.id, l]));
 
-        const mergedLists = remoteLists.map(remoteList => {
+        const mergedLists = remoteLists.flatMap(remoteList => {
             const localList = localListMap.get(remoteList.id);
-            if (!localList) return remoteList;
             const acknowledgedList = acknowledgedListMap.get(remoteList.id);
-            const listChanged = acknowledgedList && !sameCollabItem(remoteList, acknowledgedList);
+            if (!localList) {
+                if (acknowledgedList && sameCollabItem(remoteList, acknowledgedList)) return [];
+                return [remoteList];
+            }
+
+            const remoteNameChanged = acknowledgedList && remoteList.name !== acknowledgedList.name;
             const localNameChanged = !acknowledgedList || localList.name !== acknowledgedList.name;
-            return {
+            return [{
                 ...remoteList,
-                name: localNameChanged && !listChanged ? localList.name : remoteList.name,
+                name: localNameChanged && !remoteNameChanged ? localList.name : remoteList.name,
                 items: mergeArrayById(localList.items, remoteList.items, acknowledgedList?.items || [])
-            };
+            }];
         });
         for (const localList of localLists) {
             const acknowledgedList = acknowledgedListMap.get(localList.id);
@@ -8309,7 +8348,19 @@
         // Suppress echo-back: don't upload for 2.5s after receiving a remote update
         if (!options.force && State.collab.lastRemoteAt && Date.now() - State.collab.lastRemoteAt < 2500) return;
         if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
-        State.collab.uploadTimer = setTimeout(pushCollaboration, 1200);
+        State.collab.uploadTimer = setTimeout(() => {
+            State.collab.uploadTimer = null;
+            pushCollaboration();
+        }, 1200);
+    }
+
+    function scheduleCollaborationRetry(delayMs = 5000) {
+        if (!State.collab.active || State.collab.applyingRemote) return;
+        if (State.collab.uploadTimer) clearTimeout(State.collab.uploadTimer);
+        State.collab.uploadTimer = setTimeout(() => {
+            State.collab.uploadTimer = null;
+            pushCollaboration();
+        }, delayMs);
     }
 
     async function pushCollaboration(retryCount = 0) {
@@ -8325,6 +8376,7 @@
         if (typeof navigator !== "undefined" && navigator.onLine === false) {
             State.collab.pendingPush = true;
             renderShell();
+            scheduleCollaborationRetry(5000);
             return;
         }
         const now = Date.now();
@@ -8379,6 +8431,7 @@
                 setTimeout(() => pushCollaboration(retryCount + 1), delay);
             } else {
                 setStatus("Couldn't sync your changes — they're saved locally and will sync once connection is restored.");
+                scheduleCollaborationRetry(30000);
             }
         } finally {
             State.collab.uploadInFlight = false;
