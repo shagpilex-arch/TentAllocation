@@ -76,13 +76,28 @@
     const BUDGET_PERSON_TYPES = [BUDGET_PERSON_CAMPER, BUDGET_PERSON_YOUNG_LEADER, BUDGET_PERSON_ADULT];
     const BUDGET_CAMPER_TYPES = [TERMS.camperTypeSquirrel, TERMS.camperTypeBeaver, TERMS.camperTypeCub, TERMS.camperTypeScout, TERMS.camperTypeExplorer, TERMS.camperTypeStandard];
     const BUDGET_CONTRIBUTION_STANDARD = "Standard";
-    const BUDGET_CONTRIBUTION_EXCLUDED = "Excluded";
+    const BUDGET_CONTRIBUTION_EXCLUDED = "No charge";
     const BUDGET_CONTRIBUTION_EXACT = "Exact amount";
     const BUDGET_CONTRIBUTION_FOOD_ONLY = "Food only";
     const BUDGET_CONTRIBUTION_DAY_VISITOR_RATE = "Day visitor rate";
     const BUDGET_CONTRIBUTION_RULES = [BUDGET_CONTRIBUTION_STANDARD, BUDGET_CONTRIBUTION_EXCLUDED, BUDGET_CONTRIBUTION_EXACT, BUDGET_CONTRIBUTION_FOOD_ONLY, BUDGET_CONTRIBUTION_DAY_VISITOR_RATE];
     const BUDGET_LEADERS_PAY_STANDARD = "Leaders pay Standard";
     const BUDGET_LEADERS_PAY_NOTHING = "Leaders pay nothing";
+    const TENT_COLOUR_CHOICES = [
+        ["Beige", "#D7C8A2"],
+        ["Black", "#212121"],
+        ["Blue", "#2196F3"],
+        ["Brown", "#795548"],
+        ["Green", "#4CAF50"],
+        ["Jade", "#00A86B"],
+        ["Orange", "#FF9800"],
+        ["Pink", "#FF8FD2"],
+        ["Purple", "#9C27B0"],
+        ["Red", "#D32F2F"],
+        ["White", "#FFFFFF"],
+        ["Yellow", "#FDD835"]
+    ];
+    const TENT_SIZE_CHOICES = ["Small", "Standard", "Large", "Extra large"];
     const BUDGET_LEADERS_PAY_FOOD_ONLY = "Leaders pay food only";
     const BUDGET_LEADERS_PAY_EXACT = "Leaders pay an exact amount";
     const BUDGET_LEADER_RULES = [BUDGET_LEADERS_PAY_STANDARD, BUDGET_LEADERS_PAY_NOTHING, BUDGET_LEADERS_PAY_FOOD_ONLY, BUDGET_LEADERS_PAY_EXACT];
@@ -107,6 +122,7 @@
     const BUDGET_COST_PER_DAY = "Per day";
     const BUDGET_COST_METHODS = [BUDGET_COST_FIXED, BUDGET_COST_QUANTITY, BUDGET_COST_PER_PERSON, BUDGET_COST_PER_CAMPER, BUDGET_COST_PER_NIGHT, BUDGET_COST_PER_DAY];
     const BUDGET_IMPORTED_ACTIVITY_MARKER = "Imported from this camp plan.";
+    const BUDGET_ACTIVITY_PREFIX = "Activity:";
     const BUDGET_CURRENCY_OPTIONS = [
         ["£", "£"],
         ["$", "$"],
@@ -338,6 +354,7 @@
             "Tea": "Cena",
             "Extra": "Extra",
             "Camper": "Campista",
+            "Section": "Sección",
             "Young Leader": "Joven Líder",
             "Adult": "Adulto",
             "Male": "Masculino",
@@ -393,6 +410,7 @@
             "Tea": "Dîner",
             "Extra": "Supplément",
             "Camper": "Campeur",
+            "Section": "Section",
             "Young Leader": "Jeune Responsable",
             "Adult": "Adulte",
             "Male": "Masculin",
@@ -706,6 +724,7 @@
             tent.x = number(tent.x, 40 + index * 170);
             tent.y = number(tent.y, 50 + Math.floor(index / 3) * 150);
             tent.sizeScale = clamp(number(tent.sizeScale, 1), 0.7, 1.8);
+            tent.isClosed = Boolean(tent.isClosed);
         });
         const tentIds = new Set(project.tents.map(tent => tent.id));
         project.people.forEach(person => {
@@ -915,6 +934,8 @@
             camperType: mapBudgetCamperType(data.camperType),
             isDayVisitor: Boolean(data.isDayVisitor),
             contributionRule: mapBudgetContributionRule(data.contributionRule),
+            contributionRuleManual: Boolean(data.contributionRuleManual),
+            contributionRuleAutoValue: clean(data.contributionRuleAutoValue),
             contributionAmount: nonNegative(data.contributionAmount),
             notes: clean(data.notes)
         };
@@ -922,14 +943,14 @@
 
     function budgetCostItem(data = {}) {
         const method = mapBudgetCostMethod(data.calculationMethod);
-        const cost = nonNegative(data.cost ?? data.estimatedCost);
+        const cost = signedBudgetAmount(data.cost ?? data.estimatedCost);
         return {
             ...data,
             id: clean(data.id, uid()),
             description: clean(data.description, "Budget cost"),
             calculationMethod: method,
             quantity: method === BUDGET_COST_FIXED ? 1 : Math.max(0.0001, number(data.quantity, 1)),
-            unitCost: method === BUDGET_COST_FIXED ? cost : nonNegative(data.unitCost),
+            unitCost: method === BUDGET_COST_FIXED ? cost : signedBudgetAmount(data.unitCost),
             cost,
             notes: clean(data.notes)
         };
@@ -958,6 +979,23 @@
                 camperType: mapBudgetCamperType(personItem.camperType),
                 isDayVisitor: Boolean(personItem.isDayVisitor)
             });
+            const defaultRule = defaultBudgetContributionRule(project.budget.settings, result);
+            const hasAutoRule = Boolean(clean(result.contributionRuleAutoValue));
+            const autoRule = hasAutoRule ? mapBudgetContributionRule(result.contributionRuleAutoValue) : "";
+            if (!result.contributionRuleManual && hasAutoRule && result.contributionRule !== autoRule) {
+                result.contributionRuleManual = true;
+            } else if (!result.contributionRuleManual
+                && !hasAutoRule
+                && result.contributionRule !== BUDGET_CONTRIBUTION_STANDARD
+                && result.contributionRule !== defaultRule) {
+                result.contributionRuleManual = true;
+            }
+            if (!result.contributionRuleManual) {
+                result.contributionRule = defaultRule;
+                result.contributionRuleAutoValue = defaultRule;
+            } else {
+                result.contributionRuleAutoValue = "";
+            }
             result.id = uniqueId(result.id, usedIds);
             return result;
         });
@@ -993,6 +1031,10 @@
 
     function nonNegative(value) {
         return Math.max(0, number(value, 0));
+    }
+
+    function signedBudgetAmount(value) {
+        return number(value, 0);
     }
 
     function normalizeBudgetCurrency(symbol) {
@@ -1034,8 +1076,16 @@
 
     function mapBudgetContributionRule(value) {
         const cleaned = clean(value);
+        if (["Excluded", "No charge"].includes(cleaned)) return BUDGET_CONTRIBUTION_EXCLUDED;
         if (BUDGET_CONTRIBUTION_RULES.includes(cleaned)) return cleaned;
         if (["Custom fixed amount", "Percentage of Standard", "Percentage of Standard charge"].includes(cleaned)) return BUDGET_CONTRIBUTION_EXACT;
+        return BUDGET_CONTRIBUTION_STANDARD;
+    }
+
+    function defaultBudgetContributionRule(settings, personRow) {
+        if (personRow.isDayVisitor) return effectiveBudgetDayVisitorRule(settings);
+        if (personRow.personType === BUDGET_PERSON_ADULT) return effectiveBudgetLeaderRule(settings);
+        if (personRow.personType === BUDGET_PERSON_YOUNG_LEADER) return effectiveBudgetYoungLeaderRule(settings);
         return BUDGET_CONTRIBUTION_STANDARD;
     }
 
@@ -1097,22 +1147,41 @@
             || clean(item.description).toLowerCase().startsWith("activity:");
     }
 
+    function hasBudgetActivityPrefix(value) {
+        return clean(value).toLowerCase().startsWith(BUDGET_ACTIVITY_PREFIX.toLowerCase());
+    }
+
+    function removeBudgetActivityPrefix(value) {
+        const text = clean(value);
+        return hasBudgetActivityPrefix(text) ? text.slice(BUDGET_ACTIVITY_PREFIX.length).trimStart() : text;
+    }
+
+    function normalizeBudgetActivityDescription(value, isActivity) {
+        const description = removeBudgetActivityPrefix(value);
+        return isActivity && description ? `${BUDGET_ACTIVITY_PREFIX} ${description}` : description;
+    }
+
+    function formatBudgetActivityDescriptionForEditor(value, isActivity) {
+        const description = removeBudgetActivityPrefix(value);
+        return isActivity ? `${BUDGET_ACTIVITY_PREFIX} ${description}` : description;
+    }
+
     function calculateBudgetCostItem(project, item, counts = budgetCounts(project), standardPayingPeople = 0) {
         switch (item.calculationMethod) {
             case BUDGET_COST_FIXED:
-                return nonNegative(item.cost);
+                return signedBudgetAmount(item.cost);
             case BUDGET_COST_QUANTITY:
-                return nonNegative(item.quantity) * nonNegative(item.unitCost);
+                return nonNegative(item.quantity) * signedBudgetAmount(item.unitCost);
             case BUDGET_COST_PER_PERSON:
-                return counts.totalPeople * nonNegative(item.unitCost);
+                return counts.totalPeople * signedBudgetAmount(item.unitCost);
             case BUDGET_COST_PER_CAMPER:
-                return counts.campers * nonNegative(item.unitCost);
+                return counts.campers * signedBudgetAmount(item.unitCost);
             case BUDGET_COST_PER_NIGHT:
-                return budgetDurationNights(project) * nonNegative(item.unitCost);
+                return budgetDurationNights(project) * signedBudgetAmount(item.unitCost);
             case BUDGET_COST_PER_DAY:
-                return budgetDurationDays(project) * nonNegative(item.unitCost);
+                return budgetDurationDays(project) * signedBudgetAmount(item.unitCost);
             default:
-                return nonNegative(item.cost);
+                return signedBudgetAmount(item.cost);
         }
     }
 
@@ -1193,15 +1262,18 @@
             amount: calculateBudgetCostItem(project, item, counts, profile.standardPayingPeople)
         }));
         const foodCost = budgetFoodTotal(project);
-        const activityCost = costRows.filter(row => isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
-        const otherCost = costRows.filter(row => !isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
+        const outgoingCostRows = costRows.filter(row => row.amount >= 0);
+        const otherIncome = costRows.filter(row => row.amount < 0).reduce((sum, row) => sum - row.amount, 0);
+        const activityCost = outgoingCostRows.filter(row => isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
+        const otherCost = outgoingCostRows.filter(row => !isImportedBudgetActivityCost(row.item)).reduce((sum, row) => sum + row.amount, 0);
         const totalEstimatedCost = foodCost + activityCost + otherCost;
         const requiredIncome = totalEstimatedCost;
         const coefficient = profile.standardChargeCoefficient <= 0 ? 0 : profile.standardChargeCoefficient;
-        const minimumBreakEvenStandardCharge = coefficient <= 0 ? 0 : Math.max(0, (requiredIncome - profile.fixedContributionIncome) / coefficient);
+        const fixedAndOtherIncome = profile.fixedContributionIncome + otherIncome;
+        const minimumBreakEvenStandardCharge = coefficient <= 0 ? 0 : Math.max(0, (requiredIncome - fixedAndOtherIncome) / coefficient);
         const recommendedRoundedStandardCharge = roundUpToNearestFive(minimumBreakEvenStandardCharge);
         const proposedStandardCharge = project.budget.settings.proposedStandardCharge > 0 ? project.budget.settings.proposedStandardCharge : recommendedRoundedStandardCharge;
-        const totalIncomeAtProposedCharge = profile.fixedContributionIncome + profile.standardChargeCoefficient * proposedStandardCharge;
+        const totalIncomeAtProposedCharge = fixedAndOtherIncome + profile.standardChargeCoefficient * proposedStandardCharge;
         const standardIncome = profile.standardPayingPeople * proposedStandardCharge;
         return {
             counts,
@@ -1212,8 +1284,9 @@
             totalEstimatedCost,
             requiredIncome,
             fixedContributionIncome: profile.fixedContributionIncome,
+            otherIncome,
             nonStandardContributionIncome: totalIncomeAtProposedCharge - standardIncome,
-            remainingToRecoverFromStandardPayers: Math.max(0, requiredIncome - profile.fixedContributionIncome),
+            remainingToRecoverFromStandardPayers: Math.max(0, requiredIncome - fixedAndOtherIncome),
             standardPayingPeople: profile.standardPayingPeople,
             payingPeople: profile.payingPeople,
             minimumBreakEvenStandardCharge,
@@ -1221,7 +1294,7 @@
             proposedStandardCharge,
             totalIncomeAtProposedCharge,
             predictedSurplusShortfall: totalIncomeAtProposedCharge - requiredIncome,
-            surplusShortfallAtRecommendedCharge: profile.fixedContributionIncome + profile.standardChargeCoefficient * recommendedRoundedStandardCharge - requiredIncome
+            surplusShortfallAtRecommendedCharge: fixedAndOtherIncome + profile.standardChargeCoefficient * recommendedRoundedStandardCharge - requiredIncome
         };
     }
 
@@ -1248,7 +1321,7 @@
         project.budget.costItems.filter(cost => !clean(cost.description)).forEach(() => warnings.push("A cost line has no description."));
         project.budget.costItems.filter(isImportedBudgetActivityCost).forEach(cost => {
             const value = calculateBudgetCostItem(project, cost, snapshot.counts, snapshot.standardPayingPeople);
-            if (value <= 0) warnings.push(`Plan activity '${clean(cost.description).replace(/^Activity:\s*/i, "")}' has no cost yet. Leave it at 0 only if it is free.`);
+            if (Math.abs(value) < 0.005) warnings.push(`Plan activity '${clean(cost.description).replace(/^Activity:\s*/i, "")}' has no cost yet. Leave it at 0 only if it is free.`);
         });
         if (snapshot.predictedSurplusShortfall < 0) warnings.push("Total income is below the total required budget.");
         if (snapshot.standardPayingPeople <= 0) warnings.push("No Standard-paying people exist.");
@@ -1347,7 +1420,8 @@
             notes: clean(data.notes),
             x: number(data.x, 40),
             y: number(data.y, 50),
-            sizeScale: number(data.sizeScale, 1)
+            sizeScale: number(data.sizeScale, 1),
+            isClosed: Boolean(data.isClosed)
         };
     }
 
@@ -1713,7 +1787,7 @@
 
     function personRoleText(person) {
         const parts = [personTypeDisplay(person)];
-        if (person.personType === TERMS.personTypeYoungPerson) parts.push(person.camperType);
+        if (person.personType === TERMS.personTypeYoungPerson || person.personType === TERMS.personTypeYoungLeader) parts.push(person.camperType);
         if (person.isDayVisitor) parts.push("Day visitor");
         return parts.filter(Boolean).join(" | ");
     }
@@ -2450,6 +2524,7 @@
         const friendLabels = buildFriendGroupLabels();
         const allocatedCards = project.tents
             .flatMap(tent => {
+                if (tent.isClosed) return [];
                 const members = orderedPeople().filter(person => person.tentId === tent.id).sort((a, b) => localeSort(a.name, b.name));
                 return members.map((person, index) => renderCanvasPerson(person, friendLabels, buildOccupantSlot(tent, index, members.length)));
             })
@@ -2739,9 +2814,9 @@
     function renderTentVisual(tent, isBunk, isCaravan) {
         const colour = isHexColour(tent.colour) ? tent.colour : "#4CAF50";
         const stroke = darkenColour(colour, 0.45);
-        if (isBunk) return renderBunkRoomSvg(colour);
-        if (isCaravan) return renderCaravanMotorhomeSvg(colour, stroke);
-        const front = fadeColourToWhite(colour, 0.72);
+        if (isBunk) return renderBunkRoomSvg(colour, tent.isClosed);
+        if (isCaravan) return renderCaravanMotorhomeSvg(colour, stroke, tent.isClosed);
+        const front = tent.isClosed ? colour : fadeColourToWhite(colour, 0.72);
         return `
             <svg class="tent-graphic" viewBox="0 0 170 96" aria-hidden="true" focusable="false">
                 <ellipse cx="85" cy="84" rx="48" ry="6" fill="#000000" opacity="0.22"></ellipse>
@@ -2757,15 +2832,18 @@
             </svg>`;
     }
 
-    function renderCaravanMotorhomeSvg(colour, stroke) {
+    function renderCaravanMotorhomeSvg(colour, stroke, isClosed = false) {
+        const body = fadeColourToWhite(colour, 0.68);
+        const windowFill = isClosed ? darkenColour(colour, 0.35) : "#e2f4ff";
+        const doorFill = isClosed ? body : "#ffffff";
         return `
             <svg class="tent-graphic" viewBox="0 0 170 96" aria-hidden="true" focusable="false">
                 <rect x="29" y="78" width="112" height="12" rx="6" fill="#000000" opacity="0.16"></rect>
-                <rect x="33" y="30" width="104" height="46" rx="10" fill="${attr(fadeColourToWhite(colour, 0.68))}" stroke="${attr(stroke)}" stroke-width="2"></rect>
+                <rect x="33" y="30" width="104" height="46" rx="10" fill="${attr(body)}" stroke="${attr(stroke)}" stroke-width="2"></rect>
                 <rect x="36" y="57" width="44" height="10" rx="4" fill="${attr(colour)}" opacity="0.92"></rect>
-                <rect x="46" y="39" width="22" height="15" rx="3" fill="#e2f4ff" stroke="${attr(stroke)}" stroke-width="1"></rect>
-                <rect x="76" y="39" width="27" height="15" rx="3" fill="#e2f4ff" stroke="${attr(stroke)}" stroke-width="1"></rect>
-                <rect x="109" y="43" width="16" height="31" rx="3" fill="#ffffff" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <rect x="46" y="39" width="22" height="15" rx="3" fill="${attr(windowFill)}" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <rect x="76" y="39" width="27" height="15" rx="3" fill="${attr(windowFill)}" stroke="${attr(stroke)}" stroke-width="1"></rect>
+                <rect x="109" y="43" width="16" height="31" rx="3" fill="${attr(doorFill)}" stroke="${attr(stroke)}" stroke-width="1"></rect>
                 <circle cx="54" cy="76" r="8" fill="#555555" stroke="#000000" stroke-width="1"></circle>
                 <circle cx="54" cy="76" r="3.5" fill="#d0d0d0"></circle>
                 <circle cx="120" cy="76" r="8" fill="#555555" stroke="#000000" stroke-width="1"></circle>
@@ -2773,7 +2851,7 @@
             </svg>`;
     }
 
-    function renderBunkRoomSvg(colour) {
+    function renderBunkRoomSvg(colour, isClosed = false) {
         const frame = "#4f463a";
         const wood = "#8d5e34";
         return `
@@ -2781,8 +2859,15 @@
                 <rect x="37" y="78" width="96" height="14" rx="7" fill="#000000" opacity="0.18"></rect>
                 <rect x="44" y="18" width="82" height="66" rx="6" fill="#f2f8ef" stroke="${frame}" stroke-width="2"></rect>
                 <polygon points="42,18 85,4 128,18" fill="${attr(colour)}" stroke="${frame}" stroke-width="1.5"></polygon>
-                ${renderBunkSvg(59, 35, 52, 36, wood, colour)}
+                ${isClosed ? renderClosedDoorSvg(68, 34, 34, 43, fadeColourToWhite(colour, 0.58), frame) : renderBunkSvg(59, 35, 52, 36, wood, colour)}
             </svg>`;
+    }
+
+    function renderClosedDoorSvg(x, y, width, height, fill, stroke) {
+        return `
+            <rect x="${x}" y="${y}" width="${width}" height="${height}" rx="3" fill="${attr(fill)}" stroke="${attr(stroke)}" stroke-width="1.8"></rect>
+            <circle cx="${x + width * 0.78}" cy="${y + height * 0.5}" r="2.2" fill="#daa520"></circle>
+            <line x1="${x}" y1="${y + height}" x2="${x + width}" y2="${y + height}" stroke="${attr(stroke)}" stroke-width="2" stroke-linecap="round"></line>`;
     }
 
     function renderBunkSvg(x, y, width, height, frame, blanket) {
@@ -2905,29 +2990,99 @@
         }
 
         // Items 10/13: unified pointer+touch drag (works on iOS Safari)
-        $all("[data-canvas-kind]", canvas).forEach(card => {
-            // Helper: get coords from either pointer or touch event
-            function getCoords(event) {
-                const touch = event.touches?.[0] || event.changedTouches?.[0];
-                return touch
-                    ? { clientX: touch.clientX, clientY: touch.clientY }
-                    : { clientX: event.clientX, clientY: event.clientY };
+        const dragGrid = 16;
+        const autoScrollEdge = 52;
+        const autoScrollMaxStep = 18;
+
+        function getCoords(event) {
+            const touch = event.touches?.[0] || event.changedTouches?.[0];
+            return touch
+                ? { clientX: touch.clientX, clientY: touch.clientY }
+                : { clientX: event.clientX, clientY: event.clientY };
+        }
+
+        function dragContentPosition(drag) {
+            const canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: Math.max(0, drag.lastClientX - canvasRect.left + canvas.scrollLeft - drag.offsetX),
+                y: Math.max(0, drag.lastClientY - canvasRect.top + canvas.scrollTop - drag.offsetY)
+            };
+        }
+
+        function applyDragPosition(drag) {
+            const pos = dragContentPosition(drag);
+            drag.element.style.left = `${Math.round(pos.x / dragGrid) * dragGrid}px`;
+            drag.element.style.top = `${Math.round(pos.y / dragGrid) * dragGrid}px`;
+        }
+
+        function edgeScrollStep(distance)
+        {
+            if (distance >= autoScrollEdge) return 0;
+            return Math.ceil((1 - Math.max(0, distance) / autoScrollEdge) * autoScrollMaxStep);
+        }
+
+        function stopAutoScroll(drag) {
+            if (drag?.autoScrollFrame) {
+                cancelAnimationFrame(drag.autoScrollFrame);
+                drag.autoScrollFrame = 0;
+            }
+        }
+
+        function runAutoScroll() {
+            const drag = State.dragging;
+            if (!drag) return;
+
+            const rect = canvas.getBoundingClientRect();
+            let dx = 0;
+            let dy = 0;
+            if (drag.lastClientX < rect.left + autoScrollEdge) dx = -edgeScrollStep(drag.lastClientX - rect.left);
+            else if (drag.lastClientX > rect.right - autoScrollEdge) dx = edgeScrollStep(rect.right - drag.lastClientX);
+            if (drag.lastClientY < rect.top + autoScrollEdge) dy = -edgeScrollStep(drag.lastClientY - rect.top);
+            else if (drag.lastClientY > rect.bottom - autoScrollEdge) dy = edgeScrollStep(rect.bottom - drag.lastClientY);
+
+            if (dx || dy) {
+                const beforeLeft = canvas.scrollLeft;
+                const beforeTop = canvas.scrollTop;
+                canvas.scrollLeft += dx;
+                canvas.scrollTop += dy;
+                if (canvas.scrollLeft !== beforeLeft || canvas.scrollTop !== beforeTop) {
+                    applyDragPosition(drag);
+                }
             }
 
+            drag.autoScrollFrame = requestAnimationFrame(runAutoScroll);
+        }
+
+        function startAutoScroll(drag) {
+            stopAutoScroll(drag);
+            drag.autoScrollFrame = requestAnimationFrame(runAutoScroll);
+        }
+
+        function tentIdAtPoint(clientX, clientY) {
+            return document.elementsFromPoint(clientX, clientY)
+                .map(element => element.closest?.("[data-canvas-kind='tent']"))
+                .find(Boolean)
+                ?.dataset.id || null;
+        }
+
+        $all("[data-canvas-kind]", canvas).forEach(card => {
             function startDrag(event) {
                 if (event.target.closest("button")) return;
+                if (event.button !== undefined && event.button !== 0) return;
                 const { clientX, clientY } = getCoords(event);
                 const rect = card.getBoundingClientRect();
-                const canvasRect = canvas.getBoundingClientRect();
                 State.dragging = {
                     kind: card.dataset.canvasKind,
                     id: card.dataset.id,
+                    element: card,
                     offsetX: clientX - rect.left,
                     offsetY: clientY - rect.top,
-                    canvasLeft: canvasRect.left + canvas.scrollLeft,
-                    canvasTop:  canvasRect.top  + canvas.scrollTop
+                    lastClientX: clientX,
+                    lastClientY: clientY,
+                    autoScrollFrame: 0
                 };
-                // Use pointer capture when available (desktop/Android)
+                card.classList.add("dragging");
+                startAutoScroll(State.dragging);
                 if (event.pointerId !== undefined) {
                     try { card.setPointerCapture(event.pointerId); } catch(_) {}
                 }
@@ -2937,30 +3092,54 @@
             function moveDrag(event) {
                 if (!State.dragging || State.dragging.id !== card.dataset.id) return;
                 const { clientX, clientY } = getCoords(event);
-                const x = Math.max(0, clientX - State.dragging.canvasLeft - State.dragging.offsetX);
-                const y = Math.max(0, clientY - State.dragging.canvasTop  - State.dragging.offsetY);
-                card.style.left = `${Math.round(x / 16) * 16}px`;
-                card.style.top  = `${Math.round(y / 16) * 16}px`;
+                State.dragging.lastClientX = clientX;
+                State.dragging.lastClientY = clientY;
+                applyDragPosition(State.dragging);
                 event.preventDefault();
             }
 
             function endDrag(event) {
                 if (!State.dragging || State.dragging.id !== card.dataset.id) return;
+                const { clientX, clientY } = getCoords(event);
+                State.dragging.lastClientX = clientX;
+                State.dragging.lastClientY = clientY;
+                applyDragPosition(State.dragging);
+
                 const x = parseInt(card.style.left, 10) || 0;
-                const y = parseInt(card.style.top,  10) || 0;
+                const y = parseInt(card.style.top, 10) || 0;
                 const drag = State.dragging;
+                const targetTentId = drag.kind === "person" ? tentIdAtPoint(drag.lastClientX, drag.lastClientY) : null;
                 State.dragging = null;
+                stopAutoScroll(drag);
+                card.classList.remove("dragging");
                 if (event.pointerId !== undefined) {
                     try { card.releasePointerCapture(event.pointerId); } catch(_) {}
                 }
-                mutate("Moved layout item.", () => {
-                    const collection = drag.kind === "tent"
-                        ? State.project.tents
-                        : drag.kind === "person"
-                            ? State.project.people
-                            : State.project.siteItems;
+                mutate(targetTentId ? "Assigned tent." : "Moved layout item.", () => {
+                    if (drag.kind === "person") {
+                        const person = State.project.people.find(item => item.id === drag.id);
+                        if (!person) return;
+                        if (targetTentId && targetTentId !== person.tentId) {
+                            person.tentId = targetTentId;
+                            person.x = 0;
+                            person.y = 0;
+                        } else {
+                            person.x = x;
+                            person.y = y;
+                        }
+                        return;
+                    }
+
+                    const collection = drag.kind === "tent" ? State.project.tents : State.project.siteItems;
                     const item = collection.find(e => e.id === drag.id);
                     if (item) { item.x = x; item.y = y; }
+                });
+            }
+
+            if (card.dataset.canvasKind === "tent") {
+                card.addEventListener("contextmenu", event => {
+                    event.preventDefault();
+                    openTentActions(card.dataset.id).catch(showError);
                 });
             }
 
@@ -2974,6 +3153,7 @@
             card.addEventListener("touchstart", startDrag, { passive: false });
             card.addEventListener("touchmove",  moveDrag,  { passive: false });
             card.addEventListener("touchend",   endDrag,   { passive: false });
+            card.addEventListener("touchcancel", endDrag,  { passive: false });
         });
     }
 
@@ -3537,6 +3717,7 @@
                         ${budgetBreakdownBox("Income", [
                             ["Standard charges", formatBudgetMoney(snapshot.proposedStandardCharge * snapshot.standardPayingPeople)],
                             ["Exact/fixed contributions", formatBudgetMoney(snapshot.fixedContributionIncome)],
+                            ["Other income", formatBudgetMoney(snapshot.otherIncome)],
                             ["Total income", formatBudgetMoney(snapshot.totalIncomeAtProposedCharge), true]
                         ])}
                         ${budgetBreakdownBox("Result", [
@@ -3595,7 +3776,7 @@
                         <tr>
                             <th>${header("Name", "name")}</th>
                             <th>${header("Type", "personType")}</th>
-                            <th>${header("Camper type", "camperType")}</th>
+                            <th>${header("Section", "camperType")}</th>
                             <th>${header("Day visitor", "isDayVisitor")}</th>
                             <th>${header("Contribution rule", "contributionRule")}</th>
                             <th>${header("Exact amount", "contributionAmount")}</th>
@@ -3641,7 +3822,7 @@
                             <tr class="${selected ? "selected-row" : ""}">
                                 <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="description" value="${attr(item.description)}"></td>
                                 <td><select data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="calculationMethod">${BUDGET_COST_METHODS.map(method => `<option value="${attr(method)}" ${item.calculationMethod === method ? "selected" : ""}>${h(method)}</option>`).join("")}</select></td>
-                                <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="cost" type="number" min="0" step="0.01" value="${attr(Number(calculated.toFixed(2)))}" ${item.calculationMethod === BUDGET_COST_FIXED ? "" : "readonly"}></td>
+                                <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="cost" type="number" step="0.01" value="${attr(Number(calculated.toFixed(2)))}" ${item.calculationMethod === BUDGET_COST_FIXED ? "" : "readonly"}></td>
                                 <td><input data-update-kind="budget-cost" data-id="${attr(item.id)}" data-field="notes" value="${attr(item.notes)}"></td>
                                 <td class="row-actions">
                                     <button class="small-button secondary" data-action="selectBudgetCost" data-id="${attr(item.id)}" type="button">${selected ? "Selected" : "Select"}</button>
@@ -4086,7 +4267,7 @@
             { name: "name", label: "Name", value: initial.name, required: true },
             { name: "gender", label: "Gender", type: "select", options: GENDERS, value: initial.gender },
             { name: "personType", label: "Person Type", type: "select", options: PERSON_TYPE_LABELS, value: personTypeDisplay(initial) },
-            { name: "camperType", label: "Camper Type", type: "select", options: CAMPER_TYPES, value: initial.camperType },
+            { name: "camperType", label: "Section", type: "select", options: CAMPER_TYPES, value: initial.camperType },
             { name: "isDayVisitor", label: "Day visitor", type: "checkbox", value: initial.isDayVisitor },
             { name: "dietaryNotes", label: "Food allergies / dietary notes", type: "textarea", value: initial.dietaryNotes, full: true },
             { name: "medicalNotes", label: "Medical / medication notes", type: "textarea", value: initial.medicalNotes, full: true },
@@ -4183,7 +4364,7 @@
 
     async function downloadPeopleSampleCsv() {
         const rows = [
-            "Name,Type,Camper type,Day visitor,Gender,Dietary notes,Medical notes,Notes",
+            "Name,Type,Section,Day visitor,Gender,Dietary notes,Medical notes,Notes",
             "Alex Green,Camper,Cub,No,Other,Vegetarian,Inhaler,",
             "Sam Brown,Adult,Standard,No,Male,,,Leader"
         ].join("\n");
@@ -4298,29 +4479,69 @@
     async function editTent(id) {
         const existing = State.project.tents.find(item => item.id === id);
         const initial = existing ? { ...existing } : tent({ x: 40 + State.project.tents.length * 30, y: 50 + State.project.tents.length * 30 });
+        const occupantIdsToRemove = new Set();
+        const occupants = orderedPeople().filter(person => person.tentId === initial.id);
         const result = await promptFields(existing ? "Edit tent" : "Add Tent", [
             { name: "name", label: "Name", value: initial.name, required: true },
-            { name: "type", label: "Type", type: "select", options: TENT_TYPES, value: initial.type },
-            { name: "accommodationType", label: "Accommodation type", type: "select", options: ACCOMMODATION_TYPES, value: initial.accommodationType },
-            { name: "capacity", label: "Capacity", type: "number", value: initial.capacity },
-            { name: "colour", label: "Colour", type: "color", value: initial.colour },
-            { name: "sizeScale", label: "Size scale", type: "number", step: "0.1", value: initial.sizeScale },
-            { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true }
-        ]);
+            {
+                type: "group",
+                fields: [
+                    { name: "accommodationType", label: "Sleeping place", type: "select", options: ACCOMMODATION_TYPES, value: initial.accommodationType },
+                    { name: "colourLabel", label: "Colour", type: "select", options: TENT_COLOUR_CHOICES.map(([label]) => label), value: tentColourLabel(initial.colour) },
+                    { name: "sizeLabel", label: "Size", type: "select", options: TENT_SIZE_CHOICES, value: tentSizeLabel(initial.sizeScale) }
+                ]
+            },
+            { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true },
+            { type: "custom", html: renderTentOccupantEditor(occupants) }
+        ], {
+            okText: existing ? "Save" : "Add",
+            onReady: body => {
+                body.addEventListener("click", event => {
+                    const button = event.target.closest("[data-remove-tent-occupant]");
+                    if (!button) return;
+                    event.preventDefault();
+                    occupantIdsToRemove.add(button.dataset.removeTentOccupant);
+                    button.closest("tr")?.remove();
+                    if (!$all("[data-remove-tent-occupant]", body).length) {
+                        const tbody = body.querySelector(".tent-occupant-table tbody");
+                        if (tbody) tbody.innerHTML = `<tr><td colspan="2" class="empty">No occupants allocated.</td></tr>`;
+                    }
+                });
+            }
+        });
         if (!result) return;
         mutate(existing ? "Updated tent." : "Added tent.", () => {
             const target = existing || tent(initial);
             Object.assign(target, {
                 name: result.name,
-                type: result.type,
                 accommodationType: result.accommodationType,
-                capacity: number(result.capacity, 4),
-                colour: result.colour,
-                sizeScale: number(result.sizeScale, 1),
+                type: mapTentType("", result.accommodationType),
+                colour: tentColourFromLabel(result.colourLabel),
+                sizeScale: tentSizeScale(result.sizeLabel),
                 notes: result.notes
+            });
+            State.project.people.forEach(person => {
+                if (occupantIdsToRemove.has(person.id) && person.tentId === target.id) person.tentId = null;
             });
             if (!existing) State.project.tents.push(target);
         });
+    }
+
+    function renderTentOccupantEditor(occupants) {
+        return `
+            <div class="tent-occupants-editor">
+                <strong>Occupants</strong>
+                <table class="tent-occupant-table">
+                    <tbody>
+                        ${occupants.length ? occupants.map(person => `
+                            <tr>
+                                <td>${h(person.name)}</td>
+                                <td><button class="small-button danger" data-remove-tent-occupant="${attr(person.id)}" type="button">Remove</button></td>
+                            </tr>
+                        `).join("") : `<tr><td colspan="2" class="empty">No occupants allocated.</td></tr>`}
+                    </tbody>
+                </table>
+            </div>`;
     }
 
     async function openTentActions(id) {
@@ -4328,9 +4549,10 @@
         if (!target) return;
         const members = State.project.people.filter(person => person.tentId === id);
         const body = document.createElement("div");
-        body.innerHTML = `<p class="meta">${h(target.accommodationType)} | ${members.length}/${target.capacity} people</p>`;
+        body.innerHTML = `<p class="meta">${h(target.accommodationType)} | ${members.length} people</p>`;
         const action = await showModal(target.name, body, [
             { label: "Edit", value: "edit" },
+            { label: sleepingPlaceToggleLabel(target), value: "toggle", className: "secondary" },
             { label: "Assign people", value: "assign", className: "secondary" },
             { label: "Duplicate", value: "duplicate", className: "secondary" },
             { label: "Remove", value: "remove", className: "danger" },
@@ -4338,6 +4560,8 @@
         ]);
         if (action === "edit") {
             await editTent(id);
+        } else if (action === "toggle") {
+            toggleSleepingPlaceClosed(id);
         } else if (action === "assign") {
             await assignTentMembers(id);
         } else if (action === "duplicate") {
@@ -4345,6 +4569,20 @@
         } else if (action === "remove") {
             await removeTent(id);
         }
+    }
+
+    function sleepingPlaceToggleLabel(tentItem) {
+        return tentItem.accommodationType === TERMS.accommodationTent
+            ? tentItem.isClosed ? "Unzip tent" : "Zip up tent"
+            : tentItem.isClosed ? "Open door" : "Close door";
+    }
+
+    function toggleSleepingPlaceClosed(id) {
+        const target = State.project.tents.find(item => item.id === id);
+        if (!target) return;
+        mutate(target.isClosed ? "Opened sleeping place." : "Closed sleeping place.", () => {
+            target.isClosed = !target.isClosed;
+        });
     }
 
     function duplicateTent(id) {
@@ -4521,7 +4759,7 @@
             const members = orderedPeople().filter(person => person.tentId === tent.id);
             const tentWarnings = warnings.filter(warning => warning.toLowerCase().includes(tent.name.toLowerCase()));
             return `<tr><td>${h(tent.name)}</td><td>${h(tent.type)}</td><td>${h(tent.capacity)}</td><td>${h(members.map(person => person.name).join(", "))}</td><td>${h(tentWarnings.join("; ") || "None")}</td></tr>`;
-        }).join("")}<tr><td>Unallocated</td><td></td><td></td><td>${h(orderedPeople().filter(person => !person.tentId).map(person => person.name).join(", "))}</td><td></td></tr></tbody></table>`;
+        }).join("")}<tr><td>Unallocated</td><td></td><td></td><td>${h(orderedPeople().filter(person => !person.isDayVisitor && !person.tentId).map(person => person.name).join(", "))}</td><td></td></tr></tbody></table>`;
     }
 
     async function editChoreItem(id) {
@@ -5203,6 +5441,9 @@
         else if (field === "foodDays") settings.foodDays = Math.max(0, Math.round(number(value, settings.foodDays)));
         else if (field === "notes") settings.notes = clean(value);
         else if (numeric.has(field)) settings[field] = nonNegative(value);
+        if (["leaderRule", "youngLeaderRule", "dayVisitorRule"].includes(field)) {
+            syncBudgetPeople(State.project);
+        }
         updateBudgetCalculatedCosts(State.project);
     }
 
@@ -5212,11 +5453,18 @@
         if (field === "personType") item.personType = mapBudgetPersonType(value);
         else if (field === "camperType") item.camperType = mapBudgetCamperType(value);
         else if (field === "isDayVisitor") item.isDayVisitor = Boolean(value);
-        else if (field === "contributionRule") item.contributionRule = mapBudgetContributionRule(value);
+        else if (field === "contributionRule") {
+            item.contributionRule = mapBudgetContributionRule(value);
+            item.contributionRuleManual = true;
+            item.contributionRuleAutoValue = "";
+        }
         else if (field === "contributionAmount") item.contributionAmount = nonNegative(value);
         else if (field === "notes") item.notes = clean(value);
         else if (field === "name") item.name = clean(value, item.name);
         pushBudgetPeopleToProject(State.project);
+        if (["personType", "isDayVisitor"].includes(field)) {
+            syncBudgetPeople(State.project);
+        }
         updateBudgetCalculatedCosts(State.project);
     }
 
@@ -5231,7 +5479,7 @@
             }
         } else if (field === "cost") {
             if (item.calculationMethod === BUDGET_COST_FIXED) {
-                item.cost = nonNegative(value);
+                item.cost = signedBudgetAmount(value);
                 item.quantity = 1;
                 item.unitCost = item.cost;
             }
@@ -5253,22 +5501,44 @@
         const initial = existing ? { ...existing } : budgetCostItem({ description: "", calculationMethod: BUDGET_COST_FIXED, quantity: 1, unitCost: 0, cost: 0 });
         const result = await promptFields(existing ? "Edit budget cost" : "Add budget cost", [
             { name: "description", label: "Description", value: initial.description === "Budget cost" ? "" : initial.description, required: true },
+            { name: "activityCost", label: "Activity", type: "checkbox", value: hasBudgetActivityPrefix(initial.description), full: true },
             { name: "calculationMethod", label: "Calculation", type: "select", options: BUDGET_COST_METHODS, value: initial.calculationMethod },
             { name: "quantity", label: "Quantity", type: "number", step: "0.01", value: initial.quantity },
             { name: "unitCost", label: "Unit cost", type: "number", step: "0.01", value: initial.unitCost },
             { name: "cost", label: "Fixed total cost", type: "number", step: "0.01", value: initial.cost },
             { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true }
-        ], { wide: true, okText: existing ? "Save cost" : "Add cost" });
+        ], {
+            wide: true,
+            okText: existing ? "Save cost" : "Add cost",
+            onReady: body => {
+                const descriptionInput = body.querySelector('[name="description"]');
+                const activityInput = body.querySelector('[name="activityCost"]');
+                if (!descriptionInput || !activityInput) return;
+                activityInput.addEventListener("change", () => {
+                    descriptionInput.value = formatBudgetActivityDescriptionForEditor(descriptionInput.value, activityInput.checked);
+                    descriptionInput.focus();
+                });
+                descriptionInput.addEventListener("input", () => {
+                    activityInput.checked = hasBudgetActivityPrefix(descriptionInput.value);
+                });
+            }
+        });
         if (!result) return;
+        const normalizedDescription = normalizeBudgetActivityDescription(result.description, result.activityCost);
+        if (!clean(normalizedDescription)) {
+            await alertBox("Budget", "Enter a description.");
+            return;
+        }
+
         mutate(existing ? "Updated budget cost." : "Added budget cost.", () => {
             const method = mapBudgetCostMethod(result.calculationMethod);
             const target = existing || budgetCostItem();
             Object.assign(target, {
-                description: clean(result.description, "Budget cost"),
+                description: clean(normalizedDescription, "Budget cost"),
                 calculationMethod: method,
                 quantity: method === BUDGET_COST_FIXED ? 1 : Math.max(0.0001, number(result.quantity, 1)),
-                unitCost: method === BUDGET_COST_FIXED ? nonNegative(result.cost) : nonNegative(result.unitCost),
-                cost: nonNegative(method === BUDGET_COST_FIXED ? result.cost : result.cost),
+                unitCost: method === BUDGET_COST_FIXED ? signedBudgetAmount(result.cost) : signedBudgetAmount(result.unitCost),
+                cost: signedBudgetAmount(result.cost),
                 notes: clean(result.notes)
             });
             if (!existing) State.project.budget.costItems.push(target);
@@ -5396,7 +5666,7 @@
             const people = [...State.project.budget.people].sort((a, b) => budgetPersonSortGroup(a) - budgetPersonSortGroup(b) || localeSort(a.name, b.name));
             if (people[1]) Object.assign(people[1], { contributionRule: BUDGET_CONTRIBUTION_EXACT, contributionAmount: 30, notes: "Sample exact amount contribution." });
             if (people[2]) Object.assign(people[2], { contributionRule: BUDGET_CONTRIBUTION_FOOD_ONLY, notes: "Sample food-only contribution." });
-            if (people[3]) Object.assign(people[3], { contributionRule: BUDGET_CONTRIBUTION_EXCLUDED, notes: "Sample excluded person." });
+            if (people[3]) Object.assign(people[3], { contributionRule: BUDGET_CONTRIBUTION_EXCLUDED, notes: "Sample no-charge person." });
             State.project.budget.importedSourceSummary = "Loaded sample budget settings and cost lines. Personnel was not changed.";
             updateBudgetCalculatedCosts(State.project);
         });
@@ -5530,6 +5800,10 @@
         const body = document.createElement("form");
         body.className = "form-grid";
         body.innerHTML = fields.map(fieldHtml).join("");
+        const collectableFields = fields
+            .flatMap(field => field.type === "group" ? field.fields : [field])
+            .filter(field => field.type !== "custom" && field.type !== "group");
+        options.onReady?.(body);
 
         // Item 3: actually enforce `required` fields instead of leaving the HTML
         // attribute purely decorative — block the OK action and show which
@@ -5537,7 +5811,7 @@
         function validateRequiredFields(actionValue) {
             if (actionValue !== "ok") return true; // Cancel always allowed through
             let firstInvalid = null;
-            fields.forEach(field => {
+            collectableFields.forEach(field => {
                 if (!field.required) return;
                 const input = body.querySelector(`[name="${cssEscape(field.name)}"]`);
                 if (!input) return;
@@ -5562,7 +5836,7 @@
         ], { wide: options.wide, validate: validateRequiredFields });
         if (value !== "ok") return null;
         const result = {};
-        fields.forEach(field => {
+        collectableFields.forEach(field => {
             if (field.type === "checkbox") {
                 result[field.name] = body.querySelector(`[name="${cssEscape(field.name)}"]`).checked;
             } else if (field.type === "multi") {
@@ -5577,6 +5851,12 @@
     function fieldHtml(field) {
         const full = field.full || field.type === "multi" || field.type === "textarea" ? " full" : "";
         const required = field.required ? " required" : "";
+        if (field.type === "group") {
+            return `<div class="form-inline-row full">${field.fields.map(child => fieldHtml({ ...child, full: false })).join("")}</div>`;
+        }
+        if (field.type === "custom") {
+            return `<div class="full">${field.html || ""}</div>`;
+        }
         if (field.type === "textarea") {
             return `<label class="${full}">${h(field.label)}<textarea name="${attr(field.name)}"${required}>${h(field.value || "")}</textarea></label>`;
         }
@@ -5750,7 +6030,7 @@
                 warnings.push(`${first.name} and ${second.name} have a foe link but are both in ${project.tents.find(tent => tent.id === first.tentId)?.name || "the same tent"}.`);
             }
         });
-        const unallocated = project.people.filter(person => !person.tentId).length;
+        const unallocated = project.people.filter(person => !person.isDayVisitor && !person.tentId).length;
         if (unallocated > 0) warnings.push(`${unallocated} people are not allocated to a tent.`);
         return warnings;
     }
@@ -5784,7 +6064,7 @@
         const project = State.project;
         return {
             "people-and-tents.csv": [
-                "Name,Type,Camper type,Day visitor,Gender,Patrol,Tent,Dietary notes,Medical notes,Notes",
+                "Name,Type,Section,Day visitor,Gender,Patrol,Tent,Dietary notes,Medical notes,Notes",
                 ...orderedPeople().map(person => [person.name, personTypeDisplay(person), person.camperType, person.isDayVisitor ? "Yes" : "No", person.gender, person.patrol, tentName(person.tentId), person.dietaryNotes, person.medicalNotes, person.notes].map(csv).join(","))
             ].join("\n"),
             "menu.csv": [
@@ -6106,7 +6386,7 @@
             ];
         pdf.addWrappedTable(columns, rows, { minRowHeight: 28, maxLines: 4 });
 
-        const unallocated = orderedPeople().filter(p => !p.tentId);
+        const unallocated = orderedPeople().filter(p => !p.isDayVisitor && !p.tentId);
         if (unallocated.length) {
             pdf.addSubHeading("Unallocated people", "red");
             pdf.addText(unallocated.map(p => p.name).join(", "), { color: "red" });
@@ -6369,6 +6649,30 @@
         }[key] || "Green";
     }
 
+    function tentColourLabel(value) {
+        const hex = (isHexColour(value) ? value : "#4CAF50").toUpperCase();
+        return TENT_COLOUR_CHOICES.find(([, colour]) => colour.toUpperCase() === hex)?.[0] || "Green";
+    }
+
+    function tentColourFromLabel(label) {
+        return TENT_COLOUR_CHOICES.find(([name]) => name === label)?.[1] || "#4CAF50";
+    }
+
+    function tentSizeLabel(scale) {
+        const value = number(scale, 1);
+        if (value <= 0.925) return "Small";
+        if (value >= 1.375) return "Extra large";
+        if (value >= 1.125) return "Large";
+        return "Standard";
+    }
+
+    function tentSizeScale(label) {
+        if (label === "Small") return 0.85;
+        if (label === "Large") return 1.25;
+        if (label === "Extra large") return 1.5;
+        return 1;
+    }
+
     function tentOccupantSummary(people) {
         const parts = [];
         addTentSummaryPart(parts, people, TERMS.genderMale, TERMS.personTypeYoungPerson, "male camper");
@@ -6476,7 +6780,7 @@
                 ]
             };
         }) });
-        const unallocated = orderedPeople().filter(p => !p.tentId);
+        const unallocated = orderedPeople().filter(p => !p.isDayVisitor && !p.tentId);
         if (unallocated.length) {
             lines.push({ text: "Unallocated people", heading: true, color: "red" });
             unallocated.forEach(p => lines.push({ text: p.name, color: "red" }));
@@ -6611,14 +6915,14 @@
         lines.push({ text: `Day visitors: ${budgetDayVisitorRuleWithAmount(project)}` });
         lines.push({ text: `Food: ${formatBudgetMoney(project.budget.settings.foodCostPerPersonPerDay)} per person per day for ${project.budget.settings.foodDays} days. People counted: ${snapshot.counts.totalPeople}. Total: ${formatBudgetMoney(snapshot.foodCost)}` });
 
-        const activityRows = snapshot.costRows.filter(row => isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
-        const otherRows = snapshot.costRows.filter(row => !isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
+        const activityRows = snapshot.costRows.filter(row => row.amount >= 0 && isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
+        const otherRows = snapshot.costRows.filter(row => row.amount >= 0 && !isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
         addBudgetCostExportRows(lines, "Activities", activityRows);
         addBudgetCostExportRows(lines, "Other costs", otherRows);
 
         lines.push({ text: "Final charge", heading: true });
         lines.push({ text: `Outgoings: Food ${formatBudgetMoney(snapshot.foodCost)} | Activities ${formatBudgetMoney(snapshot.activityCost)} | Other ${formatBudgetMoney(snapshot.otherCost)} | Total ${formatBudgetMoney(snapshot.totalEstimatedCost)}` });
-        lines.push({ text: `Income: Standard charges ${formatBudgetMoney(snapshot.proposedStandardCharge * snapshot.standardPayingPeople)} | Exact/fixed contributions ${formatBudgetMoney(snapshot.fixedContributionIncome)} | Total ${formatBudgetMoney(snapshot.totalIncomeAtProposedCharge)}` });
+        lines.push({ text: `Income: Standard charges ${formatBudgetMoney(snapshot.proposedStandardCharge * snapshot.standardPayingPeople)} | Exact/fixed contributions ${formatBudgetMoney(snapshot.fixedContributionIncome)} | Other income ${formatBudgetMoney(snapshot.otherIncome)} | Total ${formatBudgetMoney(snapshot.totalIncomeAtProposedCharge)}` });
         lines.push({ text: `Required income: ${formatBudgetMoney(snapshot.requiredIncome)} | Balance: ${formatBudgetMoney(snapshot.predictedSurplusShortfall)}`, bold: true, color: snapshot.predictedSurplusShortfall < 0 ? "red" : undefined });
 
         if (project.budget.people.length) {
@@ -6687,7 +6991,7 @@
         const rows = ["Section,Field,Value"];
         budgetSummaryRows(project, snapshot).forEach(row => rows.push(["Summary", row[0], row[1]].map(csv).join(",")));
         rows.push("");
-        rows.push("People,Name,Type,Camper type,Day visitor,Contribution rule,Exact amount,Notes");
+        rows.push("People,Name,Type,Section,Day visitor,Contribution rule,Exact amount,Notes");
         project.budget.people.slice().sort((a, b) => localeSort(a.name, b.name)).forEach(personRow => {
             rows.push(["People", personRow.name, personRow.personType, personRow.camperType, personRow.isDayVisitor ? "Yes" : "No", personRow.contributionRule, number(personRow.contributionAmount).toFixed(2), personRow.notes].map(csv).join(","));
         });
@@ -6718,6 +7022,7 @@
             ["Total costs", snapshot.totalEstimatedCost.toFixed(2)],
             ["Required income", snapshot.requiredIncome.toFixed(2)],
             ["Fixed/exact contribution income", snapshot.fixedContributionIncome.toFixed(2)],
+            ["Other income", snapshot.otherIncome.toFixed(2)],
             ["Remaining amount to recover from Standard payers", snapshot.remainingToRecoverFromStandardPayers.toFixed(2)],
             ["Minimum break-even charge", snapshot.minimumBreakEvenStandardCharge.toFixed(2)],
             ["Recommended rounded Standard charge", snapshot.recommendedRoundedStandardCharge.toFixed(2)],
@@ -7780,6 +8085,7 @@
             const json = await decryptProjectJson(payload.encryptedProject, State.collab.key);
             const remote = normalizeProject(JSON.parse(json));
             const remoteSnapshot = JSON.stringify(remote);
+            const acknowledged = parseCollaborationSnapshot(State.collab.lastSnapshot);
 
             // Merge remote into local rather than overwriting wholesale.
             // Shopping lists: keep items from whichever side was edited more recently per item.
@@ -7787,7 +8093,7 @@
             let mergedSnapshot;
             State.collab.applyingRemote = true;
             try {
-                merged = normalizeProject(mergeCollabProject(State.project, remote));
+                merged = normalizeProject(mergeCollabProject(State.project, remote, acknowledged));
                 mergedSnapshot = JSON.stringify(merged);
                 State.project = merged;
             } finally {
@@ -7833,52 +8139,98 @@
         return `${h}h ago`;
     }
 
-    function mergeArrayById(localArr, remoteArr) {
+    function parseCollaborationSnapshot(snapshot) {
+        if (!snapshot) return null;
+        try {
+            return normalizeProject(JSON.parse(snapshot));
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function sameCollabItem(left, right) {
+        return JSON.stringify(left) === JSON.stringify(right);
+    }
+
+    function mergeArrayById(localArr, remoteArr, acknowledgedArr = []) {
         const local  = localArr  || [];
         const remote = remoteArr || [];
         if ([...local, ...remote].some(item => !item || typeof item !== "object" || !("id" in item))) {
-            return mergeStringArray(local, remote);
+            return mergeStringArray(local, remote, acknowledgedArr);
         }
 
         const localMap  = new Map(local.map(i => [i.id, i]));
         const remoteMap = new Map(remote.map(i => [i.id, i]));
-        const allIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
+        const acknowledgedMap = new Map((acknowledgedArr || []).map(i => [i.id, i]));
+        const mergedById = new Map(remoteMap);
 
-        const merged = [];
-        for (const id of allIds) {
+        for (const [id, acknowledgedItem] of acknowledgedMap) {
+            if (!localMap.has(id) && remoteMap.has(id) && sameCollabItem(remoteMap.get(id), acknowledgedItem)) {
+                mergedById.delete(id);
+            }
+        }
+
+        for (const id of new Set([...localMap.keys(), ...remoteMap.keys()])) {
             const li = localMap.get(id);
             const ri = remoteMap.get(id);
-            if (!ri) merged.push(li);        // local-only add, not yet pushed
-            else if (!li) merged.push(ri);   // remote-only add
-            else merged.push(ri);            // both have it: remote wins
+            const ai = acknowledgedMap.get(id);
+            if (!li || !ri) {
+                if (li && (!ai || !sameCollabItem(li, ai))) mergedById.set(id, li);
+                continue;
+            }
+
+            const localChanged = !ai || !sameCollabItem(li, ai);
+            const remoteChanged = ai && !sameCollabItem(ri, ai);
+            if (localChanged && !remoteChanged && !sameCollabItem(li, ri)) {
+                mergedById.set(id, li);
+            }
         }
 
         const remoteOrder = remote.map(i => i.id);
-        const localOnly   = merged.filter(i => !remoteOrder.includes(i.id));
-        return remoteOrder.map(id => merged.find(i => i.id === id)).filter(Boolean).concat(localOnly);
+        const orderedRemote = remoteOrder.map(id => mergedById.get(id)).filter(Boolean);
+        const localOnly = local.filter(item => !remoteMap.has(item.id) && mergedById.has(item.id));
+        return orderedRemote.concat(localOnly);
     }
 
-    function mergeStringArray(localArr, remoteArr) {
+    function mergeStringArray(localArr, remoteArr, acknowledgedArr = []) {
+        const local = (localArr || []).map(clean).filter(Boolean);
+        const remote = (remoteArr || []).map(clean).filter(Boolean);
+        const acknowledged = (acknowledgedArr || []).map(clean).filter(Boolean);
+        const sameStrings = (a, b) => a.length === b.length && a.every((value, index) => value.toLowerCase() === b[index].toLowerCase());
+
+        if (acknowledged.length && !sameStrings(local, acknowledged) && sameStrings(remote, acknowledged)) {
+            return local;
+        }
+
+        const localKeys = new Set(local.map(value => value.toLowerCase()));
+        const acknowledgedKeys = new Set(acknowledged.map(value => value.toLowerCase()));
         const merged = [];
         const seen = new Set();
-        for (const value of [...(remoteArr || []), ...(localArr || [])]) {
+        for (const value of remote) {
             const text = clean(value);
             if (!text) continue;
             const key = text.toLowerCase();
+            if (acknowledgedKeys.has(key) && !localKeys.has(key)) continue;
             if (seen.has(key)) continue;
             seen.add(key);
             merged.push(text);
         }
+        for (const value of local) {
+            const key = value.toLowerCase();
+            if (seen.has(key) || acknowledgedKeys.has(key)) continue;
+            seen.add(key);
+            merged.push(value);
+        }
         return merged;
     }
 
-    function mergeBudget(localBudget, remoteBudget) {
+    function mergeBudget(localBudget, remoteBudget, acknowledgedBudget) {
         if (!remoteBudget) return localBudget;
         if (!localBudget) return remoteBudget;
         return {
             ...remoteBudget,
-            people: mergeArrayById(localBudget.people || [], remoteBudget.people || []),
-            costItems: mergeArrayById(localBudget.costItems || [], remoteBudget.costItems || [])
+            people: mergeArrayById(localBudget.people || [], remoteBudget.people || [], acknowledgedBudget?.people || []),
+            costItems: mergeArrayById(localBudget.costItems || [], remoteBudget.costItems || [], acknowledgedBudget?.costItems || [])
         };
     }
 
@@ -7892,7 +8244,7 @@
      * take the remote value, since there's no sensible per-field merge for those
      * without a full operational-transform system.
      */
-    function mergeCollabProject(local, remote) {
+    function mergeCollabProject(local, remote, acknowledged = null) {
         const merged = { ...remote };
 
         // Flat id-keyed collections: generic union merge
@@ -7904,32 +8256,44 @@
             "planItems"
         ];
         for (const key of idKeyedCollections) {
-            merged[key] = mergeArrayById(local[key], remote[key]);
+            merged[key] = mergeArrayById(local[key], remote[key], acknowledged?.[key] || []);
         }
 
         // Ordered string collections are part of the desktop project model but do
         // not have item IDs. Keep the confirmed remote order, then append any
         // local-only additions so slot/library edits are not lost or collapsed.
-        merged.menuSlots = mergeStringArray(local.menuSlots, remote.menuSlots);
-        merged.menuLibraryItems = mergeStringArray(local.menuLibraryItems, remote.menuLibraryItems);
-        merged.choreSessions = mergeStringArray(local.choreSessions, remote.choreSessions);
+        merged.menuSlots = mergeStringArray(local.menuSlots, remote.menuSlots, acknowledged?.menuSlots || []);
+        merged.menuLibraryItems = mergeStringArray(local.menuLibraryItems, remote.menuLibraryItems, acknowledged?.menuLibraryItems || []);
+        merged.choreSessions = mergeStringArray(local.choreSessions, remote.choreSessions, acknowledged?.choreSessions || []);
 
         // Shopping lists: nested merge (lists, then items within each list)
         const localLists  = local.shoppingLists  || [];
         const remoteLists = remote.shoppingLists || [];
+        const acknowledgedLists = acknowledged?.shoppingLists || [];
         const localListMap  = new Map(localLists.map(l => [l.id, l]));
         const remoteListMap = new Map(remoteLists.map(l => [l.id, l]));
+        const acknowledgedListMap = new Map(acknowledgedLists.map(l => [l.id, l]));
 
         const mergedLists = remoteLists.map(remoteList => {
             const localList = localListMap.get(remoteList.id);
             if (!localList) return remoteList;
-            return { ...remoteList, items: mergeArrayById(localList.items, remoteList.items) };
+            const acknowledgedList = acknowledgedListMap.get(remoteList.id);
+            const listChanged = acknowledgedList && !sameCollabItem(remoteList, acknowledgedList);
+            const localNameChanged = !acknowledgedList || localList.name !== acknowledgedList.name;
+            return {
+                ...remoteList,
+                name: localNameChanged && !listChanged ? localList.name : remoteList.name,
+                items: mergeArrayById(localList.items, remoteList.items, acknowledgedList?.items || [])
+            };
         });
         for (const localList of localLists) {
-            if (!remoteListMap.has(localList.id)) mergedLists.push(localList);
+            const acknowledgedList = acknowledgedListMap.get(localList.id);
+            if (!remoteListMap.has(localList.id) && (!acknowledgedList || !sameCollabItem(localList, acknowledgedList))) {
+                mergedLists.push(localList);
+            }
         }
         merged.shoppingLists = mergedLists;
-        merged.budget = mergeBudget(local.budget, remote.budget);
+        merged.budget = mergeBudget(local.budget, remote.budget, acknowledged?.budget);
 
         return merged;
     }

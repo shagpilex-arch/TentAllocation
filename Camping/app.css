@@ -708,6 +708,13 @@ tr:last-child td {
     touch-action: none;
 }
 
+.canvas-card.dragging,
+.canvas-person-card.dragging {
+    z-index: 30;
+    cursor: grabbing;
+    box-shadow: 0 12px 28px rgba(30, 42, 32, 0.24);
+}
+
 .canvas-card.site {
     border-color: var(--amber);
     background: #fffffa;
@@ -1367,6 +1374,46 @@ button.person-display-card {
     grid-column: 1 / -1;
 }
 
+.form-inline-row {
+    display: grid;
+    grid-template-columns: minmax(175px, 1.2fr) minmax(105px, 0.75fr) minmax(112px, 0.75fr);
+    gap: 8px;
+    align-items: end;
+}
+
+.form-inline-row label {
+    min-width: 0;
+}
+
+.tent-occupants-editor {
+    display: grid;
+    gap: 8px;
+}
+
+.tent-occupant-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.tent-occupant-table td {
+    padding: 7px 9px;
+    border-bottom: 1px solid var(--line);
+}
+
+.tent-occupant-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.tent-occupant-table td:last-child {
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
+}
+
 .checkbox-row {
     display: flex;
     align-items: center;
@@ -1715,6 +1762,7 @@ button.quiet.is-loading::after {
     /* Item 2: grids fully single-col on phone */
     .grid.two, .grid.three, .grid.four,
     .form-grid, .summary-grid { grid-template-columns: 1fr; }
+    .form-inline-row { grid-template-columns: 1fr; }
 
     /* Summary grid stays 2-col */
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
