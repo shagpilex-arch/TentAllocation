@@ -7,6 +7,10 @@
     const SESSION_ROOT = "sessions";
     const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const COLLAB_AAD = "ScoutCampPlanner.FirebaseCollaboration.v1";
+    const DEFAULT_TENT_FIELD_ID = "default-field";
+    const TENT_ALLOCATION_HEADERS = [
+        "Field", "Sleeping place", "Type", "Colour", "Size", "Occupants", "Occupant count", "Notes", "Warnings"
+    ];
 
     const TERMS = {
         languageEnglish: "en",
@@ -281,6 +285,7 @@
         filters: {},
         sort: { people: "group", groupKit: "name", participantKit: "name", budgetPeople: "name", budgetPeopleDir: "asc" },
         selected: {},
+        selectedTentFieldId: DEFAULT_TENT_FIELD_ID,
         dragging: null,
         collab: {
             active: false,
@@ -332,6 +337,17 @@
             "Add person": "Añadir persona",
             "Add team": "Añadir equipo",
             "Add tent": "Añadir tienda",
+            "Add field": "Añadir campo",
+            "Add Field": "Añadir campo",
+            "Rename field": "Renombrar campo",
+            "Remove field": "Eliminar campo",
+            "Field": "Campo",
+            "Field name": "Nombre del campo",
+            "Sleeping place": "Lugar para dormir",
+            "Occupants": "Ocupantes",
+            "Tent table CSV": "Tabla de tiendas CSV",
+            "Tent table Excel": "Tabla de tiendas Excel",
+            "Tent table RTF": "Tabla de tiendas RTF",
             "Add item": "Añadir artículo",
             "Add meal": "Añadir comida",
             "Save": "Guardar",
@@ -354,6 +370,33 @@
             "Tea": "Cena",
             "Extra": "Extra",
             "Camper": "Campista",
+            "Attendance": "Asistencia",
+            "Nights": "Noches",
+            "Stay": "Estancia",
+            "Leader's child": "Hijo/a de dirigente",
+            "Attends whole camp": "Asiste a todo el campamento",
+            "Arrival date": "Fecha de llegada",
+            "Departure date": "Fecha de salida",
+            "Linked leader": "Dirigente vinculado",
+            "No linked leader": "Sin dirigente vinculado",
+            "Whole camp": "Todo el campamento",
+            "Plan Meal": "Planificar comida",
+            "Save plan": "Guardar planificación",
+            "Remove plan": "Eliminar planificación",
+            "Ingredients": "Ingredientes",
+            "Ingredient": "Ingrediente",
+            "Quantity": "Cantidad",
+            "Unit": "Unidad",
+            "Optional": "Opcional",
+            "Add ingredient": "Añadir ingrediente",
+            "Remove ingredient": "Eliminar ingrediente",
+            "One ingredient per row; unit is optional.": "Un ingrediente por fila; la unidad es opcional.",
+            "Estimated cost for this recipe": "Coste estimado de esta receta",
+            "How many this recipe feeds": "Para cuántas personas es esta receta",
+            "Method": "Método",
+            "From planned meals": "De comidas planificadas",
+            "Varies by meal": "Varía según la comida",
+            "Using planned meal recipe costs and each meal date's attendance. Remove all meal plans to use the daily food rate again.": "Se usan los costes de las recetas planificadas y la asistencia de cada comida. Elimine todas las planificaciones para volver a usar la tarifa diaria de comida.",
             "Section": "Sección",
             "Young Leader": "Joven Líder",
             "Adult": "Adulto",
@@ -388,6 +431,17 @@
             "Add person": "Ajouter une personne",
             "Add team": "Ajouter une équipe",
             "Add tent": "Ajouter une tente",
+            "Add field": "Ajouter un terrain",
+            "Add Field": "Ajouter un terrain",
+            "Rename field": "Renommer le terrain",
+            "Remove field": "Supprimer le terrain",
+            "Field": "Terrain",
+            "Field name": "Nom du terrain",
+            "Sleeping place": "Lieu de couchage",
+            "Occupants": "Occupants",
+            "Tent table CSV": "Tableau des tentes CSV",
+            "Tent table Excel": "Tableau des tentes Excel",
+            "Tent table RTF": "Tableau des tentes RTF",
             "Add item": "Ajouter un article",
             "Add meal": "Ajouter un repas",
             "Save": "Enregistrer",
@@ -410,6 +464,33 @@
             "Tea": "Dîner",
             "Extra": "Supplément",
             "Camper": "Campeur",
+            "Attendance": "Présence",
+            "Nights": "Nuits",
+            "Stay": "Séjour",
+            "Leader's child": "Enfant de responsable",
+            "Attends whole camp": "Participe à tout le camp",
+            "Arrival date": "Date d'arrivée",
+            "Departure date": "Date de départ",
+            "Linked leader": "Responsable associé",
+            "No linked leader": "Aucun responsable associé",
+            "Whole camp": "Tout le camp",
+            "Plan Meal": "Planifier le repas",
+            "Save plan": "Enregistrer la planification",
+            "Remove plan": "Supprimer la planification",
+            "Ingredients": "Ingrédients",
+            "Ingredient": "Ingrédient",
+            "Quantity": "Quantité",
+            "Unit": "Unité",
+            "Optional": "Facultatif",
+            "Add ingredient": "Ajouter un ingrédient",
+            "Remove ingredient": "Supprimer l’ingrédient",
+            "One ingredient per row; unit is optional.": "Un ingrédient par ligne ; l’unité est facultative.",
+            "Estimated cost for this recipe": "Coût estimé de cette recette",
+            "How many this recipe feeds": "Nombre de personnes nourries par cette recette",
+            "Method": "Méthode",
+            "From planned meals": "Depuis les repas planifiés",
+            "Varies by meal": "Varie selon le repas",
+            "Using planned meal recipe costs and each meal date's attendance. Remove all meal plans to use the daily food rate again.": "Utilise le coût des recettes planifiées et la présence à chaque repas. Supprimez toutes les planifications pour réutiliser le tarif alimentaire journalier.",
             "Section": "Section",
             "Young Leader": "Jeune Responsable",
             "Adult": "Adulte",
@@ -601,6 +682,7 @@
             createdDate: new Date().toISOString(),
             lastModified: new Date().toISOString(),
             people: [],
+            tentFields: [{ id: DEFAULT_TENT_FIELD_ID, name: "Field 1" }],
             tents: [],
             siteItems: [],
             friendLinks: [],
@@ -648,6 +730,7 @@
         project.lastModified = project.lastModified || new Date().toISOString();
 
         project.people = list(project.people);
+        project.tentFields = list(project.tentFields);
         project.tents = list(project.tents);
         project.siteItems = list(project.siteItems);
         project.friendLinks = list(project.friendLinks);
@@ -668,6 +751,7 @@
         project.budget = normalizeBudget(project.budget);
 
         normalizePeople(project);
+        normalizeTentFields(project);
         normalizeTents(project);
         normalizeSiteItems(project);
         normalizeLinks(project.friendLinks, project);
@@ -703,12 +787,29 @@
             person.dietaryNotes = clean(person.dietaryNotes);
             person.medicalNotes = clean(person.medicalNotes);
             person.notes = clean(person.notes);
+            person.attendanceStartDate = clean(person.attendanceStartDate) ? clampDate(person.attendanceStartDate, project) : "";
+            person.attendanceEndDate = clean(person.attendanceEndDate) ? clampDate(person.attendanceEndDate, project) : "";
+            if (person.attendanceStartDate && person.attendanceEndDate && person.attendanceEndDate < person.attendanceStartDate) {
+                person.attendanceEndDate = person.attendanceStartDate;
+            }
+            person.isLeadersChild = Boolean(person.isLeadersChild);
+            person.leaderParentId = clean(person.leaderParentId);
             person.x = number(person.x, 0);
             person.y = number(person.y, 0);
+        });
+        const leaderIds = new Set(project.people
+            .filter(person => [TERMS.personTypeAdult, TERMS.personTypeYoungLeader].includes(person.personType))
+            .map(person => person.id));
+        project.people.forEach(person => {
+            if (!person.isLeadersChild || person.leaderParentId === person.id || !leaderIds.has(person.leaderParentId)) {
+                person.leaderParentId = "";
+            }
         });
     }
 
     function normalizeTents(project) {
+        const fieldIds = new Set(project.tentFields.map(field => field.id));
+        const defaultFieldId = project.tentFields[0].id;
         const ids = new Set();
         project.tents.forEach((tent, index) => {
             tent.id = uniqueId(tent.id, ids);
@@ -725,6 +826,7 @@
             tent.y = number(tent.y, 50 + Math.floor(index / 3) * 150);
             tent.sizeScale = clamp(number(tent.sizeScale, 1), 0.7, 1.8);
             tent.isClosed = Boolean(tent.isClosed);
+            tent.fieldId = fieldIds.has(clean(tent.fieldId)) ? clean(tent.fieldId) : defaultFieldId;
         });
         const tentIds = new Set(project.tents.map(tent => tent.id));
         project.people.forEach(person => {
@@ -735,6 +837,8 @@
     }
 
     function normalizeSiteItems(project) {
+        const fieldIds = new Set(project.tentFields.map(field => field.id));
+        const defaultFieldId = project.tentFields[0].id;
         const ids = new Set();
         project.siteItems.forEach((item, index) => {
             item.id = uniqueId(item.id, ids);
@@ -745,6 +849,25 @@
             item.x = number(item.x, 80 + index * 150);
             item.y = number(item.y, 310);
             item.sizeScale = clamp(number(item.sizeScale, 1), 0.7, 1.8);
+            item.fieldId = fieldIds.has(clean(item.fieldId)) ? clean(item.fieldId) : defaultFieldId;
+        });
+    }
+
+    function normalizeTentFields(project) {
+        if (!project.tentFields.length) {
+            project.tentFields.push({ id: DEFAULT_TENT_FIELD_ID, name: "Field 1" });
+        }
+
+        const ids = new Set();
+        const names = new Set();
+        project.tentFields.forEach((field, index) => {
+            const fallbackId = index === 0 ? DEFAULT_TENT_FIELD_ID : uid().replaceAll("-", "");
+            field.id = uniqueId(clean(field.id, fallbackId), ids);
+            const baseName = clean(field.name, `Field ${index + 1}`);
+            let name = baseName;
+            for (let suffix = 2; names.has(name.toLowerCase()); suffix++) name = `${baseName} ${suffix}`;
+            names.add(name.toLowerCase());
+            field.name = name;
         });
     }
 
@@ -786,6 +909,15 @@
             item.pudding = clean(item.pudding);
             item.dietaryNotes = clean(item.dietaryNotes);
             item.notes = clean(item.notes);
+            item.ingredients = list(item.ingredients).map(mealIngredient).filter(ingredient => ingredient.name && ingredient.quantity > 0);
+            item.estimatedCost = nonNegative(item.estimatedCost);
+            item.recipeServes = Math.max(0, Math.round(number(item.recipeServes, 0)));
+            item.method = clean(item.method);
+            item.hasMealPlan = Boolean(item.hasMealPlan)
+                || item.ingredients.length > 0
+                || item.estimatedCost > 0
+                || item.recipeServes > 0
+                || Boolean(item.method);
         });
         const seenNotes = new Set();
         project.menuDayNotes = project.menuDayNotes.filter(note => {
@@ -876,9 +1008,17 @@
     }
 
     function normalizeShopping(project) {
+        let generatedFoodListSeen = false;
+        project.shoppingLists = project.shoppingLists.filter(listItem => {
+            if (!listItem?.isGeneratedFromMenu) return true;
+            if (generatedFoodListSeen) return false;
+            generatedFoodListSeen = true;
+            return true;
+        });
         project.shoppingLists.forEach(listItem => {
             listItem.id = clean(listItem.id, uid());
             listItem.name = clean(listItem.name, "Shopping list");
+            listItem.isGeneratedFromMenu = Boolean(listItem.isGeneratedFromMenu);
             listItem.items = list(listItem.items);
             listItem.items.forEach(item => {
                 item.id = clean(item.id, uid());
@@ -887,6 +1027,7 @@
                 item.checked = Boolean(item.checked);
             });
         });
+        syncFoodShoppingFromMeals(project);
     }
 
     function createBudgetState(data = {}) {
@@ -1137,7 +1278,140 @@
         return Math.max(0, budgetDurationDays(project) - 1);
     }
 
+    function personAttendanceRange(project, personItem) {
+        let start = clean(personItem.attendanceStartDate) || project.startDate;
+        let end = clean(personItem.attendanceEndDate) || project.endDate;
+        start = start < project.startDate ? project.startDate : start > project.endDate ? project.endDate : start;
+        end = end < project.startDate ? project.startDate : end > project.endDate ? project.endDate : end;
+        if (end < start) end = start;
+        return { start, end };
+    }
+
+    function personAttendanceNights(project, personItem) {
+        const range = personAttendanceRange(project, personItem);
+        return Math.max(0, Math.round((parseDate(range.end) - parseDate(range.start)) / 86400000));
+    }
+
+    function personAttendanceLabel(project, personItem) {
+        if (!clean(personItem.attendanceStartDate) && !clean(personItem.attendanceEndDate)) return "Whole camp";
+        const range = personAttendanceRange(project, personItem);
+        return range.start === range.end
+            ? displayDate(range.start)
+            : `${displayDate(range.start)} - ${displayDate(range.end)}`;
+    }
+
+    function mealAttendanceCount(project, date) {
+        if (!project.people.length) return Math.max(0, number(project.participantCountOverride, 0));
+        return project.people.filter(personItem => {
+            const range = personAttendanceRange(project, personItem);
+            return date >= range.start && date <= range.end;
+        }).length;
+    }
+
+    function hasPlannedMeals(project = State.project) {
+        return project.menuItems.some(item => item.hasMealPlan
+            && item.recipeServes > 0
+            && isMenuSlotActive(project, item.date, item.slot));
+    }
+
+    function plannedMealBatches(project, item) {
+        if (!item.hasMealPlan || item.recipeServes <= 0) return 0;
+        const people = mealAttendanceCount(project, item.date);
+        return people <= 0 ? 0 : Math.ceil(people / item.recipeServes);
+    }
+
+    function plannedMealCost(project, item) {
+        return nonNegative(item.estimatedCost) * plannedMealBatches(project, item);
+    }
+
+    function plannedMealsTotal(project = State.project) {
+        return project.menuItems
+            .filter(item => item.hasMealPlan && item.recipeServes > 0 && isMenuSlotActive(project, item.date, item.slot))
+            .reduce((sum, item) => sum + plannedMealCost(project, item), 0);
+    }
+
+    const MEAL_INGREDIENT_UNITS = new Set([
+        "g", "gram", "grams", "kg", "kilogram", "kilograms",
+        "ml", "millilitre", "millilitres", "l", "litre", "litres",
+        "tsp", "teaspoon", "teaspoons", "tbsp", "tablespoon", "tablespoons",
+        "pack", "packs", "packet", "packets", "tin", "tins", "can", "cans",
+        "jar", "jars", "bottle", "bottles", "box", "boxes", "bag", "bags",
+        "slice", "slices", "loaf", "loaves", "dozen"
+    ]);
+
+    function ingredientQuantity(value) {
+        const text = clean(value).replace(",", ".");
+        const fraction = /^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/.exec(text);
+        if (fraction) {
+            const denominator = Number(fraction[2]);
+            return denominator ? Number(fraction[1]) / denominator : NaN;
+        }
+        return Number(text);
+    }
+
+    function parseIngredientList(text) {
+        const lines = String(text || "").split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        if (!lines.length) return { error: "Enter at least one ingredient. Each line must use '- quantity [unit] ingredient'." };
+        const ingredients = [];
+        for (let index = 0; index < lines.length; index++) {
+            const match = /^(?:-|\*|•)\s+(\d+(?:[\.,]\d+)?|\d+\s*\/\s*\d+)\s+(.+)$/.exec(lines[index]);
+            const quantity = match ? ingredientQuantity(match[1]) : NaN;
+            if (!match || !Number.isFinite(quantity) || quantity <= 0) {
+                return { error: `Ingredient line ${index + 1} must use '- quantity [unit] ingredient'.` };
+            }
+            const description = match[2].trim();
+            const words = description.split(/\s+/);
+            const hasUnit = words.length > 1 && MEAL_INGREDIENT_UNITS.has(words[0].toLowerCase());
+            const unit = hasUnit ? words.shift().toLowerCase() : "";
+            const name = words.join(" ").trim();
+            if (!name) return { error: `Ingredient line ${index + 1} has no ingredient name.` };
+            ingredients.push(mealIngredient({ name, quantity, unit }));
+        }
+        return { ingredients };
+    }
+
+    function formatIngredientList(ingredients) {
+        return list(ingredients).map(ingredient => `- ${formatQty(ingredient.quantity)}${ingredient.unit ? " " + ingredient.unit : ""} ${ingredient.name}`).join("\n");
+    }
+
+    function syncFoodShoppingFromMeals(project = State.project) {
+        const meals = project.menuItems.filter(item => item.hasMealPlan
+            && item.recipeServes > 0
+            && isMenuSlotActive(project, item.date, item.slot));
+        let generated = project.shoppingLists.find(listItem => listItem.isGeneratedFromMenu);
+        if (!meals.length) {
+            if (generated) project.shoppingLists = project.shoppingLists.filter(listItem => listItem !== generated);
+            return;
+        }
+        if (!generated) {
+            const name = project.shoppingLists.some(listItem => listItem.name.toLowerCase() === "food shopping")
+                ? "Food Shopping (Menu)"
+                : "Food Shopping";
+            generated = shoppingList({ name, isGeneratedFromMenu: true });
+            project.shoppingLists.push(generated);
+        }
+        const totals = new Map();
+        meals.forEach(item => {
+            const batches = plannedMealBatches(project, item);
+            item.ingredients.forEach(ingredient => {
+                const key = `${ingredient.name.trim().toLowerCase()}\u001f${ingredient.unit.trim().toLowerCase()}`;
+                const current = totals.get(key) || { name: ingredient.name.trim(), unit: ingredient.unit.trim().toLowerCase(), quantity: 0 };
+                current.quantity += ingredient.quantity * batches;
+                totals.set(key, current);
+            });
+        });
+        const existing = new Map(list(generated.items).map(item => [item.name.trim().toLowerCase(), item]));
+        generated.items = [...totals.values()]
+            .sort((left, right) => localeSort(left.name, right.name) || localeSort(left.unit, right.unit))
+            .map(row => {
+                const name = row.unit ? `${row.name} (${row.unit})` : row.name;
+                const item = existing.get(name.toLowerCase()) || { id: uid(), checked: false };
+                return { ...item, name, quantity: Math.round(row.quantity * 1000) / 1000 };
+            });
+    }
+
     function budgetFoodTotal(project = State.project) {
+        if (hasPlannedMeals(project)) return plannedMealsTotal(project);
         const counts = budgetCounts(project);
         return project.budget.settings.foodCostPerPersonPerDay * counts.totalPeople * Math.max(0, project.budget.settings.foodDays);
     }
@@ -1316,7 +1590,7 @@
         const snapshot = calculateBudgetSnapshot(project);
         const settings = project.budget.settings;
         if (!project.people.length) warnings.push("No people have been added yet.");
-        if (!project.budget.costItems.length && settings.foodCostPerPersonPerDay <= 0) warnings.push("No costs or food budget have been entered yet.");
+        if (!project.budget.costItems.length && settings.foodCostPerPersonPerDay <= 0 && !hasPlannedMeals(project)) warnings.push("No costs or food budget have been entered yet.");
         if (parseDate(project.endDate) < parseDate(project.startDate)) warnings.push("End date is before start date.");
         project.budget.costItems.filter(cost => !clean(cost.description)).forEach(() => warnings.push("A cost line has no description."));
         project.budget.costItems.filter(isImportedBudgetActivityCost).forEach(cost => {
@@ -1399,6 +1673,10 @@
             gender: data.gender || TERMS.genderOther,
             camperType: data.camperType || TERMS.camperTypeStandard,
             isDayVisitor: Boolean(data.isDayVisitor),
+            attendanceStartDate: clean(data.attendanceStartDate),
+            attendanceEndDate: clean(data.attendanceEndDate),
+            isLeadersChild: Boolean(data.isLeadersChild),
+            leaderParentId: clean(data.leaderParentId),
             patrol: clean(data.patrol),
             dietaryNotes: clean(data.dietaryNotes),
             medicalNotes: clean(data.medicalNotes),
@@ -1421,7 +1699,8 @@
             x: number(data.x, 40),
             y: number(data.y, 50),
             sizeScale: number(data.sizeScale, 1),
-            isClosed: Boolean(data.isClosed)
+            isClosed: Boolean(data.isClosed),
+            fieldId: clean(data.fieldId, State.project?.tentFields?.[0]?.id || DEFAULT_TENT_FIELD_ID)
         };
     }
 
@@ -1434,7 +1713,8 @@
             notes: clean(data.notes),
             x: number(data.x, 80),
             y: number(data.y, 300),
-            sizeScale: number(data.sizeScale, 1)
+            sizeScale: number(data.sizeScale, 1),
+            fieldId: clean(data.fieldId, State.project?.tentFields?.[0]?.id || DEFAULT_TENT_FIELD_ID)
         };
     }
 
@@ -1494,7 +1774,21 @@
             meal: clean(data.meal),
             pudding: clean(data.pudding),
             dietaryNotes: clean(data.dietaryNotes),
-            notes: clean(data.notes)
+            notes: clean(data.notes),
+            ingredients: list(data.ingredients).map(mealIngredient),
+            hasMealPlan: Boolean(data.hasMealPlan),
+            estimatedCost: nonNegative(data.estimatedCost),
+            recipeServes: Math.max(0, Math.round(number(data.recipeServes, 0))),
+            method: clean(data.method)
+        };
+    }
+
+    function mealIngredient(data = {}) {
+        return {
+            id: data.id || uid(),
+            name: clean(data.name),
+            quantity: Math.max(0, number(data.quantity, 0)),
+            unit: clean(data.unit).toLowerCase()
         };
     }
 
@@ -1520,7 +1814,8 @@
         return {
             id: data.id || uid(),
             name: clean(data.name, "Shopping list"),
-            items: list(data.items)
+            items: list(data.items),
+            isGeneratedFromMenu: Boolean(data.isGeneratedFromMenu)
         };
     }
 
@@ -1715,7 +2010,7 @@
     }
 
     function hasMenuContent(item) {
-        return Boolean(clean(item.meal) || clean(item.pudding) || clean(item.dietaryNotes) || clean(item.notes));
+        return Boolean(clean(item.meal) || clean(item.pudding) || clean(item.dietaryNotes) || clean(item.notes) || item.hasMealPlan);
     }
 
     function mealSlotIndex(project, slot) {
@@ -1764,6 +2059,10 @@
 
     function tentName(id) {
         return State.project.tents.find(tent => tent.id === id)?.name || "";
+    }
+
+    function tentFieldName(id) {
+        return State.project.tentFields.find(field => field.id === id)?.name || State.project.tentFields[0]?.name || "Field 1";
     }
 
     function choreName(id) {
@@ -2262,6 +2561,7 @@
                 return [
                     { label: "Add tent", action: "addTent" },
                     { label: "Add site item", action: "addSiteItem", style: "amber" },
+                    { label: "Add field", action: "addTentField" },
                     { label: "Links", action: "manageLinks", style: "secondary" },
                     { label: "Arrange", action: "arrangeTents", style: "slate" }
                 ];
@@ -2429,6 +2729,8 @@
             personTypeDisplay(person),
             person.camperType,
             person.isDayVisitor ? "day visitor" : "",
+            personAttendanceLabel(State.project, person),
+            person.isLeadersChild ? `leader's child ${personName(person.leaderParentId)}` : "",
             person.gender,
             teamsForPerson(person.id).map(team => team.name).join(" "),
             tentName(person.tentId),
@@ -2469,19 +2771,33 @@
     }
 
     function peopleTable(people) {
+        const allPeople = State.project.people;
+        const varies = selector => allPeople.length > 1
+            && new Set(allPeople.map(person => String(selector(person) ?? ""))).size > 1;
+        const visible = {
+            type: varies(person => `${personTypeDisplay(person)}\u001f${person.camperType}`),
+            stay: varies(person => `${personAttendanceLabel(State.project, person)}\u001f${personAttendanceNights(State.project, person)}`),
+            leadersChild: varies(person => person.isLeadersChild ? personName(person.leaderParentId) || "Yes" : ""),
+            teams: varies(person => teamsForPerson(person.id).map(team => team.name).join(", ")),
+            tent: varies(person => tentName(person.tentId) || "Unallocated"),
+            dietary: varies(person => person.dietaryNotes),
+            medical: varies(person => person.medicalNotes)
+        };
         return `
             <div class="table-wrap">
                 <table class="compact-table people-table">
-                    <thead><tr><th>Name</th><th>Type</th><th>Teams</th><th>Tent</th><th class="col-dietary">Dietary</th><th class="col-medical">Medical</th><th></th></tr></thead>
+                    <thead><tr><th>Name</th>${visible.type ? "<th>Type</th>" : ""}${visible.stay ? "<th>Stay</th>" : ""}${visible.leadersChild ? "<th>Leader's child</th>" : ""}${visible.teams ? "<th>Teams</th>" : ""}${visible.tent ? "<th>Tent</th>" : ""}${visible.dietary ? '<th class="col-dietary">Dietary</th>' : ""}${visible.medical ? '<th class="col-medical">Medical</th>' : ""}<th></th></tr></thead>
                     <tbody>
                     ${people.map(person => `
                         <tr>
                             <td data-label="Name"><strong>${h(person.name)}</strong><br><span class="muted">${h(person.gender)}${person.isDayVisitor ? " | Day visitor" : ""}</span></td>
-                            <td data-label="Type">${h(personTypeDisplay(person))}<br><span class="muted">${h(person.camperType)}</span></td>
-                            <td data-label="Teams">${h(teamsForPerson(person.id).map(team => team.name).join(", "))}</td>
-                            <td data-label="Tent">${h(tentName(person.tentId) || "Unallocated")}</td>
-                            <td class="col-dietary" data-label="Dietary">${h(person.dietaryNotes || "—")}</td>
-                            <td class="col-medical" data-label="Medical">${h(person.medicalNotes || "—")}</td>
+                            ${visible.type ? `<td data-label="Type">${h(personTypeDisplay(person))}<br><span class="muted">${h(person.camperType)}</span></td>` : ""}
+                            ${visible.stay ? `<td data-label="Stay">${h(personAttendanceLabel(State.project, person))}<br><span class="muted">${personAttendanceNights(State.project, person)} night${personAttendanceNights(State.project, person) === 1 ? "" : "s"}</span></td>` : ""}
+                            ${visible.leadersChild ? `<td data-label="Leader's child">${person.isLeadersChild ? h(personName(person.leaderParentId) || "Yes") : "—"}</td>` : ""}
+                            ${visible.teams ? `<td data-label="Teams">${h(teamsForPerson(person.id).map(team => team.name).join(", "))}</td>` : ""}
+                            ${visible.tent ? `<td data-label="Tent">${h(tentName(person.tentId) || "Unallocated")}</td>` : ""}
+                            ${visible.dietary ? `<td class="col-dietary" data-label="Dietary">${h(person.dietaryNotes || "—")}</td>` : ""}
+                            ${visible.medical ? `<td class="col-medical" data-label="Medical">${h(person.medicalNotes || "—")}</td>` : ""}
                             <td class="row-actions">
                                 <button class="small-button secondary" data-action="editPerson" data-id="${attr(person.id)}" type="button">Edit</button>
                                 <button class="small-button secondary" data-action="assignPerson" data-id="${attr(person.id)}" type="button">Assign</button>
@@ -2517,24 +2833,108 @@
             </div>`;
     }
 
+    function currentTentField(project = State.project) {
+        const fields = project?.tentFields || [];
+        const selected = fields.find(field => field.id === State.selectedTentFieldId) || fields[0];
+        if (selected) State.selectedTentFieldId = selected.id;
+        return selected || { id: DEFAULT_TENT_FIELD_ID, name: "Field 1" };
+    }
+
+    function uniqueTentFieldName(baseName, excludingId = "") {
+        const initial = clean(baseName, `Field ${(State.project.tentFields?.length || 0) + 1}`);
+        const names = new Set((State.project.tentFields || [])
+            .filter(field => field.id !== excludingId)
+            .map(field => field.name.toLowerCase()));
+        if (!names.has(initial.toLowerCase())) return initial;
+        for (let suffix = 2; ; suffix++) {
+            const candidate = `${initial} ${suffix}`;
+            if (!names.has(candidate.toLowerCase())) return candidate;
+        }
+    }
+
+    async function addTentField() {
+        const suggested = uniqueTentFieldName(`Field ${State.project.tentFields.length + 1}`);
+        const name = await promptText("Add field", "Field name", suggested);
+        if (name === null) return;
+        const field = { id: uid().replaceAll("-", ""), name: uniqueTentFieldName(clean(name, suggested)) };
+        mutate(`Added allocation field ${field.name}.`, () => {
+            State.project.tentFields.push(field);
+            State.selectedTentFieldId = field.id;
+        });
+    }
+
+    function selectTentField(id) {
+        if (!State.project.tentFields.some(field => field.id === id)) return;
+        State.selectedTentFieldId = id;
+        renderMain();
+        setStatus(`Showing ${currentTentField().name}.`);
+    }
+
+    async function renameTentField(id) {
+        const field = State.project.tentFields.find(item => item.id === id);
+        if (!field) return;
+        const name = await promptText("Rename field", "Field name", field.name);
+        if (name === null) return;
+        mutate("Renamed allocation field.", () => {
+            field.name = uniqueTentFieldName(clean(name, field.name), field.id);
+        });
+    }
+
+    async function removeTentField(id) {
+        const field = State.project.tentFields.find(item => item.id === id);
+        if (!field) return;
+        if (State.project.tentFields.length <= 1) {
+            await alertBox("Remove field", "At least one allocation field is required.");
+            return;
+        }
+        const target = State.project.tentFields.find(item => item.id !== id);
+        const tents = State.project.tents.filter(tent => tent.fieldId === id).length;
+        const siteItems = State.project.siteItems.filter(item => item.fieldId === id).length;
+        const message = tents + siteItems
+            ? `Remove ${field.name}? Its ${tents} sleeping place(s) and ${siteItems} site item(s) will move to ${target.name}.`
+            : `Remove ${field.name}?`;
+        if (!(await confirmBox("Remove field", message))) return;
+        mutate(`Removed ${field.name}.`, () => {
+            State.project.tents.forEach(tent => { if (tent.fieldId === id) tent.fieldId = target.id; });
+            State.project.siteItems.forEach(item => { if (item.fieldId === id) item.fieldId = target.id; });
+            State.project.tentFields = State.project.tentFields.filter(item => item.id !== id);
+            State.selectedTentFieldId = target.id;
+        });
+    }
+
     function renderTentAllocation() {
         const project = State.project;
+        const field = currentTentField(project);
+        const fieldTents = project.tents.filter(tent => tent.fieldId === field.id);
+        const fieldTentIds = new Set(fieldTents.map(tent => tent.id));
+        const fieldSiteItems = project.siteItems.filter(item => item.fieldId === field.id);
         const warnings = buildTentWarnings(project);
         const unallocated = orderedPeople().filter(person => !person.tentId);
         const friendLabels = buildFriendGroupLabels();
-        const allocatedCards = project.tents
+        const allocatedCards = fieldTents
             .flatMap(tent => {
                 if (tent.isClosed) return [];
                 const members = orderedPeople().filter(person => person.tentId === tent.id).sort((a, b) => localeSort(a.name, b.name));
                 return members.map((person, index) => renderCanvasPerson(person, friendLabels, buildOccupantSlot(tent, index, members.length)));
             })
             .join("");
+        const fieldButtons = project.tentFields.length > 1 ? `
+            <div class="tent-field-bar">
+                <div class="tabs tent-field-tabs">
+                    ${project.tentFields.map(item => `<button class="${item.id === field.id ? "active" : ""}" data-action="selectTentField" data-id="${attr(item.id)}" type="button">${h(item.name)}</button>`).join("")}
+                </div>
+                <div class="row-actions tent-field-actions">
+                    <button class="small-button secondary" data-action="renameTentField" data-id="${attr(field.id)}" type="button">Rename field</button>
+                    <button class="small-button danger" data-action="removeTentField" data-id="${attr(field.id)}" type="button">Remove field</button>
+                </div>
+            </div>` : "";
         return `
+            ${fieldButtons}
             ${sectionHeader("Tent Allocation", "Touch-drag tents and site items, then assign people into tents.", `<button data-action="makeTentTable" type="button">Preview table</button>`)}
             <div class="grid three">
                 ${summaryTile("Total people", project.people.length)}
-                ${summaryTile("Allocated", project.people.length - unallocated.length)}
-                ${summaryTile("Warnings", warnings.length)}
+                ${summaryTile(`${field.name} sleeping places`, fieldTents.length)}
+                ${summaryTile(`${field.name} occupants`, orderedPeople().filter(person => fieldTentIds.has(person.tentId)).length)}
             </div>
             <div class="grid two" style="margin-top:12px">
                 <section class="panel">
@@ -2557,8 +2957,8 @@
                 <button class="secondary" data-action="exportTentTagsPdf" type="button">Tags PDF</button>
             </div>
             <div id="tentCanvas" class="tent-layout" style="height:620px">
-                ${project.siteItems.map(item => renderCanvasSiteItem(item)).join("")}
-                ${project.tents.map(tent => renderCanvasTent(tent, warnings)).join("")}
+                ${fieldSiteItems.map(item => renderCanvasSiteItem(item)).join("")}
+                ${fieldTents.map(tent => renderCanvasTent(tent, warnings)).join("")}
                 ${allocatedCards}
             </div>
         `;
@@ -3364,6 +3764,7 @@
                         ${item.pudding ? `<span>Pudding: ${h(item.pudding)}</span>` : ""}
                         ${item.dietaryNotes ? `<span class="warning">Dietary: ${h(item.dietaryNotes)}</span>` : ""}
                         ${item.notes ? `<small>${h(item.notes)}</small>` : ""}
+                        ${item.hasMealPlan ? `<small><strong>Planned meal</strong> | feeds ${item.recipeServes} | ${mealAttendanceCount(State.project, item.date)} attending | ${plannedMealBatches(State.project, item)} batch${plannedMealBatches(State.project, item) === 1 ? "" : "es"}</small>` : ""}
                         <div class="row-actions">
                             <button class="small-button secondary" data-action="editMeal" data-id="${attr(item.id)}" type="button">Edit</button>
                             <button class="small-button danger" data-action="removeMeal" data-id="${attr(item.id)}" type="button">Remove</button>
@@ -3531,12 +3932,12 @@
             </div>`;
     }
 
-    function qtyControl(id, kind, quantity) {
+    function qtyControl(id, kind, quantity, readOnly = false) {
         return `
             <span class="qty-control">
-                <button class="minus" data-action="adjustKitQty" data-id="${attr(id)}" data-delta="-1" type="button">-</button>
+                <button class="minus" data-action="adjustKitQty" data-id="${attr(id)}" data-delta="-1" type="button"${readOnly ? " disabled" : ""}>-</button>
                 <span class="qty">${h(formatQty(quantity))}</span>
-                <button data-action="adjustKitQty" data-id="${attr(id)}" data-delta="1" type="button">+</button>
+                <button data-action="adjustKitQty" data-id="${attr(id)}" data-delta="1" type="button"${readOnly ? " disabled" : ""}>+</button>
             </span>`;
     }
 
@@ -3575,9 +3976,11 @@
                     <h3 class="shopping-card-title">${h(listItem.name)}</h3>
                     ${total ? `<span class="shopping-progress">${checkedCount}/${total}</span>` : ""}
                     <div class="shopping-card-actions">
-                        <button class="small-button secondary" data-action="addShoppingItem" data-id="${attr(listItem.id)}" type="button">+ Add</button>
-                        <button class="small-button secondary" data-action="renameShoppingList" data-id="${attr(listItem.id)}" type="button">Rename</button>
-                        <button class="small-button danger" data-action="removeShoppingList" data-id="${attr(listItem.id)}" type="button">✕</button>
+                        ${listItem.isGeneratedFromMenu
+                            ? `<span class="shopping-generated-label">From planned meals</span>`
+                            : `<button class="small-button secondary" data-action="addShoppingItem" data-id="${attr(listItem.id)}" type="button">+ Add</button>
+                               <button class="small-button secondary" data-action="renameShoppingList" data-id="${attr(listItem.id)}" type="button">Rename</button>
+                               <button class="small-button danger" data-action="removeShoppingList" data-id="${attr(listItem.id)}" type="button">✕</button>`}
                     </div>
                 </div>
                 <div class="shopping-items">
@@ -3597,17 +4000,18 @@
                                 data-id="${attr(item.id)}"
                                 data-field="name"
                                 value="${attr(item.name)}"
+                                ${listItem.isGeneratedFromMenu ? "readonly" : ""}
                                 placeholder="Item name"
                                 autocomplete="off">
                             <div class="shopping-qty">
-                                ${qtyControl(item.id, "shopping", item.quantity)}
+                                ${qtyControl(item.id, "shopping", item.quantity, listItem.isGeneratedFromMenu)}
                             </div>
-                            <button class="shopping-remove small-button danger"
+                            ${listItem.isGeneratedFromMenu ? "" : `<button class="shopping-remove small-button danger"
                                 data-action="removeShoppingItem"
                                 data-list-id="${attr(listItem.id)}"
                                 data-id="${attr(item.id)}"
                                 aria-label="Remove ${h(item.name)}"
-                                type="button">✕</button>
+                                type="button">✕</button>`}
                         </div>
                     `).join("") : `<div class="empty">No items in this list yet — use + Add item below to start.</div>`}
                 </div>
@@ -3622,6 +4026,7 @@
         const warnings = budgetWarnings(project);
         const balanceClass = snapshot.predictedSurplusShortfall < 0 ? "budget-negative" : "budget-positive";
         const currency = budgetCurrencyLabel(settings.currencySymbol);
+        const plannedFood = hasPlannedMeals(project);
         return `
             ${sectionHeader("Budget", "Costs, contribution rules and final camp charges. People and dates come from the current camp project.")}
             <div class="budget-stack">
@@ -3670,13 +4075,14 @@
                         <label>Food days<input data-update-kind="budget-setting" data-field="foodDays" type="number" min="0" step="1" value="${attr(settings.foodDays)}"></label>
                         <div class="budget-stat">
                             <span>Food people</span>
-                            <strong>${snapshot.counts.totalPeople} ${snapshot.counts.totalPeople === 1 ? "person" : "people"}</strong>
+                            <strong>${plannedFood ? "Varies by meal" : `${snapshot.counts.totalPeople} ${snapshot.counts.totalPeople === 1 ? "person" : "people"}`}</strong>
                         </div>
                         <div class="budget-stat">
                             <span>Automatic food total</span>
                             <strong>${formatBudgetMoney(snapshot.foodCost)}</strong>
                         </div>
                     </div>
+                    ${plannedFood ? `<p class="muted">Using planned meal recipe costs and each meal date's attendance. Remove all meal plans to use the daily food rate again.</p>` : ""}
                 </section>
 
                 <section class="card">
@@ -3880,7 +4286,7 @@
                 <details class="panel export-panel-details"${exportOpen(true)}>
                     <summary>Data export</summary>
                     <div class="export-panel-body panel-body">
-                        <p>Creates a ZIP containing people-and-tents.csv, menu.csv, kit-list.csv, chores.csv and budget.csv.</p>
+                        <p>Creates a ZIP containing people-and-tents.csv, tent-allocation.csv, menu.csv, kit-list.csv, chores.csv and budget.csv.</p>
                         <button class="teal" data-action="exportCsvZip" type="button">Export CSV ZIP</button>
                     </div>
                 </details>
@@ -3908,6 +4314,9 @@
                     <summary>Tent allocation</summary>
                     <div class="export-panel-body panel-body row-actions">
                         <button data-action="exportTentTablePdf" type="button">Tent table PDF</button>
+                        <button class="teal" data-action="exportTentAllocationCsv" type="button">Tent table CSV</button>
+                        <button class="teal" data-action="exportTentAllocationExcel" type="button">Tent table Excel</button>
+                        <button class="secondary" data-action="exportTentAllocationRtf" type="button">Tent table RTF</button>
                         <button data-action="exportTentTagsPdf" type="button">Tent tags PDF</button>
                         <button data-action="exportTentLayoutPdf" type="button">Tent layout PDF</button>
                         <button data-action="makeTentTable" type="button">Preview table</button>
@@ -3955,6 +4364,10 @@
             removeTeam: () => removeTeam(data.id),
             manageTeamMembers: () => manageTeamMembers(data.id),
             bulkAddTeams,
+            addTentField,
+            selectTentField: () => selectTentField(data.id),
+            renameTentField: () => renameTentField(data.id),
+            removeTentField: () => removeTentField(data.id),
             addTent: () => editTent(),
             openTentActions: () => openTentActions(data.id),
             editTent: () => editTent(data.id),
@@ -4052,6 +4465,9 @@
             exportBudgetPdf,
             exportBudgetCsv,
             exportTentTablePdf,
+            exportTentAllocationCsv,
+            exportTentAllocationExcel,
+            exportTentAllocationRtf,
             exportTentTagsPdf,
             exportTentLayoutPdf,
             exportCsvZip,
@@ -4263,17 +4679,46 @@
         const existing = State.project.people.find(item => item.id === id);
         const initial = existing ? { ...existing } : person();
         const selectedTeams = new Set(existing ? teamsForPerson(existing.id).map(team => team.id) : []);
+        const attendance = personAttendanceRange(State.project, initial);
+        const wholeCamp = !clean(initial.attendanceStartDate) && !clean(initial.attendanceEndDate);
+        const leaderOptions = ["", ...State.project.people
+            .filter(candidate => candidate.id !== initial.id && [TERMS.personTypeAdult, TERMS.personTypeYoungLeader].includes(candidate.personType))
+            .sort((left, right) => localeSort(left.name, right.name))
+            .map(candidate => candidate.id)];
+        const leaderLabels = Object.fromEntries([["", "No linked leader"], ...State.project.people.map(candidate => [candidate.id, candidate.name])]);
         const result = await promptFields(existing ? "Edit person" : "Add person", [
             { name: "name", label: "Name", value: initial.name, required: true },
             { name: "gender", label: "Gender", type: "select", options: GENDERS, value: initial.gender },
             { name: "personType", label: "Person Type", type: "select", options: PERSON_TYPE_LABELS, value: personTypeDisplay(initial) },
             { name: "camperType", label: "Section", type: "select", options: CAMPER_TYPES, value: initial.camperType },
             { name: "isDayVisitor", label: "Day visitor", type: "checkbox", value: initial.isDayVisitor },
+            { name: "attendsWholeCamp", label: "Attends whole camp", type: "checkbox", value: wholeCamp },
+            { name: "attendanceStartDate", label: "Arrival date", type: "date", value: attendance.start },
+            { name: "attendanceEndDate", label: "Departure date", type: "date", value: attendance.end },
+            { name: "isLeadersChild", label: "Leader's child", type: "checkbox", value: initial.isLeadersChild },
+            { name: "leaderParentId", label: "Linked leader", type: "select", options: leaderOptions, labels: leaderLabels, value: initial.leaderParentId || "" },
             { name: "dietaryNotes", label: "Food allergies / dietary notes", type: "textarea", value: initial.dietaryNotes, full: true },
             { name: "medicalNotes", label: "Medical / medication notes", type: "textarea", value: initial.medicalNotes, full: true },
             { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true },
             { name: "teamIds", label: "Teams", type: "multi", options: State.project.choreTeams.map(team => ({ value: team.id, label: team.name, checked: selectedTeams.has(team.id) })), full: true }
-        ], { wide: true });
+        ], {
+            wide: true,
+            onReady: body => {
+                const whole = body.querySelector('[name="attendsWholeCamp"]');
+                const start = body.querySelector('[name="attendanceStartDate"]');
+                const end = body.querySelector('[name="attendanceEndDate"]');
+                const leadersChild = body.querySelector('[name="isLeadersChild"]');
+                const parent = body.querySelector('[name="leaderParentId"]');
+                const refresh = () => {
+                    start.disabled = end.disabled = whole.checked;
+                    parent.disabled = !leadersChild.checked || leaderOptions.length <= 1;
+                };
+                whole.addEventListener("change", refresh);
+                leadersChild.addEventListener("change", refresh);
+                start.addEventListener("change", () => { if (end.value < start.value) end.value = start.value; });
+                refresh();
+            }
+        });
         if (!result) return;
         if (!clean(result.name)) {
             throw new Error("Enter a name.");
@@ -4286,6 +4731,10 @@
                 personType: personTypeFromDisplay(result.personType),
                 camperType: result.camperType,
                 isDayVisitor: Boolean(result.isDayVisitor),
+                attendanceStartDate: result.attendsWholeCamp ? "" : result.attendanceStartDate,
+                attendanceEndDate: result.attendsWholeCamp ? "" : (result.attendanceEndDate < result.attendanceStartDate ? result.attendanceStartDate : result.attendanceEndDate),
+                isLeadersChild: Boolean(result.isLeadersChild),
+                leaderParentId: result.isLeadersChild ? result.leaderParentId : "",
                 dietaryNotes: result.dietaryNotes,
                 medicalNotes: result.medicalNotes,
                 notes: result.notes
@@ -4468,7 +4917,7 @@
         const personItem = State.project.people.find(person => person.id === id);
         if (!personItem) return;
         const result = await promptFields(`Tent for ${personItem.name}`, [
-            { name: "tentId", label: "Tent", type: "select", options: State.project.tents.map(tent => tent.id), labels: Object.fromEntries(State.project.tents.map(tent => [tent.id, tent.name])), value: personItem.tentId || State.project.tents[0]?.id || "" }
+            { name: "tentId", label: "Tent", type: "select", options: State.project.tents.map(tent => tent.id), labels: Object.fromEntries(State.project.tents.map(tent => [tent.id, `${tent.name} (${tentFieldName(tent.fieldId)})`])), value: personItem.tentId || State.project.tents[0]?.id || "" }
         ]);
         if (!result) return;
         mutate("Assigned tent.", () => {
@@ -4478,7 +4927,9 @@
 
     async function editTent(id) {
         const existing = State.project.tents.find(item => item.id === id);
-        const initial = existing ? { ...existing } : tent({ x: 40 + State.project.tents.length * 30, y: 50 + State.project.tents.length * 30 });
+        const field = currentTentField();
+        const fieldTentCount = State.project.tents.filter(item => item.fieldId === field.id).length;
+        const initial = existing ? { ...existing } : tent({ fieldId: field.id, x: 40 + fieldTentCount * 30, y: 50 + fieldTentCount * 30 });
         const occupantIdsToRemove = new Set();
         const occupants = orderedPeople().filter(person => person.tentId === initial.id);
         const result = await promptFields(existing ? "Edit tent" : "Add Tent", [
@@ -4491,6 +4942,7 @@
                     { name: "sizeLabel", label: "Size", type: "select", options: TENT_SIZE_CHOICES, value: tentSizeLabel(initial.sizeScale) }
                 ]
             },
+            { name: "fieldId", label: "Field", type: "select", options: State.project.tentFields.map(item => item.id), labels: Object.fromEntries(State.project.tentFields.map(item => [item.id, item.name])), value: initial.fieldId },
             { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true },
             { type: "custom", html: renderTentOccupantEditor(occupants) }
         ], {
@@ -4518,6 +4970,7 @@
                 type: mapTentType("", result.accommodationType),
                 colour: tentColourFromLabel(result.colourLabel),
                 sizeScale: tentSizeScale(result.sizeLabel),
+                fieldId: result.fieldId,
                 notes: result.notes
             });
             State.project.people.forEach(person => {
@@ -4549,7 +5002,7 @@
         if (!target) return;
         const members = State.project.people.filter(person => person.tentId === id);
         const body = document.createElement("div");
-        body.innerHTML = `<p class="meta">${h(target.accommodationType)} | ${members.length} people</p>`;
+        body.innerHTML = `<p class="meta">${h(target.accommodationType)} | ${h(tentFieldName(target.fieldId))} | ${members.length} people</p>`;
         const action = await showModal(target.name, body, [
             { label: "Edit", value: "edit" },
             { label: sleepingPlaceToggleLabel(target), value: "toggle", className: "secondary" },
@@ -4628,7 +5081,7 @@
         const target = State.project.siteItems.find(item => item.id === id);
         if (!target) return;
         const body = document.createElement("div");
-        body.innerHTML = `<p class="meta">${h(target.type)}</p>`;
+        body.innerHTML = `<p class="meta">${h(target.type)} | ${h(tentFieldName(target.fieldId))}</p>`;
         const action = await showModal(target.name, body, [
             { label: "Edit", value: "edit" },
             { label: "Remove", value: "remove", className: "danger" },
@@ -4643,12 +5096,15 @@
 
     async function editSiteItem(id) {
         const existing = State.project.siteItems.find(item => item.id === id);
-        const initial = existing ? { ...existing } : siteItem({ x: 80 + State.project.siteItems.length * 30, y: 310 });
+        const field = currentTentField();
+        const fieldItemCount = State.project.siteItems.filter(item => item.fieldId === field.id).length;
+        const initial = existing ? { ...existing } : siteItem({ fieldId: field.id, x: 80 + fieldItemCount * 30, y: 310 });
         const result = await promptFields(existing ? "Edit site item" : "Add Site Item", [
             { name: "name", label: "Name", value: initial.name, required: true },
             { name: "type", label: "Type", type: "select", options: SITE_ITEM_TYPES, value: initial.type },
             { name: "colour", label: "Colour", type: "color", value: initial.colour },
             { name: "sizeScale", label: "Size scale", type: "number", step: "0.1", value: initial.sizeScale },
+            { name: "fieldId", label: "Field", type: "select", options: State.project.tentFields.map(item => item.id), labels: Object.fromEntries(State.project.tentFields.map(item => [item.id, item.name])), value: initial.fieldId },
             { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true }
         ]);
         if (!result) return;
@@ -4720,12 +5176,13 @@
     }
 
     function arrangeTents() {
+        const fieldId = currentTentField().id;
         mutate("Arranged tents and site items.", () => {
-            State.project.tents.forEach((tent, index) => {
+            State.project.tents.filter(tent => tent.fieldId === fieldId).forEach((tent, index) => {
                 tent.x = 32 + (index % 3) * 210;
                 tent.y = 32 + Math.floor(index / 3) * 150;
             });
-            State.project.siteItems.forEach((item, index) => {
+            State.project.siteItems.filter(item => item.fieldId === fieldId).forEach((item, index) => {
                 item.x = 32 + (index % 3) * 190;
                 item.y = 360 + Math.floor(index / 3) * 110;
             });
@@ -4748,18 +5205,26 @@
         body.innerHTML = `<div class="table-wrap">${tentTableHtml(warnings)}</div>`;
         showModal("Tent allocation table", body, [
             { label: "Table PDF", value: "pdf" },
+            { label: "CSV", value: "csv" },
+            { label: "Excel", value: "excel" },
+            { label: "RTF", value: "rtf" },
             { label: "Close", value: "close", className: "secondary" }
         ], { wide: true }).then(value => {
             if (value === "pdf") exportTentTablePdf();
+            if (value === "csv") exportTentAllocationCsv();
+            if (value === "excel") exportTentAllocationExcel();
+            if (value === "rtf") exportTentAllocationRtf();
         });
     }
 
     function tentTableHtml(warnings = buildTentWarnings(State.project)) {
-        return `<table><thead><tr><th>Tent</th><th>Type</th><th>Capacity</th><th>People</th><th>Warnings</th></tr></thead><tbody>${State.project.tents.map(tent => {
-            const members = orderedPeople().filter(person => person.tentId === tent.id);
-            const tentWarnings = warnings.filter(warning => warning.toLowerCase().includes(tent.name.toLowerCase()));
-            return `<tr><td>${h(tent.name)}</td><td>${h(tent.type)}</td><td>${h(tent.capacity)}</td><td>${h(members.map(person => person.name).join(", "))}</td><td>${h(tentWarnings.join("; ") || "None")}</td></tr>`;
-        }).join("")}<tr><td>Unallocated</td><td></td><td></td><td>${h(orderedPeople().filter(person => !person.isDayVisitor && !person.tentId).map(person => person.name).join(", "))}</td><td></td></tr></tbody></table>`;
+        const rows = tentAllocationRows(State.project, warnings);
+        const cells = rows.map(row => `<tr>${row.map(value => `<td>${h(value || "—")}</td>`).join("")}</tr>`).join("");
+        const unallocated = orderedPeople().filter(person => !person.isDayVisitor && !person.tentId).map(person => person.name).join(", ");
+        const unallocatedRow = unallocated
+            ? `<tr><td>All fields</td><td>Unallocated</td><td colspan="3"></td><td>${h(unallocated)}</td><td>${orderedPeople().filter(person => !person.isDayVisitor && !person.tentId).length}</td><td colspan="2"></td></tr>`
+            : "";
+        return `<table><thead><tr>${TENT_ALLOCATION_HEADERS.map(header => `<th>${h(header)}</th>`).join("")}</tr></thead><tbody>${cells}${unallocatedRow}</tbody></table>`;
     }
 
     async function editChoreItem(id) {
@@ -4923,26 +5388,185 @@
     async function editMeal(id, date, slot) {
         const existing = State.project.menuItems.find(item => item.id === id);
         const initial = existing || mealItem({ date: date || State.project.startDate, slot: slot || State.project.menuStartSlot });
-        const result = await promptFields(existing ? "Edit meal" : "Add meal", [
-            { name: "date", label: "Date", type: "date", value: initial.date },
-            { name: "slot", label: "Meal slot", type: "select", options: State.project.menuSlots, value: initial.slot },
-            { name: "meal", label: "Food", value: initial.meal },
-            { name: "pudding", label: "Pudding", value: initial.pudding },
-            { name: "dietaryNotes", label: "Dietary notes", type: "textarea", value: initial.dietaryNotes, full: true },
-            { name: "notes", label: "Notes", type: "textarea", value: initial.notes, full: true },
-            { name: "saveToLibrary", label: "Save meal to menu library", type: "checkbox", value: false }
-        ], { wide: true });
-        if (!result) return;
-        mutate(existing ? "Updated meal." : "Added meal.", () => {
-            const target = existing || mealItem();
-            Object.assign(target, result);
-            delete target.saveToLibrary;
-            if (!existing) State.project.menuItems.push(target);
-            if (result.saveToLibrary && clean(result.meal) && !State.project.menuLibraryItems.some(item => item.toLowerCase() === result.meal.toLowerCase())) {
-                State.project.menuLibraryItems.push(result.meal);
-                State.project.menuLibraryItems.sort(localeSort);
+        const draft = mealItem({ ...initial, ingredients: list(initial.ingredients).map(ingredient => ({ ...ingredient })) });
+        for (;;) {
+            const result = await promptFields(existing ? "Edit meal" : "Add meal", [
+                { name: "date", label: "Date", type: "date", value: draft.date },
+                { name: "slot", label: "Meal slot", type: "select", options: State.project.menuSlots, value: draft.slot },
+                { name: "meal", label: "Food", value: draft.meal },
+                { name: "pudding", label: "Pudding", value: draft.pudding },
+                { name: "dietaryNotes", label: "Dietary notes", type: "textarea", value: draft.dietaryNotes, full: true },
+                { name: "notes", label: "Notes", type: "textarea", value: draft.notes, full: true },
+                { name: "saveToLibrary", label: "Save meal to menu library", type: "checkbox", value: false }
+            ], {
+                wide: true,
+                returnAction: true,
+                extraActions: [{ label: "Plan Meal", value: "plan", className: draft.hasMealPlan ? "" : "secondary" }]
+            });
+            if (!result) return;
+            Object.assign(draft, {
+                date: result.date,
+                slot: result.slot,
+                meal: result.meal,
+                pudding: result.pudding,
+                dietaryNotes: result.dietaryNotes,
+                notes: result.notes
+            });
+            if (result._action === "plan") {
+                await editMealPlan(draft);
+                continue;
+            }
+
+            mutate(existing ? "Updated meal." : "Added meal.", () => {
+                const target = existing || mealItem(draft);
+                Object.assign(target, mealItem(draft));
+                if (!existing) State.project.menuItems.push(target);
+                if (result.saveToLibrary && clean(result.meal) && !State.project.menuLibraryItems.some(item => item.toLowerCase() === result.meal.toLowerCase())) {
+                    State.project.menuLibraryItems.push(result.meal);
+                    State.project.menuLibraryItems.sort(localeSort);
+                }
+            });
+            return;
+        }
+    }
+
+    async function editMealPlan(draft) {
+        const attending = mealAttendanceCount(State.project, draft.date);
+        const rows = list(draft.ingredients).length
+            ? list(draft.ingredients).map(ingredient => ({
+                id: ingredient.id || uid(),
+                name: ingredient.name,
+                quantity: ingredient.quantity,
+                unit: ingredient.unit
+            }))
+            : [{ id: uid(), name: "", quantity: 1, unit: "" }];
+        const body = document.createElement("form");
+        body.className = "form-grid meal-plan-form";
+        body.innerHTML = `
+            <div class="form-hint full"><strong>${h(draft.meal || "Meal details")}</strong><br>${attending} people are attending on ${h(displayDate(draft.date, true))}. Costs and ingredients use whole recipe batches.</div>
+            <div class="meal-ingredient-editor full">
+                <div class="meal-ingredient-heading"><strong>${h(L("Ingredients"))}</strong><span>${h(L("One ingredient per row; unit is optional."))}</span></div>
+                <div class="meal-ingredient-list"></div>
+                <button class="secondary meal-ingredient-add" type="button">+ ${h(L("Add ingredient"))}</button>
+            </div>
+            <label>${h(L("Estimated cost for this recipe"))}<input name="estimatedCost" type="number" min="0" step="0.01" value="${attr(draft.estimatedCost || 0)}"></label>
+            <label>${h(L("How many this recipe feeds"))}<input name="recipeServes" type="number" min="1" step="1" value="${attr(draft.recipeServes || "")}"></label>
+            <label class="full">${h(L("Method"))}<textarea name="method">${h(draft.method || "")}</textarea></label>
+            <div class="meal-plan-error full" role="alert"></div>`;
+        body.addEventListener("submit", event => event.preventDefault());
+
+        const listNode = $(".meal-ingredient-list", body);
+        const errorNode = $(".meal-plan-error", body);
+        function renderIngredientRows(focusIndex = -1) {
+            listNode.innerHTML = `
+                <div class="meal-ingredient-columns" aria-hidden="true"><span>${h(L("Ingredient"))}</span><span>${h(L("Quantity"))}</span><span>${h(L("Unit"))}</span><span></span></div>
+                ${rows.map((row, index) => `
+                    <div class="meal-ingredient-row" data-index="${index}">
+                        <input data-field="name" value="${attr(row.name)}" placeholder="${attr(L("Ingredient"))}" aria-label="${attr(`${L("Ingredient")} ${index + 1}`)}">
+                        <input data-field="quantity" type="number" min="0" step="any" value="${attr(row.quantity)}" aria-label="${attr(`${L("Quantity")} ${index + 1}`)}">
+                        <input data-field="unit" value="${attr(row.unit)}" placeholder="${attr(L("Optional"))}" aria-label="${attr(`${L("Unit")} ${index + 1}`)}">
+                        <button class="danger meal-ingredient-remove" data-remove-index="${index}" type="button" aria-label="${attr(`${L("Remove ingredient")} ${index + 1}`)}">×</button>
+                    </div>`).join("")}`;
+            if (focusIndex >= 0) {
+                requestAnimationFrame(() => listNode.querySelector(`.meal-ingredient-row[data-index="${focusIndex}"] [data-field="name"]`)?.focus());
+            }
+        }
+
+        listNode.addEventListener("input", event => {
+            const input = event.target.closest("[data-field]");
+            const row = event.target.closest(".meal-ingredient-row");
+            if (!input || !row) return;
+            const target = rows[Number(row.dataset.index)];
+            target[input.dataset.field] = input.dataset.field === "quantity" ? input.value : input.value;
+            errorNode.textContent = "";
+        });
+        listNode.addEventListener("click", event => {
+            const button = event.target.closest("[data-remove-index]");
+            if (!button) return;
+            rows.splice(Number(button.dataset.removeIndex), 1);
+            if (!rows.length) rows.push({ id: uid(), name: "", quantity: 1, unit: "" });
+            renderIngredientRows(Math.min(Number(button.dataset.removeIndex), rows.length - 1));
+        });
+        listNode.addEventListener("keydown", event => {
+            const input = event.target.closest('[data-field="name"]');
+            const row = event.target.closest(".meal-ingredient-row");
+            if (event.key !== "Enter" || !input || !row) return;
+            const index = Number(row.dataset.index);
+            if (index !== rows.length - 1 || !clean(input.value)) return;
+            event.preventDefault();
+            rows.push({ id: uid(), name: "", quantity: 1, unit: "" });
+            renderIngredientRows(rows.length - 1);
+        });
+        $(".meal-ingredient-add", body).addEventListener("click", () => {
+            rows.push({ id: uid(), name: "", quantity: 1, unit: "" });
+            renderIngredientRows(rows.length - 1);
+        });
+        renderIngredientRows();
+
+        let validated = null;
+        function showValidation(message, input) {
+            errorNode.textContent = message;
+            input?.focus();
+            return false;
+        }
+
+        const actions = [
+            ...(draft.hasMealPlan ? [{ label: L("Remove plan"), value: "remove", className: "danger" }] : []),
+            { label: L("Save plan"), value: "save" },
+            { label: L("Cancel"), value: "cancel", className: "secondary" }
+        ];
+        const action = await showModal(L("Plan Meal"), body, actions, {
+            wide: true,
+            validate: value => {
+                if (value !== "save") return true;
+                const activeRows = rows.filter(row => clean(row.name) || clean(row.unit));
+                if (!activeRows.length) {
+                    return showValidation("Add at least one ingredient.", listNode.querySelector('[data-field="name"]'));
+                }
+
+                const ingredients = [];
+                for (const row of activeRows) {
+                    const rowIndex = rows.indexOf(row);
+                    const rowNode = listNode.querySelector(`.meal-ingredient-row[data-index="${rowIndex}"]`);
+                    if (!clean(row.name)) {
+                        return showValidation("Enter an ingredient name for every row.", rowNode?.querySelector('[data-field="name"]'));
+                    }
+                    const quantity = Number(row.quantity);
+                    if (!Number.isFinite(quantity) || quantity <= 0) {
+                        return showValidation(`Enter a quantity greater than zero for ${row.name}.`, rowNode?.querySelector('[data-field="quantity"]'));
+                    }
+                    ingredients.push(mealIngredient({ id: row.id, name: clean(row.name), quantity, unit: clean(row.unit) }));
+                }
+
+                const cost = Number(body.elements.estimatedCost.value);
+                if (!Number.isFinite(cost) || cost < 0) {
+                    return showValidation("Enter a valid estimated cost of zero or more.", body.elements.estimatedCost);
+                }
+                const serves = Math.round(Number(body.elements.recipeServes.value));
+                if (!Number.isFinite(serves) || serves <= 0) {
+                    return showValidation("Enter how many people this recipe feeds.", body.elements.recipeServes);
+                }
+                const method = clean(body.elements.method.value);
+                if (!method) {
+                    return showValidation("Enter the cooking method.", body.elements.method);
+                }
+                validated = { ingredients, cost, serves, method };
+                return true;
             }
         });
+        if (action === "remove") {
+            Object.assign(draft, { hasMealPlan: false, ingredients: [], estimatedCost: 0, recipeServes: 0, method: "" });
+            return true;
+        }
+        if (action !== "save" || !validated) return false;
+        Object.assign(draft, {
+            hasMealPlan: true,
+            ingredients: validated.ingredients,
+            estimatedCost: validated.cost,
+            recipeServes: validated.serves,
+            method: validated.method
+        });
+        return true;
     }
 
     async function removeMeal(id) {
@@ -5055,7 +5679,12 @@
             }
             State.project.menuItems
                 .filter(item => item.date === sourceDate && hasMenuContent(item))
-                .forEach(item => State.project.menuItems.push({ ...item, id: uid(), date: target }));
+                .forEach(item => State.project.menuItems.push(mealItem({
+                    ...item,
+                    id: uid(),
+                    date: target,
+                    ingredients: list(item.ingredients).map(ingredient => ({ ...ingredient, id: uid() }))
+                })));
             const note = State.project.menuDayNotes.find(item => item.date === sourceDate);
             if (note) {
                 State.project.menuDayNotes = State.project.menuDayNotes.filter(item => item.date !== target);
@@ -5831,10 +6460,11 @@
         }
 
         const value = await showModal(title, body, [
+            ...list(options.extraActions),
             { label: options.okText || "OK", value: "ok" },
             { label: "Cancel", value: "cancel", className: "secondary" }
         ], { wide: options.wide, validate: validateRequiredFields });
-        if (value !== "ok") return null;
+        if (value === "cancel") return null;
         const result = {};
         collectableFields.forEach(field => {
             if (field.type === "checkbox") {
@@ -5845,6 +6475,7 @@
                 result[field.name] = body.querySelector(`[name="${cssEscape(field.name)}"]`)?.value ?? "";
             }
         });
+        if (options.returnAction) result._action = value;
         return result;
     }
 
@@ -6064,12 +6695,17 @@
         const project = State.project;
         return {
             "people-and-tents.csv": [
-                "Name,Type,Section,Day visitor,Gender,Patrol,Tent,Dietary notes,Medical notes,Notes",
-                ...orderedPeople().map(person => [person.name, personTypeDisplay(person), person.camperType, person.isDayVisitor ? "Yes" : "No", person.gender, person.patrol, tentName(person.tentId), person.dietaryNotes, person.medicalNotes, person.notes].map(csv).join(","))
+                "Name,Type,Section,Day visitor,Attendance start,Attendance end,Nights,Leader's child,Linked leader,Gender,Patrol,Tent,Field,Dietary notes,Medical notes,Notes",
+                ...orderedPeople().map(person => {
+                    const tent = project.tents.find(item => item.id === person.tentId);
+                    const attendance = personAttendanceRange(project, person);
+                    return [person.name, personTypeDisplay(person), person.camperType, person.isDayVisitor ? "Yes" : "No", attendance.start, attendance.end, personAttendanceNights(project, person), person.isLeadersChild ? "Yes" : "No", personName(person.leaderParentId), person.gender, person.patrol, tentName(person.tentId), tent ? tentFieldName(tent.fieldId) : "", person.dietaryNotes, person.medicalNotes, person.notes].map(csv).join(",");
+                })
             ].join("\n"),
+            "tent-allocation.csv": [TENT_ALLOCATION_HEADERS, ...tentAllocationRows(project)].map(row => row.map(csv).join(",")).join("\n"),
             "menu.csv": [
-                "Date,Meal slot,Food,Pudding,Dietary notes,Notes",
-                ...project.menuItems.filter(item => hasMenuContent(item) && isMenuSlotActive(project, item.date, item.slot)).map(item => [item.date, item.slot, item.meal, item.pudding, item.dietaryNotes, item.notes].map(csv).join(","))
+                "Date,Meal slot,Food,Pudding,Dietary notes,Notes,Planned,Recipe feeds,Estimated recipe cost,People attending,Batches,Ingredients,Method",
+                ...project.menuItems.filter(item => hasMenuContent(item) && isMenuSlotActive(project, item.date, item.slot)).map(item => [item.date, item.slot, item.meal, item.pudding, item.dietaryNotes, item.notes, item.hasMealPlan ? "Yes" : "No", item.recipeServes, item.estimatedCost, mealAttendanceCount(project, item.date), plannedMealBatches(project, item), formatIngredientList(item.ingredients), item.method].map(csv).join(","))
             ].join("\n"),
             "kit-list.csv": [
                 "Item,Quantity,Status,Owner,Consumable,Needs action,Notes",
@@ -6189,7 +6825,7 @@
         const data = {
             overview: { campName: p.campName, location: p.location, startDate: p.startDate, endDate: p.endDate, participantCountOverride: p.participantCountOverride, notes: p.notes },
             personnel: { people: p.people, choreTeams: p.choreTeams },
-            "tent-allocation": { tents: p.tents, siteItems: p.siteItems, friendLinks: p.friendLinks, foeLinks: p.foeLinks, assignments: p.people.map(person => ({ personId: person.id, tentId: person.tentId })) },
+            "tent-allocation": { tentFields: p.tentFields, tents: p.tents, siteItems: p.siteItems, friendLinks: p.friendLinks, foeLinks: p.foeLinks, assignments: p.people.map(person => ({ personId: person.id, tentId: person.tentId })) },
             chores: { choreItems: p.choreItems, choreTeams: p.choreTeams, choreSessions: p.choreSessions, choreAllocations: p.choreAllocations },
             menu: { menuSlots: p.menuSlots, menuStartSlot: p.menuStartSlot, menuEndSlot: p.menuEndSlot, menuDayNotes: p.menuDayNotes, menuLibraryItems: p.menuLibraryItems, menuItems: p.menuItems },
             plan: { planItems: p.planItems },
@@ -6228,6 +6864,7 @@
                 p.choreTeams = list(d.choreTeams);
                 break;
             case "tent-allocation":
+                p.tentFields = list(d.tentFields);
                 p.tents = list(d.tents);
                 p.siteItems = list(d.siteItems);
                 p.friendLinks = list(d.friendLinks);
@@ -6349,6 +6986,119 @@
         await saveTextFile(`${safeFileName(State.project.campName)}-${datedFileName("budget.csv")}`, "text/csv", buildBudgetCsv());
     }
 
+    function tentAllocationRows(project = State.project, warnings = buildTentWarnings(project)) {
+        const fieldNames = new Map(project.tentFields.map(field => [field.id, field.name]));
+        const fieldOrder = new Map(project.tentFields.map((field, index) => [field.id, index]));
+        return project.tents
+            .slice()
+            .sort((left, right) => number(fieldOrder.get(left.fieldId), Number.MAX_SAFE_INTEGER) - number(fieldOrder.get(right.fieldId), Number.MAX_SAFE_INTEGER)
+                || localeSort(left.name, right.name))
+            .map(tent => {
+                const occupants = orderedPeople().filter(person => person.tentId === tent.id);
+                const accommodation = isBunkTent(tent)
+                    ? "Bunk room"
+                    : isCaravanMotorhome(tent) ? "Caravan/motorhome" : "Tent";
+                return [
+                    fieldNames.get(tent.fieldId) || project.tentFields[0]?.name || "Field 1",
+                    tent.name,
+                    accommodation,
+                    tentColourName(tent.colour),
+                    tentSizeLabel(tent.sizeScale),
+                    occupants.map(person => person.name).join(", ") || "None",
+                    String(occupants.length),
+                    tent.notes || "",
+                    tentSpecificWarnings(tent, warnings).join("; ")
+                ];
+            });
+    }
+
+    async function exportTentAllocationCsv() {
+        const rows = tentAllocationRows();
+        const text = [TENT_ALLOCATION_HEADERS, ...rows].map(row => row.map(csv).join(",")).join("\n");
+        await saveTextFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-allocation.csv")}`, "text/csv", `\ufeff${text}`);
+    }
+
+    async function exportTentAllocationExcel() {
+        const bytes = buildTentAllocationXlsx(State.project, tentAllocationRows());
+        await saveBytesFile(
+            `${safeFileName(State.project.campName)}-${datedFileName("tent-allocation.xlsx")}`,
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            bytes
+        );
+    }
+
+    async function exportTentAllocationRtf() {
+        const project = State.project;
+        const rows = tentAllocationRows(project);
+        const widths = [1250, 1700, 1250, 950, 950, 3000, 850, 2500, 2500];
+        const tableRow = (values, header, alternate) => {
+            let cellX = 0;
+            let controls = "\\trowd\\trgaph60\\trleft0\\trqc";
+            widths.forEach(width => {
+                cellX += width;
+                controls += `${header ? "\\clcbpat2" : alternate ? "\\clcbpat4" : "\\clcbpat3"}\\clvertalc\\clbrdrt\\brdrs\\brdrw8\\brdrcf5\\clbrdrl\\brdrs\\brdrw8\\brdrcf5\\clbrdrb\\brdrs\\brdrw8\\brdrcf5\\clbrdrr\\brdrs\\brdrw8\\brdrcf5\\cellx${cellX}`;
+            });
+            const cells = widths.map((_, index) => `\\pard\\intbl\\f0\\fs16\\ql\\cf${header ? 3 : 1}${header ? "\\b" : ""} ${rtfEscape(values[index] || "")}${header ? "\\b0" : ""}\\cell `).join("");
+            return `${controls}\n${cells}\\row\n`;
+        };
+        const unallocated = orderedPeople().filter(person => !person.isDayVisitor && !person.tentId).map(person => person.name);
+        const content = [
+            "{\\rtf1\\ansi\\deff0\\uc1",
+            "{\\fonttbl{\\f0 Segoe UI;}{\\f1 Arial;}}",
+            "{\\colortbl;\\red0\\green0\\blue0;\\red46\\green115\\blue59;\\red255\\green255\\blue255;\\red235\\green246\\blue228;\\red205\\green219\\blue201;\\red184\\green45\\blue45;}",
+            "\\paperw16840\\paperh11907\\landscape\\margl520\\margr520\\margt520\\margb520\\viewkind4",
+            `\\pard\\f0\\fs36\\qc\\cf3\\cb2\\b ${rtfEscape(project.campName)}\\b0\\sa100\\par`,
+            `\\pard\\f0\\fs20\\qc\\cf1 ${rtfEscape(`Tent allocation | ${dateRange(project)}${project.location ? ` | ${project.location}` : ""}`)}\\sa140\\par`,
+            tableRow(TENT_ALLOCATION_HEADERS, true, false),
+            ...rows.map((row, index) => tableRow(row, false, index % 2 === 1)),
+            ...(unallocated.length ? [
+                "\\pard\\f0\\fs22\\ql\\cf6\\b Unallocated people\\b0\\sa80\\par",
+                `\\pard\\f0\\fs18\\ql\\cf1 ${rtfEscape(unallocated.join(", "))}\\sa100\\par`
+            ] : []),
+            "}"
+        ].join("\n");
+        await saveTextFile(`${safeFileName(project.campName)}-${datedFileName("tent-allocation.rtf")}`, "application/rtf", content);
+    }
+
+    function buildTentAllocationXlsx(project, rows) {
+        const xml = xlsxXmlEscape;
+        const columnName = numberValue => {
+            let name = "";
+            for (let value = numberValue; value > 0; value = Math.floor((value - 1) / 26)) name = String.fromCharCode(65 + ((value - 1) % 26)) + name;
+            return name;
+        };
+        const excelRow = (rowNumber, values, style, numericColumn = -1) => {
+            const cells = values.map((value, index) => {
+                const reference = `${columnName(index + 1)}${rowNumber}`;
+                if (index === numericColumn && /^\d+$/.test(String(value))) return `<c r="${reference}" s="${style}"><v>${value}</v></c>`;
+                return `<c r="${reference}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${xml(value)}</t></is></c>`;
+            }).join("");
+            return `<row r="${rowNumber}"${rowNumber === 1 ? " ht=\"28\" customHeight=\"1\"" : ""}>${cells}</row>`;
+        };
+        const worksheetRows = [
+            excelRow(1, [`${project.campName} - Tent allocation`], 1),
+            excelRow(2, [`${dateRange(project)}${project.location ? ` | ${project.location}` : ""}`], 2),
+            excelRow(4, TENT_ALLOCATION_HEADERS, 3),
+            ...rows.map((row, index) => excelRow(index + 5, row, index % 2 === 0 ? 4 : 5, 6))
+        ].join("");
+        const lastRow = rows.length + 4;
+        const files = [
+            ["[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>`],
+            ["_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>`],
+            ["docProps/app.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Scout Camp Planner</Application></Properties>`],
+            ["docProps/core.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xml(project.campName)} - Tent allocation</dc:title><dc:creator>Scout Camp Planner</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().replace(/\.\d{3}Z$/, "Z")}</dcterms:created></cp:coreProperties>`],
+            ["xl/workbook.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Tent Allocation" sheetId="1" r:id="rId1"/></sheets></workbook>`],
+            ["xl/_rels/workbook.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+            ["xl/styles.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="10"/><name val="Segoe UI"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="16"/><name val="Segoe UI"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="10"/><name val="Segoe UI"/></font></fonts><fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF2E733B"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE7F3DF"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border/><border><left style="thin"><color rgb="FFCDDCC9"/></left><right style="thin"><color rgb="FFCDDCC9"/></right><top style="thin"><color rgb="FFCDDCC9"/></top><bottom style="thin"><color rgb="FFCDDCC9"/></bottom></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="6"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment wrapText="1" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="4" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment wrapText="1" vertical="top"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1"><alignment wrapText="1" vertical="top"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`],
+            ["xl/worksheets/sheet1.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols><col min="1" max="1" width="18" customWidth="1"/><col min="2" max="2" width="22" customWidth="1"/><col min="3" max="5" width="16" customWidth="1"/><col min="6" max="6" width="42" customWidth="1"/><col min="7" max="7" width="15" customWidth="1"/><col min="8" max="9" width="34" customWidth="1"/></cols><sheetData>${worksheetRows}</sheetData><mergeCells count="2"><mergeCell ref="A1:I1"/><mergeCell ref="A2:I2"/></mergeCells>${rows.length ? `<autoFilter ref="A4:I${lastRow}"/>` : ""}<pageMargins left="0.25" right="0.25" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/></worksheet>`]
+        ];
+        return createZip(files.map(([name, content]) => ({ name, bytes: textToBytes(content) })));
+    }
+
+    function xlsxXmlEscape(value) {
+        return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll("\"", "&quot;").replaceAll("'", "&apos;");
+    }
+
     // Desktop-style landscape allocation table.
     async function exportTentTablePdf() {
         const pdf = new ScoutPdf("Tent allocation table", State.project, { orientation: "landscape", toc: false });
@@ -6357,31 +7107,26 @@
         const warnings = buildTentWarnings(State.project);
         const showWarnings = State.project.tents.some(tent => tentSpecificWarnings(tent, warnings).length);
         if (showWarnings) pdf.addWarningBox(warnings.join("  |  "));
-        const rows = State.project.tents.map(tent => {
-            const occupants = orderedPeople().filter(p => p.tentId === tent.id);
-            const names = occupants.map(p => p.name).join(", ") || "—";
-            const row = [
-                tent.name,
-                tentTypeLabel(tent),
-                names,
-                tentOccupantSummary(occupants) || "—"
-            ];
-            if (showWarnings) row.push(tentSpecificWarnings(tent, warnings).join("; ") || "—");
-            return row;
+        const rows = tentAllocationRows(State.project, warnings).map(row => {
+            const values = [row[0], row[1], `${row[3]} ${row[2].toLowerCase()}`, row[5], row[6]];
+            if (showWarnings) values.push(row[8] || "—");
+            return values;
         });
 
         const columns = showWarnings
             ? [
-                { label: "Tent name", width: 0.16 },
-                { label: "Type", width: 0.14 },
-                { label: "People allocated", width: 0.34 },
-                { label: "Occupants", width: 0.20 },
+                { label: "Field", width: 0.13 },
+                { label: "Sleeping place", width: 0.15 },
+                { label: "Type", width: 0.16 },
+                { label: "People allocated", width: 0.30 },
+                { label: "Occupants", width: 0.10 },
                 { label: "Warnings" }
             ]
             : [
-                { label: "Tent name", width: 0.18 },
-                { label: "Type", width: 0.16 },
-                { label: "People allocated", width: 0.42 },
+                { label: "Field", width: 0.15 },
+                { label: "Sleeping place", width: 0.18 },
+                { label: "Type", width: 0.18 },
+                { label: "People allocated", width: 0.39 },
                 { label: "Occupants" }
             ];
         pdf.addWrappedTable(columns, rows, { minRowHeight: 28, maxLines: 4 });
@@ -6412,32 +7157,36 @@
     // as text, so the printout actually functions as a map you can navigate by.
     async function exportTentLayoutPdf() {
         const pdf = new ScoutPdf("Tent layout", State.project, { toc: false });
-        pdf.addSectionBanner("Site map");
+        State.project.tentFields.forEach((field, fieldIndex) => {
+            if (fieldIndex > 0) pdf._addNewPage();
+            pdf.addSectionBanner(`Site map - ${field.name}`);
+            const fieldTents = State.project.tents.filter(tent => tent.fieldId === field.id);
+            const allItems = [
+                ...fieldTents.map(t => ({
+                    x: t.x || 0, y: t.y || 0, w: 170 * number(t.sizeScale, 1), h: 145 * number(t.sizeScale, 1),
+                    label: t.name, kind: "tent", colour: t.colour, isBunk: isBunkTent(t), isCaravan: isCaravanMotorhome(t),
+                    occupants: orderedPeople().filter(p => p.tentId === t.id)
+                })),
+                ...State.project.siteItems.filter(item => item.fieldId === field.id).map(s => ({
+                    x: s.x || 0, y: s.y || 0, w: 92 * number(s.sizeScale, 1), h: 90 * number(s.sizeScale, 1),
+                    label: s.name, kind: "site", colour: s.colour
+                }))
+            ];
 
-        const allItems = [
-            ...State.project.tents.map(t => ({
-                x: t.x || 0, y: t.y || 0, w: 170 * number(t.sizeScale, 1), h: 145 * number(t.sizeScale, 1),
-                label: t.name, kind: "tent", colour: t.colour, isBunk: isBunkTent(t), isCaravan: isCaravanMotorhome(t),
-                occupants: orderedPeople().filter(p => p.tentId === t.id)
-            })),
-            ...State.project.siteItems.map(s => ({
-                x: s.x || 0, y: s.y || 0, w: 92 * number(s.sizeScale, 1), h: 90 * number(s.sizeScale, 1),
-                label: s.name, kind: "site", colour: s.colour
-            }))
-        ];
+            if (!allItems.length) {
+                pdf.addText("No sleeping places or site items have been placed on this field yet.");
+            } else {
+                const canvasWidth = Math.max(900, ...allItems.map(item => item.x + item.w + 40));
+                const canvasHeight = Math.max(600, ...allItems.map(item => item.y + item.h + 40));
+                pdf.addSiteMap(allItems, canvasWidth, canvasHeight);
+            }
 
-        if (!allItems.length) {
-            pdf.addText("No tents or site items have been placed on the layout yet.");
-        } else {
-            const canvasWidth  = Math.max(900, ...allItems.map(i => i.x + i.w + 40));
-            const canvasHeight = Math.max(600, ...allItems.map(i => i.y + i.h + 40));
-            pdf.addSiteMap(allItems, canvasWidth, canvasHeight);
-        }
-
-        pdf.addSubHeading("Tent occupants");
-        State.project.tents.forEach(tent => {
-            const people = orderedPeople().filter(p => p.tentId === tent.id).map(p => p.name).join(", ") || "None";
-            pdf.addText(`${tent.name}: ${people}`);
+            pdf.addSubHeading("Occupants");
+            if (!fieldTents.length) pdf.addText("No sleeping places on this field.");
+            fieldTents.forEach(tent => {
+                const people = orderedPeople().filter(person => person.tentId === tent.id).map(person => person.name).join(", ") || "None";
+                pdf.addText(`${tent.name}: ${people}`);
+            });
         });
 
         await saveBytesFile(`${safeFileName(State.project.campName)}-${datedFileName("tent-layout.pdf")}`, "application/pdf", pdf.bytes());
@@ -6555,6 +7304,13 @@
         if (item.pudding) lines.push(`Pudding: ${item.pudding}`);
         if (item.dietaryNotes) lines.push(`Dietary: ${item.dietaryNotes}`);
         if (item.notes) lines.push(`Notes: ${item.notes}`);
+        if (item.hasMealPlan) {
+            const people = mealAttendanceCount(State.project, item.date);
+            const batches = plannedMealBatches(State.project, item);
+            lines.push(`Feeds ${item.recipeServes} | ${people} attending | ${batches} batch${batches === 1 ? "" : "es"} | Estimated cost: ${formatBudgetMoney(plannedMealCost(State.project, item))}`);
+            lines.push(`Ingredients: ${item.ingredients.map(ingredient => `${formatQty(ingredient.quantity * batches)}${ingredient.unit ? " " + ingredient.unit : ""} ${ingredient.name}`).join("; ")}`);
+            lines.push(`Method: ${item.method}`);
+        }
         const wrappedCount = lines.reduce((sum, line) => sum + wrapText(line, Math.floor(rightWidth / 4.5)).length, 0);
         const height = Math.max(28, wrappedCount * 11 + 12);
         pdf.reserveBlock(height + 4);
@@ -6746,7 +7502,9 @@
                 const tent = tentName(person.tentId) || "No tent";
                 const diet = person.dietaryNotes ? `  Diet: ${person.dietaryNotes}` : "";
                 const med  = person.medicalNotes  ? `  Medical: ${person.medicalNotes}` : "";
-                    return `${person.name}  (${person.gender !== "Not set" ? person.gender + ", " : ""}${tent})${diet}${med}`;
+                const stay = `  Stay: ${personAttendanceLabel(State.project, person)} (${personAttendanceNights(State.project, person)} nights)`;
+                const leadersChild = person.isLeadersChild ? `  Leader's child${personName(person.leaderParentId) ? ": " + personName(person.leaderParentId) : ""}` : "";
+                    return `${person.name}  (${person.gender !== "Not set" ? person.gender + ", " : ""}${tent})${stay}${leadersChild}${diet}${med}`;
                 })
             }))
         });
@@ -6802,6 +7560,17 @@
         }
         if (!kitchen) {
             lines.push({ twoColumnSections: true, sections: enumerateDates(State.project.startDate, State.project.endDate).map(menuDayPdfSection) });
+            const planned = State.project.menuItems
+                .filter(item => item.hasMealPlan && isMenuSlotActive(State.project, item.date, item.slot))
+                .sort((left, right) => left.date.localeCompare(right.date) || mealSlotIndex(State.project, left.slot) - mealSlotIndex(State.project, right.slot));
+            if (planned.length) {
+                lines.push({ text: "Meal plans", heading: true });
+                planned.forEach(item => {
+                    const batches = plannedMealBatches(State.project, item);
+                    const ingredients = item.ingredients.map(ingredient => `${formatQty(ingredient.quantity * batches)}${ingredient.unit ? " " + ingredient.unit : ""} ${ingredient.name}`).join("; ");
+                    lines.push({ text: `${displayDate(item.date)} ${item.slot}: ${item.meal} | ${mealAttendanceCount(State.project, item.date)} attending | ${batches} batch${batches === 1 ? "" : "es"} | ${formatBudgetMoney(plannedMealCost(State.project, item))} | Ingredients: ${ingredients} | Method: ${item.method}` });
+                });
+            }
             return;
         }
         enumerateDates(State.project.startDate, State.project.endDate).forEach((date, index) => {
@@ -6913,7 +7682,9 @@
         lines.push({ text: `Leaders: ${budgetRuleWithAmount(project.budget.settings.leaderRule, project.budget.settings.leaderContributionAmount)}` });
         lines.push({ text: `Young Leaders: ${budgetRuleWithAmount(project.budget.settings.youngLeaderRule, project.budget.settings.youngLeaderContributionAmount)}` });
         lines.push({ text: `Day visitors: ${budgetDayVisitorRuleWithAmount(project)}` });
-        lines.push({ text: `Food: ${formatBudgetMoney(project.budget.settings.foodCostPerPersonPerDay)} per person per day for ${project.budget.settings.foodDays} days. People counted: ${snapshot.counts.totalPeople}. Total: ${formatBudgetMoney(snapshot.foodCost)}` });
+        lines.push({ text: hasPlannedMeals(project)
+            ? `Food: planned meal recipes using attendance on each meal date and whole recipe batches. Total: ${formatBudgetMoney(snapshot.foodCost)}`
+            : `Food: ${formatBudgetMoney(project.budget.settings.foodCostPerPersonPerDay)} per person per day for ${project.budget.settings.foodDays} days. People counted: ${snapshot.counts.totalPeople}. Total: ${formatBudgetMoney(snapshot.foodCost)}` });
 
         const activityRows = snapshot.costRows.filter(row => row.amount >= 0 && isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
         const otherRows = snapshot.costRows.filter(row => row.amount >= 0 && !isImportedBudgetActivityCost(row.item)).sort((a, b) => budgetCostSort(a.item.description, b.item.description));
@@ -7017,6 +7788,7 @@
             ["Day visitors", snapshot.counts.dayVisitors],
             ["Standard-paying people", snapshot.standardPayingPeople],
             ["Food cost", snapshot.foodCost.toFixed(2)],
+            ["Food calculation", hasPlannedMeals(project) ? "Planned meal recipes and attendance" : "Legacy per-person daily rate"],
             ["Activity costs", snapshot.activityCost.toFixed(2)],
             ["Other costs", snapshot.otherCost.toFixed(2)],
             ["Total costs", snapshot.totalEstimatedCost.toFixed(2)],
@@ -7880,12 +8652,18 @@
             `Files in this export:`,
             ``,
             `  people-and-tents.csv`,
-            `    One row per person: type, gender, patrol/team, tent allocation,`,
+            `    One row per person: type, section, attendance dates and nights,`,
+            `    leader-child details, gender, patrol/team, sleeping place and field,`,
             `    dietary notes, medical notes, and general notes.`,
+            ``,
+            `  tent-allocation.csv`,
+            `    One row per tent, bunk room or caravan/motorhome, including its`,
+            `    field, occupants, notes and any allocation warnings.`,
             ``,
             `  menu.csv`,
             `    One row per planned meal slot: date, slot (breakfast/lunch/dinner),`,
-            `    the food, pudding, dietary notes, and notes for that meal.`,
+            `    food, pudding and notes, plus recipe servings, cost, attendance,`,
+            `    batches, ingredients and method where a meal plan has been added.`,
             ``,
             `  kit-list.csv`,
             `    One row per kit item: quantity, status, owner, whether it's`,
@@ -8284,7 +9062,7 @@
 
         // Flat id-keyed collections: generic union merge
         const idKeyedCollections = [
-            "people", "tents", "siteItems", "friendLinks", "foeLinks",
+            "people", "tentFields", "tents", "siteItems", "friendLinks", "foeLinks",
             "menuDayNotes", "menuItems",
             "kitItems", "groupKitInventory", "participantKitInventory",
             "choreItems", "choreTeams", "choreAllocations",

@@ -997,6 +997,12 @@ button.person-display-card {
     padding: 0 8px 8px;
 }
 
+.shopping-generated-label {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
 .shopping-items {
     display: grid;
     gap: 8px;
@@ -1310,6 +1316,28 @@ button.person-display-card {
     color: #fff;
 }
 
+.tent-field-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 0 14px;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.tent-field-tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+}
+
+.tent-field-actions {
+    flex: 0 0 auto;
+}
+
 /* ── Modal ───────────────────────────────────── */
 
 .modal-host {
@@ -1372,6 +1400,82 @@ button.person-display-card {
 
 .form-grid .full {
     grid-column: 1 / -1;
+}
+
+.form-hint {
+    padding: 10px 12px;
+    border-left: 4px solid var(--green-700);
+    background: var(--green-050);
+    color: var(--green-900);
+    line-height: 1.45;
+}
+
+.meal-ingredient-editor {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--green-050);
+}
+
+.meal-ingredient-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: var(--green-900);
+}
+
+.meal-ingredient-heading span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.meal-ingredient-list {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.meal-ingredient-columns,
+.meal-ingredient-row {
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) 110px 130px 38px;
+    gap: 8px;
+    align-items: center;
+}
+
+.meal-ingredient-columns {
+    padding: 0 2px;
+    color: var(--green-900);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.meal-ingredient-row input {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    background: #fff;
+}
+
+.meal-ingredient-remove {
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.meal-ingredient-add {
+    min-height: 34px;
+}
+
+.meal-plan-error {
+    min-height: 20px;
+    color: var(--red);
+    font-weight: 700;
 }
 
 .form-inline-row {
@@ -1657,6 +1761,8 @@ button.quiet.is-loading::after {
     /* Section header stacks */
     .section-header { flex-direction: column; gap: 8px; }
     .section-header h1 { font-size: clamp(17px, 4vw, 22px); }
+    .tent-field-bar { align-items: stretch; flex-direction: column; }
+    .tent-field-actions { justify-content: flex-start; }
 
     /* Toolbar wraps */
     .toolbar { flex-wrap: wrap; }
@@ -1763,6 +1869,26 @@ button.quiet.is-loading::after {
     .grid.two, .grid.three, .grid.four,
     .form-grid, .summary-grid { grid-template-columns: 1fr; }
     .form-inline-row { grid-template-columns: 1fr; }
+
+    .meal-ingredient-heading {
+        display: grid;
+        gap: 2px;
+    }
+
+    .meal-ingredient-columns,
+    .meal-ingredient-row {
+        grid-template-columns: minmax(80px, 1fr) 64px 70px 34px;
+        gap: 4px;
+    }
+
+    .meal-ingredient-columns {
+        font-size: 10px;
+    }
+
+    .meal-ingredient-remove {
+        width: 34px;
+        min-width: 34px;
+    }
 
     /* Summary grid stays 2-col */
     .summary-grid { grid-template-columns: repeat(2, 1fr); }
