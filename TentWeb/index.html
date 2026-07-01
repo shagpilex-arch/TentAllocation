@@ -1,157 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en-GB">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Camp Tent Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1f552e">
+    <title>Scout Camp Planner</title>
     <link rel="stylesheet" href="app.css">
 </head>
-<body class="locked">
-    <div id="app" class="app-shell">
-        <nav class="camp-menu" aria-label="Main menu">
-            <ul class="menu-root">
-                <li class="menu-node">
-                    <button class="menu-button" type="button">File</button>
-                    <ul class="menu-dropdown">
-                        <li><button type="button" data-action="new">New</button></li>
-                        <li><button type="button" data-action="open">Open</button></li>
-                        <li><button type="button" data-action="collaboration">Collaboration...</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="save"><span>Save</span><span class="gesture">Ctrl+S</span></button></li>
-                        <li><button type="button" data-action="save-as">Save As...</button></li>
-                        <li class="separator"></li>
-                        <li class="menu-node submenu">
-                            <button type="button">Export</button>
-                            <ul class="menu-dropdown submenu-dropdown">
-                                <li><button type="button" data-action="export-table-pdf">Export Table to PDF</button></li>
-                                <li><button type="button" data-action="export-layout-pdf">Export Camp Layout</button></li>
-                                <li><button type="button" data-action="export-tags-pdf">Export as Tent Tags</button></li>
-                            </ul>
-                        </li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="exit">Exit</button></li>
-                    </ul>
-                </li>
-                <li class="menu-node">
-                    <button class="menu-button" type="button">Edit</button>
-                    <ul class="menu-dropdown">
-                        <li><button id="undoMenuItem" type="button" data-action="undo"><span>Undo</span><span class="gesture">Ctrl+Z</span></button></li>
-                        <li><button id="redoMenuItem" type="button" data-action="redo"><span>Redo</span><span class="gesture">Ctrl+Y</span></button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="edit-camp">Camp Details...</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="edit-tent">Edit Tent...</button></li>
-                        <li><button type="button" data-action="duplicate-tent">Duplicate Tent...</button></li>
-                        <li><button type="button" data-action="delete-tent">Delete Tent...</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="edit-person">Edit Person...</button></li>
-                        <li><button type="button" data-action="delete-person">Delete Person...</button></li>
-                        <li><button type="button" data-action="edit-site-item">Edit Site Item...</button></li>
-                        <li><button type="button" data-action="delete-site-item">Delete Site Item...</button></li>
-                    </ul>
-                </li>
-                <li class="menu-node">
-                    <button class="menu-button" type="button">Camping</button>
-                    <ul class="menu-dropdown">
-                        <li><button type="button" data-action="add-tent"><span>Add Tent</span><span class="gesture">Alt+T</span></button></li>
-                        <li><button type="button" data-action="add-person"><span>Add Camper</span><span class="gesture">Alt+C</span></button></li>
-                        <li><button type="button" data-action="add-site-item">Add Site Item</button></li>
-                        <li><button type="button" data-action="bulk-add">Bulk Add People</button></li>
-                        <li><button type="button" data-action="import-csv">Import People from CSV...</button></li>
-                        <li><button type="button" data-action="download-sample-csv">Download Sample CSV...</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="add-friend">Add Friend Link</button></li>
-                        <li><button type="button" data-action="remove-friend">Remove Friend Link</button></li>
-                        <li><button type="button" data-action="add-foe">Add Foe Link</button></li>
-                        <li><button type="button" data-action="remove-foe">Remove Foe Link</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="arrange-tents">Arrange Tents Neatly</button></li>
-                        <li><button type="button" data-action="clear-allocations">Clear All Allocations</button></li>
-                        <li class="separator"></li>
-                        <li><button type="button" data-action="make-table">Make Table</button></li>
-                    </ul>
-                </li>
-                <li class="menu-node">
-                    <button class="menu-button" type="button">Help</button>
-                    <ul class="menu-dropdown">
-                        <li><button type="button" data-action="about">About Camp Tent Planner</button></li>
-                    </ul>
-                </li>
-            </ul>
-        </nav>
-
-        <main class="planner-grid">
-            <section class="planner-main" aria-label="Camp planner">
-                <div class="toolbar">
-                    <button type="button" class="tool-button add-tent" data-action="add-tent">Add Tent</button>
-                    <button type="button" class="tool-button add-person" data-action="add-person">Add Camper</button>
-                    <button type="button" class="tool-button add-site" data-action="add-site-item">Add Site Item</button>
-                    <span class="toolbar-divider"></span>
-                    <button type="button" class="tool-button bulk-add" data-action="bulk-add">Bulk Add</button>
-                    <button type="button" class="tool-button import-csv" data-action="import-csv">Import CSV</button>
-                    <span class="toolbar-divider"></span>
-                    <button type="button" class="tool-button friend-link" data-action="add-friend">Friend Link</button>
-                    <button type="button" class="tool-button foe-link" data-action="add-foe">Foe Link</button>
-                    <span class="toolbar-divider"></span>
-                    <button type="button" class="tool-button export" data-action="make-table">Export</button>
-                    <button type="button" class="tool-button collaboration" data-action="collaboration">Collaboration</button>
+<body>
+    <div id="app" class="app">
+        <header class="topbar">
+            <div class="topbar-main">
+                <!-- Hamburger: visible on tablet (960px), hidden on desktop -->
+                <button id="navToggle" class="icon-button topbar-hamburger" type="button" aria-label="Toggle navigation">☰</button>
+                <div class="brand">
+                    <div class="brand-title">Camp Planner</div>
+                    <div id="dirtyBadge" class="brand-subtitle">Ready</div>
                 </div>
+                <div id="summaryPill" class="summary-pill"></div>
+            </div>
+            <div id="topbarStrip" class="topbar-strip" aria-label="Application menu and commands"></div>
+        </header>
 
-                <div id="canvasScroll" class="canvas-scroll">
-                    <div id="canvasScaleHost" class="canvas-scale-host">
-                        <div id="mainCanvas" class="main-canvas" aria-label="Camp layout"></div>
-                    </div>
-                </div>
+        <!-- Overlay backdrop for mobile nav -->
+        <div id="navOverlay" class="nav-overlay" aria-hidden="true"></div>
 
-                <section id="unallocatedBorder" class="unallocated-border" aria-label="Unallocated Campers">
-                    <h2>Unallocated Campers</h2>
-                    <div class="unallocated-scroll">
-                        <div id="unallocatedPanel" class="unallocated-panel"></div>
-                    </div>
-                </section>
-            </section>
-
-            <aside class="right-panel" aria-label="Camp information">
-                <div class="right-top">
-                    <h2>Camp Info</h2>
-                    <div id="versionLabel" class="version-label"></div>
-                    <div id="campNameLabel" class="camp-name-label"></div>
-                    <div id="campDateLabel" class="camp-date-label"></div>
-                    <button type="button" class="edit-camp-button" data-action="edit-camp">Edit Camp</button>
-                    <div id="collaborationStatus" class="collaboration-status">Collaboration: Off</div>
-
-                    <hr>
-                    <h2>Statistics</h2>
-                    <div id="statsLabel" class="stats-label"></div>
-
-                    <hr>
-                    <label class="snap-row">
-                        <input id="snapToGrid" type="checkbox" checked>
-                        <span>Snap to Grid</span>
-                    </label>
-                </div>
-
-                <section class="warnings-section">
-                    <h2>Warnings</h2>
-                    <div id="warningsPanel" class="warnings-panel"></div>
-                </section>
-
-                <div class="zoom-bar">
-                    <span>Zoom:</span>
-                    <input id="zoomSlider" type="range" min="0" max="4" step="1" value="2">
-                    <span id="zoomLevelLabel">100%</span>
-                    <button type="button" data-action="fit-screen">Fit</button>
+        <div class="workspace">
+            <aside id="sideNav" class="side-nav" aria-label="Sections">
+                <div class="nav-toggle-row">
+                    <button id="navToggleInner" class="icon-button" type="button" aria-label="Collapse navigation">☰</button>
                 </div>
             </aside>
-        </main>
+            <main id="mainContent" class="main-content" tabindex="-1"></main>
+        </div>
+
+        <!-- Bottom tab bar: phone only -->
+        <nav id="bottomNav" class="bottom-nav" aria-label="Sections"></nav>
+
+        <footer class="statusbar">
+            <span id="statusText">Ready.</span>
+            <span id="collabBadge" class="collab-badge hidden"></span>
+        </footer>
     </div>
 
-    <div id="modalRoot" class="modal-root" aria-live="polite"></div>
-    <div id="contextMenu" class="context-menu" hidden></div>
-    <input id="openFileInput" type="file" accept=".camp,.json,application/json" hidden>
-    <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-    <script src="app.js?v=20260527-firebase"></script>
+    <div id="modalHost" class="modal-host hidden" role="presentation"></div>
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+    <input id="fallbackFileInput" class="hidden" type="file">
+    <script src="app.js"></script>
 </body>
 </html>
