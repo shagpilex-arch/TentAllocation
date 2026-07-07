@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1565c0">
+    <title>Guide Camp Planner</title>
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <header class="topbar">
+            <div class="topbar-main">
+                <!-- Hamburger: visible on tablet (960px), hidden on desktop -->
+                <button id="navToggle" class="icon-button topbar-hamburger" type="button" aria-label="Toggle navigation">☰</button>
+                <div class="brand">
+                    <div class="brand-title">Camp Planner</div>
+                    <div id="dirtyBadge" class="brand-subtitle">Ready</div>
+                </div>
+                <div id="summaryPill" class="summary-pill"></div>
+            </div>
+            <div id="topbarStrip" class="topbar-strip" aria-label="Application menu and commands"></div>
+        </header>
+
+        <!-- Overlay backdrop for mobile nav -->
+        <div id="navOverlay" class="nav-overlay" aria-hidden="true"></div>
+
+        <div class="workspace">
+            <aside id="sideNav" class="side-nav" aria-label="Sections">
+                <div class="nav-toggle-row">
+                    <button id="navToggleInner" class="icon-button" type="button" aria-label="Collapse navigation">☰</button>
+                </div>
+            </aside>
+            <main id="mainContent" class="main-content" tabindex="-1"></main>
+        </div>
+
+        <!-- Bottom tab bar: phone only -->
+        <nav id="bottomNav" class="bottom-nav" aria-label="Sections"></nav>
+
+        <footer class="statusbar">
+            <span id="statusText">Ready.</span>
+            <span id="collabBadge" class="collab-badge hidden"></span>
+        </footer>
+    </div>
+
+    <div id="modalHost" class="modal-host hidden" role="presentation"></div>
+    <div id="toastHost" class="toast-host" aria-live="polite"></div>
+    <input id="fallbackFileInput" class="hidden" type="file">
+    <script src="app.js"></script>
+</body>
+</html>
