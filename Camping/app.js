@@ -34,6 +34,7 @@
         accommodationBunkRoom: "Bunk room",
         accommodationCaravanMotorhome: "Caravan/motorhome",
         mealBreakfast: "Breakfast",
+        mealLunch: "Lunch",
         mealDinner: "Dinner",
         mealTea: "Tea",
         mealExtra: "Extra",
@@ -2027,7 +2028,8 @@
     function mapMealSlot(value) {
         const text = clean(value).toLowerCase();
         if (text.includes("breakfast") || text === "0") return TERMS.mealBreakfast;
-        if (text.includes("dinner") || text.includes("lunch") || text === "1") return TERMS.mealDinner;
+        if (text.includes("lunch")) return TERMS.mealLunch;
+        if (text.includes("dinner") || text === "1") return TERMS.mealDinner;
         if (text.includes("tea") || text.includes("supper") || text === "2") return TERMS.mealTea;
         return clean(value, TERMS.mealExtra);
     }
