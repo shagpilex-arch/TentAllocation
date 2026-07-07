@@ -346,41 +346,24 @@ h3 {
   color: var(--white);
 }
 
+.guide-button,
+.guide-page .button-primary,
+.guide-page .button-accent {
+  background: #1769b7;
+  color: var(--white);
+}
+
+.guide-button:hover,
+.guide-page .button-primary:hover,
+.guide-page .button-accent:hover {
+  background: #0f5598;
+  color: var(--white);
+}
+
 .button-small {
   min-height: 36px;
   padding: 0.5rem 0.75rem;
   font-size: 0.92rem;
-}
-
-.camp-strip {
-  background: var(--green-deep);
-  color: var(--white);
-}
-
-.camp-strip-inner {
-  max-width: var(--max);
-  margin: 0 auto;
-  padding: 0.75rem 1.25rem;
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.camp-strip strong {
-  color: var(--gold);
-}
-
-.camp-strip a {
-  color: var(--white);
-  font-weight: 800;
-}
-
-.camp-strip span {
-  display: block;
-  min-width: 0;
-  overflow-wrap: break-word;
 }
 
 .section {
@@ -461,6 +444,11 @@ h3 {
   background: linear-gradient(180deg, var(--white), #fff6e7);
 }
 
+.project-card.guide-card {
+  border-color: #8ab6e4;
+  background: linear-gradient(180deg, var(--white), #eef7ff);
+}
+
 .project-card p {
   color: var(--muted);
   margin-bottom: 0;
@@ -530,6 +518,11 @@ h3 {
   color: #234121;
 }
 
+.status-guide {
+  background: #dbeeff;
+  color: #084f93;
+}
+
 .status-developing {
   background: #f4dfad;
   color: #604015;
@@ -568,6 +561,12 @@ h3 {
   color: var(--green-deep);
   font-size: 0.82rem;
   font-weight: 700;
+}
+
+.guide-tag {
+  background: #edf7ff;
+  color: #0f5598;
+  border-color: #b8d7f5;
 }
 
 .support-panel {
@@ -786,6 +785,153 @@ h3 {
   width: 100%;
   min-height: 46px;
   white-space: normal;
+}
+
+.online-panel {
+  margin: 2.4rem 0;
+  padding: 1.45rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 0.36fr);
+  gap: 1.25rem;
+  align-items: stretch;
+  border: 2px solid #8fa173;
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(64, 83, 58, 0.2), rgba(213, 166, 75, 0.16)),
+    var(--white);
+  box-shadow: 0 18px 36px rgba(58, 44, 28, 0.16);
+}
+
+.online-panel h2 {
+  margin-bottom: 0.65rem;
+  font-size: 1.7rem;
+}
+
+.online-panel > *,
+.online-action {
+  min-width: 0;
+}
+
+.online-panel p {
+  color: #463d31;
+  margin-bottom: 0.8rem;
+  overflow-wrap: break-word;
+}
+
+.online-action {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.85rem;
+  padding: 1.05rem;
+  border: 2px solid var(--green);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(241, 248, 233, 0.94)),
+    repeating-linear-gradient(135deg, rgba(64, 83, 58, 0.12) 0 8px, transparent 8px 16px);
+}
+
+.online-action p {
+  margin-bottom: 0;
+  color: var(--green-deep);
+  font-weight: 800;
+}
+
+.online-action .button {
+  width: 100%;
+  min-height: 46px;
+  white-space: normal;
+}
+
+.guide-page .site-header,
+.guide-header {
+  background: rgba(247, 251, 255, 0.96);
+}
+
+.guide-page .page-hero,
+.guide-page .project-hero,
+.guide-hero {
+  background: #e7f2ff;
+}
+
+.guide-note {
+  background: #d9edff;
+  border-color: #9dc7f0;
+}
+
+.guide-online-panel {
+  border-color: #6fa7dd;
+  background:
+    linear-gradient(135deg, rgba(23, 105, 183, 0.18), rgba(126, 191, 232, 0.16)),
+    var(--white);
+}
+
+.guide-online-action {
+  border-color: #1769b7;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(236, 247, 255, 0.94)),
+    repeating-linear-gradient(135deg, rgba(23, 105, 183, 0.12) 0 8px, transparent 8px 16px);
+}
+
+.guide-online-action p {
+  color: #084f93;
+}
+
+.guide-support-panel {
+  border-color: #6fa7dd;
+  background:
+    linear-gradient(135deg, rgba(23, 105, 183, 0.16), rgba(126, 191, 232, 0.16)),
+    var(--white);
+}
+
+.guide-support-panel .support-kicker,
+.guide-page .support-kicker,
+.guide-page .support-action-kicker {
+  background: #0f5598;
+}
+
+.guide-support-action {
+  border-color: #1769b7;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.94), rgba(236, 247, 255, 0.94)),
+    repeating-linear-gradient(135deg, rgba(23, 105, 183, 0.18) 0 8px, transparent 8px 16px);
+}
+
+.guide-support-action::before {
+  background: linear-gradient(90deg, #0f5598, #58a8de, var(--gold));
+}
+
+.guide-page .support-amount {
+  color: #1769b7;
+}
+
+.guide-page .support-reasons li {
+  color: #084f93;
+}
+
+.guide-page .support-reasons li::before {
+  background: #58a8de;
+  box-shadow: 0 0 0 2px rgba(88, 168, 222, 0.22);
+}
+
+.guide-download-section {
+  background: #0f5598;
+}
+
+.guide-download-section .button-primary,
+.guide-store-button {
+  background: #d5a64b;
+  color: #2d2113;
+}
+
+.guide-download-section .button-primary:hover,
+.guide-store-button:hover {
+  background: #e0b967;
+  color: #2d2113;
+}
+
+.guide-screenshot img {
+  background: #eaf5ff;
 }
 
 .page-hero,
@@ -1056,6 +1202,22 @@ body.lightbox-open {
 }
 
 .download-section .button-primary:hover {
+  background: #e0b967;
+  color: #2d2113;
+}
+
+.download-section.guide-download-section {
+  background: #0f5598;
+}
+
+.download-section.guide-download-section .button-primary,
+.download-section.guide-download-section .guide-store-button {
+  background: var(--gold);
+  color: #2d2113;
+}
+
+.download-section.guide-download-section .button-primary:hover,
+.download-section.guide-download-section .guide-store-button:hover {
   background: #e0b967;
   color: #2d2113;
 }
@@ -1384,6 +1546,7 @@ body.lightbox-open {
     .project-hero-inner,
     .support-panel,
     .web-collab-panel,
+    .online-panel,
     .contact-hero-grid,
     .contact-layout {
     grid-template-columns: 1fr;
@@ -1410,7 +1573,6 @@ body.lightbox-open {
 @media (max-width: 640px) {
   .site-nav,
   .home-hero-inner,
-  .camp-strip-inner,
   .page-hero-inner,
   .project-hero-inner,
   .footer-inner,
@@ -1422,6 +1584,8 @@ body.lightbox-open {
 
   h1 {
     font-size: 2rem;
+    max-width: 12ch;
+    overflow-wrap: break-word;
   }
 
   h2 {
@@ -1456,16 +1620,6 @@ body.lightbox-open {
     width: 260px;
   }
 
-  .camp-strip-inner {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .camp-strip span,
-  .camp-strip a {
-    width: 100%;
-  }
-
   .hero-actions .button {
     flex: 1 1 100%;
     white-space: normal;
@@ -1474,16 +1628,18 @@ body.lightbox-open {
   .hero-copy,
   .project-summary,
   .panel p,
+  .feature-list li,
   .support-panel p,
   .download-section p,
   .screenshot-caption p {
-    max-width: 38ch;
+    max-width: min(38ch, calc(100vw - 4rem));
   }
 
     .panel,
     .project-card,
     .support-panel,
     .web-collab-panel,
+    .online-panel,
     .download-section,
     .screenshot,
     .model-card {
