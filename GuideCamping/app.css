@@ -1390,6 +1390,23 @@ button.person-display-card {
     background: var(--sand);
 }
 
+.slot-editor {
+    display: grid;
+    gap: 12px;
+}
+
+.slot-editor-list {
+    display: grid;
+    gap: 8px;
+}
+
+.slot-editor-row {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) auto auto auto;
+    gap: 8px;
+    align-items: center;
+}
+
 /* ── Forms ───────────────────────────────────── */
 
 .form-grid {

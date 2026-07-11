@@ -32,6 +32,11 @@
         accommodationTent: "Tent",
         accommodationBunkRoom: "Bunk room",
         accommodationCaravanMotorhome: "Caravan/motorhome",
+        mealBreakfastId: "meal-breakfast",
+        mealLunchId: "meal-lunch",
+        mealDinnerId: "meal-dinner",
+        mealTeaId: "meal-tea",
+        mealExtraId: "meal-extra",
         mealBreakfast: "Breakfast",
         mealLunch: "Lunch",
         mealDinner: "Dinner",
@@ -58,6 +63,12 @@
     const GENDERS = [TERMS.genderNotSet, TERMS.genderMale, TERMS.genderFemale, TERMS.genderOther];
     const CAMPER_TYPES = [TERMS.camperTypeStandard, TERMS.camperTypeRainbow, TERMS.camperTypeBrownie, TERMS.camperTypeGuide, TERMS.camperTypeRanger];
     const ACCOMMODATION_TYPES = [TERMS.accommodationTent, TERMS.accommodationBunkRoom, TERMS.accommodationCaravanMotorhome];
+    const MEAL_SLOT_DEFINITIONS = [
+        { id: TERMS.mealBreakfastId, label: TERMS.mealBreakfast },
+        { id: TERMS.mealDinnerId, label: TERMS.mealDinner },
+        { id: TERMS.mealTeaId, label: TERMS.mealTea },
+        { id: TERMS.mealExtraId, label: TERMS.mealExtra }
+    ];
     const MEAL_SLOTS = [TERMS.mealBreakfast, TERMS.mealDinner, TERMS.mealTea, TERMS.mealExtra];
     const KIT_STATUSES = [
         TERMS.kitToCheck,
@@ -688,8 +699,11 @@
             friendLinks: [],
             foeLinks: [],
             menuSlots: [...MEAL_SLOTS],
+            menuSlotDefinitions: MEAL_SLOT_DEFINITIONS.map(slot => ({ ...slot })),
             menuStartSlot: TERMS.mealBreakfast,
             menuEndSlot: TERMS.mealTea,
+            menuStartSlotId: TERMS.mealBreakfastId,
+            menuEndSlotId: TERMS.mealTeaId,
             menuDayNotes: [],
             menuLibraryItems: [],
             menuLibrarySeeded: false,
@@ -736,6 +750,7 @@
         project.friendLinks = list(project.friendLinks);
         project.foeLinks = list(project.foeLinks);
         project.menuSlots = list(project.menuSlots);
+        project.menuSlotDefinitions = list(project.menuSlotDefinitions);
         project.menuDayNotes = list(project.menuDayNotes);
         project.menuLibraryItems = list(project.menuLibraryItems);
         project.menuItems = list(project.menuItems);
@@ -890,11 +905,19 @@
     }
 
     function normalizeMenu(project) {
-        const slots = distinct(project.menuSlots.map(slot => clean(slot)).filter(Boolean), value => value.toLowerCase());
-        project.menuSlots = slots.length ? slots : [...MEAL_SLOTS];
-        project.menuStartSlot = project.menuSlots.find(slot => slot.toLowerCase() === clean(project.menuStartSlot).toLowerCase()) ?? project.menuSlots[0];
-        project.menuEndSlot = project.menuSlots.find(slot => slot.toLowerCase() === clean(project.menuEndSlot).toLowerCase()) ?? project.menuSlots[Math.min(2, project.menuSlots.length - 1)];
+        normalizeMenuSlots(project);
+        const startDefinition = menuSlotById(project, project.menuStartSlotId)
+            || menuSlotByLabel(project, project.menuStartSlot)
+            || project.menuSlotDefinitions[0];
+        const endDefinition = menuSlotById(project, project.menuEndSlotId)
+            || menuSlotByLabel(project, project.menuEndSlot)
+            || project.menuSlotDefinitions[Math.min(defaultMenuEndIndex(project), project.menuSlotDefinitions.length - 1)];
+        project.menuStartSlotId = startDefinition.id;
+        project.menuStartSlot = startDefinition.label;
+        project.menuEndSlotId = endDefinition.id;
+        project.menuEndSlot = endDefinition.label;
         if (project.startDate === project.endDate && mealSlotIndex(project, project.menuEndSlot) < mealSlotIndex(project, project.menuStartSlot)) {
+            project.menuEndSlotId = project.menuStartSlotId;
             project.menuEndSlot = project.menuStartSlot;
         }
         if (!project.menuLibrarySeeded) {
@@ -904,7 +927,7 @@
         project.menuItems.forEach(item => {
             item.id = clean(item.id, uid());
             item.date = clampDate(item.date, project);
-            item.slot = normalizeMealSlot(project, item.slot);
+            normalizeMealSlot(project, item);
             item.meal = clean(item.meal);
             item.pudding = clean(item.pudding);
             item.dietaryNotes = clean(item.dietaryNotes);
@@ -1770,6 +1793,7 @@
         return {
             id: data.id || uid(),
             date: data.date || State.project.startDate,
+            slotId: clean(data.slotId),
             slot: data.slot || TERMS.mealBreakfast,
             meal: clean(data.meal),
             pudding: clean(data.pudding),
@@ -2017,15 +2041,98 @@
         return Boolean(clean(item.meal) || clean(item.pudding) || clean(item.dietaryNotes) || clean(item.notes) || item.hasMealPlan);
     }
 
+    function defaultMealSlotId(label) {
+        const text = clean(label).toLowerCase();
+        if (text === TERMS.mealBreakfast.toLowerCase()) return TERMS.mealBreakfastId;
+        if (text === TERMS.mealLunch.toLowerCase()) return TERMS.mealLunchId;
+        if (text === TERMS.mealDinner.toLowerCase()) return TERMS.mealDinnerId;
+        if (text === TERMS.mealTea.toLowerCase()) return TERMS.mealTeaId;
+        if (text === TERMS.mealExtra.toLowerCase()) return TERMS.mealExtraId;
+        return uid();
+    }
+
+    function uniqueMenuSlotId(base, used) {
+        let candidate = clean(base, uid());
+        while (used.has(candidate.toLowerCase())) candidate = uid();
+        used.add(candidate.toLowerCase());
+        return candidate;
+    }
+
+    function normalizeMenuSlots(project) {
+        const sourceLabels = project.menuSlotDefinitions.length
+            ? project.menuSlotDefinitions.map(slot => clean(slot.label)).filter(Boolean)
+            : project.menuSlots.map(slot => clean(slot)).filter(Boolean);
+        const labels = distinct(sourceLabels, value => value.toLowerCase());
+        if (!labels.length) labels.push(...MEAL_SLOTS);
+
+        const previousByLabel = new Map(project.menuSlotDefinitions
+            .filter(slot => clean(slot.label))
+            .map(slot => [clean(slot.label).toLowerCase(), slot]));
+        const used = new Set();
+        project.menuSlotDefinitions = labels.map(label => {
+            const previous = previousByLabel.get(label.toLowerCase()) || {};
+            return {
+                id: uniqueMenuSlotId(clean(previous.id, defaultMealSlotId(label)), used),
+                label
+            };
+        });
+        syncLegacyMenuSlots(project);
+    }
+
+    function syncLegacyMenuSlots(project) {
+        project.menuSlots = project.menuSlotDefinitions.map(slot => slot.label);
+    }
+
+    function menuSlotById(project, id) {
+        const key = clean(id).toLowerCase();
+        return key ? project.menuSlotDefinitions.find(slot => clean(slot.id).toLowerCase() === key) : null;
+    }
+
+    function menuSlotByLabel(project, label) {
+        const key = clean(label).toLowerCase();
+        return key ? project.menuSlotDefinitions.find(slot => clean(slot.label).toLowerCase() === key) : null;
+    }
+
+    function addMenuSlotDefinition(project, label) {
+        const used = new Set(project.menuSlotDefinitions.map(slot => clean(slot.id).toLowerCase()).filter(Boolean));
+        const definition = {
+            id: uniqueMenuSlotId(defaultMealSlotId(label), used),
+            label: clean(label, TERMS.mealExtra)
+        };
+        project.menuSlotDefinitions.push(definition);
+        syncLegacyMenuSlots(project);
+        return definition;
+    }
+
+    function assignMealSlot(project, item, label) {
+        const definition = menuSlotByLabel(project, label) || addMenuSlotDefinition(project, label);
+        item.slotId = definition.id;
+        item.slot = definition.label;
+    }
+
+    function menuSlotIdForLabel(project, label) {
+        return menuSlotByLabel(project, label)?.id || "";
+    }
+
+    function defaultMenuEndIndex(project) {
+        const teaIndex = mealSlotIndex(project, TERMS.mealTea);
+        return teaIndex >= 0 ? teaIndex : Math.max(0, project.menuSlots.length - 1);
+    }
+
     function mealSlotIndex(project, slot) {
         return project.menuSlots.findIndex(item => item.toLowerCase() === clean(slot).toLowerCase());
     }
 
-    function normalizeMealSlot(project, slot) {
-        const found = project.menuSlots.find(item => item.toLowerCase() === clean(slot).toLowerCase());
-        if (found) return found;
-        const mapped = mapMealSlot(slot);
-        return project.menuSlots.find(item => item.toLowerCase() === mapped.toLowerCase()) || project.menuSlots[0];
+    function normalizeMealSlot(project, item) {
+        let definition = menuSlotById(project, item.slotId) || menuSlotByLabel(project, item.slot);
+        if (!definition && ["0", "1", "2"].includes(clean(item.slot))) {
+            definition = menuSlotByLabel(project, mapMealSlot(item.slot));
+        }
+        if (!definition) {
+            definition = addMenuSlotDefinition(project, clean(item.slot, TERMS.mealExtra));
+        }
+        item.slotId = definition.id;
+        item.slot = definition.label;
     }
 
     function mapMealSlot(value) {
@@ -2033,7 +2140,7 @@
         if (text.includes("breakfast") || text === "0") return TERMS.mealBreakfast;
         if (text.includes("lunch")) return TERMS.mealLunch;
         if (text.includes("dinner") || text === "1") return TERMS.mealDinner;
-        if (text.includes("tea") || text.includes("supper") || text === "2") return TERMS.mealTea;
+        if (text.includes("tea") || text === "2") return TERMS.mealTea;
         return clean(value, TERMS.mealExtra);
     }
 
@@ -2044,7 +2151,7 @@
         let start = mealSlotIndex(project, project.menuStartSlot);
         let end = mealSlotIndex(project, project.menuEndSlot);
         if (start < 0) start = 0;
-        if (end < 0) end = Math.min(2, project.menuSlots.length - 1);
+        if (end < 0) end = defaultMenuEndIndex(project);
         if (project.startDate === project.endDate && start > end) end = start;
         return project.menuSlots.filter((slot, index) =>
             (date !== project.startDate || index >= start) && (date !== project.endDate || index <= end));
@@ -5379,7 +5486,8 @@
 
     async function editMeal(id, date, slot) {
         const existing = State.project.menuItems.find(item => item.id === id);
-        const initial = existing || mealItem({ date: date || State.project.startDate, slot: slot || State.project.menuStartSlot });
+        const initialSlot = slot || State.project.menuStartSlot;
+        const initial = existing || mealItem({ date: date || State.project.startDate, slot: initialSlot, slotId: menuSlotIdForLabel(State.project, initialSlot) });
         const draft = mealItem({ ...initial, ingredients: list(initial.ingredients).map(ingredient => ({ ...ingredient })) });
         for (;;) {
             const result = await promptFields(existing ? "Edit meal" : "Add meal", [
@@ -5398,12 +5506,12 @@
             if (!result) return;
             Object.assign(draft, {
                 date: result.date,
-                slot: result.slot,
                 meal: result.meal,
                 pudding: result.pudding,
                 dietaryNotes: result.dietaryNotes,
                 notes: result.notes
             });
+            assignMealSlot(State.project, draft, result.slot);
             if (result._action === "plan") {
                 await editMealPlan(draft);
                 continue;
@@ -5574,7 +5682,7 @@
             enumerateDates(State.project.startDate, State.project.endDate).forEach(date => {
                 activeMealSlots(State.project, date).forEach(slot => {
                     if (!State.project.menuItems.some(item => item.date === date && item.slot.toLowerCase() === slot.toLowerCase())) {
-                        State.project.menuItems.push(mealItem({ date, slot }));
+                        State.project.menuItems.push(mealItem({ date, slot, slotId: menuSlotIdForLabel(State.project, slot) }));
                         count++;
                     }
                 });
@@ -5592,19 +5700,122 @@
         mutate("Updated menu start/end.", () => {
             State.project.menuStartSlot = result.menuStartSlot;
             State.project.menuEndSlot = result.menuEndSlot;
+            State.project.menuStartSlotId = menuSlotIdForLabel(State.project, result.menuStartSlot);
+            State.project.menuEndSlotId = menuSlotIdForLabel(State.project, result.menuEndSlot);
         });
     }
 
     async function modifyMenuSlots() {
-        const result = await promptFields("Modify menu slots", [
-            { name: "slots", label: "One meal slot per line", type: "textarea", value: State.project.menuSlots.join("\n"), full: true }
-        ]);
-        if (!result) return;
-        const slots = distinct(result.slots.split(/\r?\n/).map(clean).filter(Boolean), value => value.toLowerCase());
-        if (!slots.length) throw new Error("At least one slot is required.");
+        normalizeProject(State.project);
+        const rows = State.project.menuSlotDefinitions.map(slot => ({ id: slot.id, label: slot.label }));
+        const body = document.createElement("div");
+        body.className = "slot-editor";
+        let error = "";
+
+        function render(focusIndex = -1) {
+            body.innerHTML = `
+                <p class="muted">Rename, add, remove or reorder meal slots. Existing meals stay attached to the same hidden slot.</p>
+                ${error ? `<div class="warning">${h(error)}</div>` : ""}
+                <div class="slot-editor-list">
+                    ${rows.map((row, index) => `
+                        <div class="slot-editor-row" data-index="${index}">
+                            <input value="${attr(row.label)}" aria-label="Meal slot ${index + 1}">
+                            <button class="small-button secondary" data-move="-1" type="button" ${index === 0 ? "disabled" : ""}>Up</button>
+                            <button class="small-button secondary" data-move="1" type="button" ${index === rows.length - 1 ? "disabled" : ""}>Down</button>
+                            <button class="small-button danger" data-remove type="button" ${rows.length <= 1 ? "disabled" : ""}>Remove</button>
+                        </div>`).join("")}
+                </div>
+                <div class="toolbar"><button data-add-slot type="button">Add meal slot</button></div>`;
+            if (focusIndex >= 0) {
+                requestAnimationFrame(() => body.querySelector(`.slot-editor-row[data-index="${focusIndex}"] input`)?.focus());
+            }
+        }
+
+        body.addEventListener("input", event => {
+            const row = event.target.closest(".slot-editor-row");
+            if (!row || event.target.tagName !== "INPUT") return;
+            rows[Number(row.dataset.index)].label = event.target.value;
+            error = "";
+        });
+        body.addEventListener("click", event => {
+            const row = event.target.closest(".slot-editor-row");
+            if (event.target.closest("[data-add-slot]")) {
+                rows.push({ id: uid(), label: "" });
+                error = "";
+                render(rows.length - 1);
+                return;
+            }
+
+            if (!row) return;
+            const index = Number(row.dataset.index);
+            if (event.target.closest("[data-remove]")) {
+                if (rows.length <= 1) return;
+                rows.splice(index, 1);
+                error = "";
+                render(Math.min(index, rows.length - 1));
+                return;
+            }
+
+            const move = Number(event.target.closest("[data-move]")?.dataset.move || 0);
+            if (!move) return;
+            const target = index + move;
+            if (target < 0 || target >= rows.length) return;
+            const [item] = rows.splice(index, 1);
+            rows.splice(target, 0, item);
+            error = "";
+            render(target);
+        });
+        render();
+
+        const action = await showModal("Modify menu slots", body, [
+            { label: "Save", value: "save" },
+            { label: "Cancel", value: "cancel", className: "secondary" }
+        ], {
+            validate: value => {
+                if (value !== "save") return true;
+                const labels = rows.map(row => clean(row.label));
+                if (labels.some(label => !label)) {
+                    error = "Every meal slot needs a name.";
+                    render(labels.findIndex(label => !label));
+                    return false;
+                }
+
+                const seen = new Set();
+                const duplicateIndex = labels.findIndex(label => {
+                    const key = label.toLowerCase();
+                    if (seen.has(key)) return true;
+                    seen.add(key);
+                    return false;
+                });
+                if (duplicateIndex >= 0) {
+                    error = "Meal slot names must be unique.";
+                    render(duplicateIndex);
+                    return false;
+                }
+
+                return true;
+            }
+        });
+        if (action !== "save") return;
+
         mutate("Updated menu slots.", () => {
-            State.project.menuSlots = slots;
-            State.project.menuItems.forEach(item => item.slot = normalizeMealSlot(State.project, item.slot));
+            const previousById = new Map(State.project.menuSlotDefinitions.map(slot => [slot.id, slot]));
+            const keptIds = new Set(rows.map(row => row.id));
+            State.project.menuSlotDefinitions = rows.map(row => ({ id: clean(row.id, uid()), label: clean(row.label, TERMS.mealExtra) }));
+            syncLegacyMenuSlots(State.project);
+            State.project.menuItems = State.project.menuItems.filter(item => !item.slotId || keptIds.has(item.slotId) || menuSlotByLabel(State.project, item.slot));
+            State.project.menuItems.forEach(item => {
+                const previous = previousById.get(item.slotId);
+                if (previous && keptIds.has(item.slotId)) {
+                    const current = menuSlotById(State.project, item.slotId);
+                    if (current) {
+                        item.slot = current.label;
+                        return;
+                    }
+                }
+
+                normalizeMealSlot(State.project, item);
+            });
         });
     }
 
@@ -5612,6 +5823,7 @@
         const body = document.createElement("div");
         const targetDate = date || State.project.startDate;
         const targetSlot = slot || State.project.menuStartSlot;
+        const targetSlotId = menuSlotIdForLabel(State.project, targetSlot);
         const drawLibrary = () => {
             body.innerHTML = `
                 <div class="toolbar">
@@ -5653,7 +5865,7 @@
         const selected = $all("input:checked", body).map(input => input.value);
         if (value === "insert" && selected.length) {
             mutate("Inserted menu library items.", () => {
-                selected.forEach(meal => State.project.menuItems.push(mealItem({ date: targetDate, slot: targetSlot, meal })));
+                selected.forEach(meal => State.project.menuItems.push(mealItem({ date: targetDate, slot: targetSlot, slotId: targetSlotId, meal })));
             });
         }
     }
@@ -6819,7 +7031,7 @@
             personnel: { people: p.people, choreTeams: p.choreTeams },
             "tent-allocation": { tentFields: p.tentFields, tents: p.tents, siteItems: p.siteItems, friendLinks: p.friendLinks, foeLinks: p.foeLinks, assignments: p.people.map(person => ({ personId: person.id, tentId: person.tentId })) },
             chores: { choreItems: p.choreItems, choreTeams: p.choreTeams, choreSessions: p.choreSessions, choreAllocations: p.choreAllocations },
-            menu: { menuSlots: p.menuSlots, menuStartSlot: p.menuStartSlot, menuEndSlot: p.menuEndSlot, menuDayNotes: p.menuDayNotes, menuLibraryItems: p.menuLibraryItems, menuItems: p.menuItems },
+            menu: { menuSlots: p.menuSlots, menuSlotDefinitions: p.menuSlotDefinitions, menuStartSlot: p.menuStartSlot, menuEndSlot: p.menuEndSlot, menuStartSlotId: p.menuStartSlotId, menuEndSlotId: p.menuEndSlotId, menuDayNotes: p.menuDayNotes, menuLibraryItems: p.menuLibraryItems, menuLibrarySeeded: p.menuLibrarySeeded, menuItems: p.menuItems },
             plan: { planItems: p.planItems },
             "group-kit": { kitItems: groupKit(), groupKitInventory: p.groupKitInventory },
             "participant-kit": { kitItems: participantKit(), participantKitInventory: p.participantKitInventory },
@@ -6873,7 +7085,16 @@
                 p.choreAllocations = list(d.choreAllocations);
                 break;
             case "menu":
-                Object.assign(p, d);
+                p.menuSlots = list(d.menuSlots);
+                p.menuSlotDefinitions = list(d.menuSlotDefinitions);
+                p.menuStartSlot = clean(d.menuStartSlot, p.menuStartSlot);
+                p.menuEndSlot = clean(d.menuEndSlot, p.menuEndSlot);
+                p.menuStartSlotId = clean(d.menuStartSlotId, p.menuStartSlotId);
+                p.menuEndSlotId = clean(d.menuEndSlotId, p.menuEndSlotId);
+                p.menuDayNotes = list(d.menuDayNotes);
+                p.menuLibraryItems = list(d.menuLibraryItems);
+                p.menuItems = list(d.menuItems);
+                p.menuLibrarySeeded = Boolean(d.menuLibrarySeeded);
                 break;
             case "plan":
                 p.planItems = list(d.planItems);
@@ -9046,7 +9267,7 @@
         for (const key of [
             "campName", "location", "startDate", "endDate",
             "participantCountOverride", "notes", "languageCode",
-            "menuStartSlot", "menuEndSlot",
+            "menuStartSlot", "menuEndSlot", "menuStartSlotId", "menuEndSlotId",
             "menuLibrarySeeded", "groupKitInventorySeeded", "participantKitInventorySeeded"
         ]) {
             merged[key] = mergeScalar(local?.[key], remote?.[key], acknowledged?.[key]);
@@ -9055,7 +9276,7 @@
         // Flat id-keyed collections: generic union merge
         const idKeyedCollections = [
             "people", "tentFields", "tents", "siteItems", "friendLinks", "foeLinks",
-            "menuDayNotes", "menuItems",
+            "menuSlotDefinitions", "menuDayNotes", "menuItems",
             "kitItems", "groupKitInventory", "participantKitInventory",
             "choreItems", "choreTeams", "choreAllocations",
             "planItems"
